@@ -457,3 +457,32 @@ end
     #println(res)
     println("\nEstimated:\n$(res_ss.minimizer)\nReal:\n$phi\n")
 <=#
+using BlackBoxOptim
+
+ode_fun = floudas_one
+
+data = Float64[1.0 0.57353 0.328937 0.188654 0.108198 0.0620545 0.0355906 0.0204132 0.011708 0.00671499;
+        0.0 0.401566 0.589647 0.659731 0.666112 0.639512 0.597179 0.54867 0.499168 0.451377]
+t = Float64[0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 0.888889, 1.0]
+
+
+function lsq_ss_estimator(phi)
+    tspan = (t[1], t[end])
+    ini_cond = data[:,1]
+    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+    osol  = solve(oprob, Tsit5(), saveat=t)
+    estimated = reduce(hcat, osol.u)
+    p = plot(transpose(data))
+    plot!(p, transpose(estimated))
+    display(p)
+    return sum((estimated-data).^2)
+end
+
+p0 = [5., 5.]
+res = bboptimize(lsq_ss_estimator; SearchRange = (0., 5.), NumDimensions = 2)
+
+print(lsq_ss_estimator([5.0035, 1]))
+
+print(phi_array[1])
+
+print("Testing commit from Juno.")
