@@ -408,7 +408,7 @@ for i in 1:6 #range(1, stop=2)
     print("\n----- Adams-Moulton Estimator -----\n")
     res_am = optimize(p -> soft_l1(adams_moulton_estimator(p, data, t, ode_fun)),
                     lower, upper,
-                    initial_guess,
+                    phi,
                     Fminbox(NelderMead()))
     println("\nReal:\n$phi\nEstimated:\n$(res_am.minimizer)\n")
 
@@ -419,7 +419,7 @@ for i in 1:6 #range(1, stop=2)
     print("\n----- Single Shooting Estimator -----\n")
     res_ss = optimize(p -> soft_l1(single_shooting_estimator(p, data, t, ode_fun)),
                     lower, upper,
-                    initial_guess)
+                    phi)
     println("\nReal:\n$phi\nEstimated:\n$(res_ss.minimizer)\n")
 
     oprob = ODEProblem(ode_fun, ini_cond, tspan, res_ss.minimizer)
@@ -427,10 +427,10 @@ for i in 1:6 #range(1, stop=2)
     plot!(osol_plot, osol, label="SS", color="yellow")
 
     print("\n----- Classic Estimator -----\n")
-    cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(t,data),
+    cost_function = build_loss_objective(oprob,Vern7(),L2Loss(t,data),
                                  maxiters=10000,verbose=false)
     res_cla = optimize(cost_function, lower,
-                 upper, res_am.minimizer, Fminbox(NelderMead()))
+                 upper, phi, Fminbox(NelderMead()))
     #println(res)
     println("\nReal:\n$phi\nEstimated:\n$(res_cla.minimizer)")
 
