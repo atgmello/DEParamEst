@@ -331,6 +331,37 @@ end
 p0 = [5., 5.]
 fit = curve_fit(lsq_ss_estimator, t, data, p0)
 
+# ----- Blackbox solver -----
+
+using BlackBoxOptim
+
+ode_fun = floudas_one
+
+data = Float64[1.0 0.57353 0.328937 0.188654 0.108198 0.0620545 0.0355906 0.0204132 0.011708 0.00671499;
+        0.0 0.401566 0.589647 0.659731 0.666112 0.639512 0.597179 0.54867 0.499168 0.451377]
+t = Float64[0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 0.888889, 1.0]
+
+
+function lsq_ss_estimator(phi)
+    tspan = (t[1], t[end])
+    ini_cond = data[:,1]
+    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+    osol  = solve(oprob, Tsit5(), saveat=t)
+    estimated = reduce(hcat, osol.u)
+    p = plot(transpose(data))
+    plot!(p, transpose(estimated))
+    display(p)
+    return sum((estimated-data).^2)
+end
+
+p0 = [5., 5.]
+res = bboptimize(lsq_ss_estimator; SearchRange = (0., 5.), NumDimensions = 2)
+
+print(lsq_ss_estimator([5.0035, 1]))
+
+print(phi_array[1])
+
+print("Testing commit from Juno.")
 
 # ----- Testando problema Floudas -----
 
@@ -340,7 +371,7 @@ using DifferentialEquations
 using DiffEqParamEstim
 import Distributions: Uniform
 
-for i in [1,2] #range(1, stop=2)
+for i in 1:6 #range(1, stop=2)
     println("\n----- Solving problem $i -----\n")
     ode_fun = ode_fun_array[i]
     t = t_array[i]
@@ -352,8 +383,11 @@ for i in [1,2] #range(1, stop=2)
     osol  = solve(oprob, Tsit5(), saveat=t)
     osol_plot = scatter(osol)
     display(osol_plot)
-    data = reduce(hcat, osol.u)
+    #data = reduce(hcat, osol.u)
 
+    data = floudas_samples_array[i]
+    t = floudas_samples_times_array[i]
+    tspan = (t[1], t[end])
     rand_range = rand_range_array[i]
 
     initial_guess = desired_precision[]
@@ -372,14 +406,25 @@ for i in [1,2] #range(1, stop=2)
     end
 
     print("\n----- Adams-Moulton Estimator -----\n")
-    res_am = optimize(p -> adams_moulton_estimator(p, data, t, ode_fun),
+    res_am = optimize(p -> soft_l1(adams_moulton_estimator(p, data, t, ode_fun)),
                     lower, upper,
                     initial_guess,
                     Fminbox(NelderMead()))
     println("\nReal:\n$phi\nEstimated:\n$(res_am.minimizer)\n")
 
     oprob = ODEProblem(ode_fun, ini_cond, tspan, res_am.minimizer)
-    osol  = solve(oprob, Tsit5(), saveat=t)
+    osol  = solve(oprob, Tsit5())
+    plot!(osol_plot, osol, label="AM", color="red")
+
+    print("\n----- Single Shooting Estimator -----\n")
+    res_ss = optimize(p -> soft_l1(single_shooting_estimator(p, data, t, ode_fun)),
+                    lower, upper,
+                    initial_guess)
+    println("\nReal:\n$phi\nEstimated:\n$(res_ss.minimizer)\n")
+
+    oprob = ODEProblem(ode_fun, ini_cond, tspan, res_ss.minimizer)
+    osol  = solve(oprob, Tsit5())
+    plot!(osol_plot, osol, label="SS", color="yellow")
 
     print("\n----- Classic Estimator -----\n")
     cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(t,data),
@@ -390,8 +435,8 @@ for i in [1,2] #range(1, stop=2)
     println("\nReal:\n$phi\nEstimated:\n$(res_cla.minimizer)")
 
     oprob = ODEProblem(ode_fun, ini_cond, tspan, res_cla.minimizer)
-    osol  = solve(oprob, Tsit5(), saveat=t)
-    plot!(osol_plot, osol)
+    osol  = solve(oprob, Tsit5())
+    plot!(osol_plot, osol, label="CLA", color="blue")
 
     #=>
     print("\n----- Lsq Adams-Moulton Estimator -----\n")
@@ -457,32 +502,3 @@ end
     #println(res)
     println("\nEstimated:\n$(res_ss.minimizer)\nReal:\n$phi\n")
 <=#
-using BlackBoxOptim
-
-ode_fun = floudas_one
-
-data = Float64[1.0 0.57353 0.328937 0.188654 0.108198 0.0620545 0.0355906 0.0204132 0.011708 0.00671499;
-        0.0 0.401566 0.589647 0.659731 0.666112 0.639512 0.597179 0.54867 0.499168 0.451377]
-t = Float64[0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 0.888889, 1.0]
-
-
-function lsq_ss_estimator(phi)
-    tspan = (t[1], t[end])
-    ini_cond = data[:,1]
-    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Tsit5(), saveat=t)
-    estimated = reduce(hcat, osol.u)
-    p = plot(transpose(data))
-    plot!(p, transpose(estimated))
-    display(p)
-    return sum((estimated-data).^2)
-end
-
-p0 = [5., 5.]
-res = bboptimize(lsq_ss_estimator; SearchRange = (0., 5.), NumDimensions = 2)
-
-print(lsq_ss_estimator([5.0035, 1]))
-
-print(phi_array[1])
-
-print("Testing commit from Juno.")
