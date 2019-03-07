@@ -18,7 +18,7 @@ function contour_3d_plots(x, y, z, phi; title="")
 end
 
 
-function calc_z_plot(x, y, data, ode_fun, phi; fun="am")
+function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am")
     z = desired_precision[]
     if fun=="am"
         obj_fun = adams_moulton_estimator
@@ -34,10 +34,11 @@ function calc_z_plot(x, y, data, ode_fun, phi; fun="am")
         end
     end
     z = reshape(z, (length(y), length(x)))
-    contour_3d_plots(x, y, z, phi, title="$fun")
+    num_samples = length(data)
+    contour_3d_plots(x, y, z, phi, title="$fun for num_samples=$num_samples")
 end
 
-for i in [6]
+for i in [1,4,6]
     println("\n----- Plots for problem $i -----\n")
     ode_fun = ode_fun_array[i]
     t = t_array[i]
@@ -49,30 +50,34 @@ for i in [6]
     max_range = rand_range[end]
     delta_t = desired_precision(.1)
 
-    tspan = (t[1], t[end])
-    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Tsit5(), saveat=t)
-    plot(osol)
-    println(osol.t)
-    println(osol.u)
-    data = reduce(hcat, osol.u)
-    println(data)
-    data_plot = scatter(t, transpose(data))
-    display(data_plot)
+    for num_samples in 3:20:23
+        tspan = (t[1], t[end])
+        oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+        #saveat_t = range(t[1], stop=t[end], length=num_samples)
+        saveat_t = t[1]:((t[end]-t[1])/num_samples):t[end]
+        osol  = solve(oprob, Tsit5(), saveat=saveat_t)
+        plot(osol)
+        println(osol.t)
+        println(osol.u)
+        data = reduce(hcat, osol.u)
+        println(data)
+        data_plot = scatter(saveat_t, transpose(data))
+        display(data_plot)
 
-    x = range(min_range, max_range, step=.05)
-    y = range(min_range, max_range, step=.05)
+        x = range(min_range, max_range, step=.05)
+        y = range(min_range, max_range, step=.05)
 
-    x_reduced = range(phi[1]-.05, phi[1]+.05, step=.001)
-    y_reduced = range(phi[2]-.05, phi[2]+.05, step=.001)
+        x_reduced = range(phi[1]-.05, phi[1]+.05, step=.001)
+        y_reduced = range(phi[2]-.05, phi[2]+.05, step=.001)
 
-    println("\n----- Adams-Moulton Estimator -----")
-    calc_z_plot(x, y, data, ode_fun, phi, fun="am")
-    calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, fun="am")
+        println("\n----- Adams-Moulton Estimator -----")
+        calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="am")
+        calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="am")
 
-    println("\n----- Classic Estimator -----")
-    calc_z_plot(x, y, data, ode_fun, phi, fun="cla")
-    calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, fun="cla")
+        println("\n----- Classic Estimator -----")
+        calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="cla")
+        calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="cla")
+    end
 end
 
 x = range(1, 10, step=1)
