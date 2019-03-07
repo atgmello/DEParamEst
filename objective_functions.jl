@@ -1,4 +1,4 @@
-function adams_moulton_estimator(phi, data, time_array, ode_fun)
+function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
     estimated = zeros(num_samples*num_state_variables)
@@ -19,17 +19,17 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun)
         estimated[:, i+1] = x_k_1
     end
 
-    #=>
-    println("Plot of $phi")
-    p = scatter(transpose(estimated))
-    display(p)
-    <=#
+    if plot_estimated
+        p = scatter(transpose(estimated), title="Plot of $phi")
+        display(p)
+    end
+
     residuals = (data-estimated)
     return sum(residuals.^2)
 end
 
 
-function data_shooting_estimator(phi, data, t, ode_fun)
+function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
     estimated = zeros(num_samples*num_state_variables)
@@ -43,35 +43,38 @@ function data_shooting_estimator(phi, data, t, ode_fun)
 
         x_k_0 = data[:, i]
 
-        tspan = (t_0, t_1)
-        oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-        osol  = solve(oprob, Tsit5(), saveat=tspan)
+        for i in 1:steps
+            tspan = (t_0, t_1)
+            oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
+            osol  = solve(oprob, Tsit5(), saveat=tspan)
 
-        x_k_1 = x_k_0 + delta_t*(osol.u[end])
+            x_k_1 = x_k_0 + delta_t*(osol.u[end])
+            x_k_0 = x_k_1
+        end
         estimated[:, i+1] = x_k_1
     end
 
-    #=>
-    println("Plot of $phi")
-    p = scatter(transpose(estimated))
-    display(p)
-    <=#
+    if plot_estimated
+        p = scatter(transpose(estimated), title="Plot of $phi")
+        display(p)
+    end
+
     residuals = (data-estimated)
     return sum(residuals.^2)
 end
 
-function single_shooting_estimator(phi, data, t, ode_fun)
+function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
     osol  = solve(oprob, Tsit5(), saveat=t)
     estimated = reduce(hcat, osol.u)
 
-    #=>
-    println("Plot of $phi")end
-    p = scatter(transpose(estimated))
-    display(p)
-    <=#
+    if plot_estimated
+        p = scatter(transpose(estimated), title="Plot of $phi")
+        display(p)
+    end
+
     residuals = (data-estimated)
     return sum(residuals.^2)
 end
