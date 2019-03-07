@@ -427,7 +427,7 @@ for i in 1:6 #range(1, stop=2)
     plot!(osol_plot, osol, label="SS", color="yellow")
 
     print("\n----- Classic Estimator -----\n")
-    cost_function = build_loss_objective(oprob,Vern7(),L2Loss(t,data),
+    cost_function = build_loss_objective(oprob,lsoda(),L2Loss(t,data),
                                  maxiters=10000,verbose=false)
     res_cla = optimize(cost_function, lower,
                  upper, phi, Fminbox(NelderMead()))

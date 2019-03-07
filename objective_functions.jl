@@ -1,4 +1,4 @@
-using ODEInterfaceDiffEq
+using LSODA
 
 function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
@@ -48,7 +48,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
         for i in 1:steps
             tspan = (t_0, t_1)
             oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-            osol  = solve(oprob, Vern7(), saveat=tspan)
+            osol  = solve(oprob, lsoda(), saveat=tspan)
 
             x_k_1 = x_k_0 + delta_t*(osol.u[end])
             x_k_0 = x_k_1
@@ -69,7 +69,7 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Vern7(), saveat=t)
+    osol  = solve(oprob, lsoda(), saveat=t)
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
