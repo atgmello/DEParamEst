@@ -425,7 +425,6 @@ for i in [1,2] #range(1, stop=2)
     oprob = ODEProblem(ode_fun, ini_cond, tspan, fit.param)
     osol  = solve(oprob, Tsit5(), saveat=t)
     plot!(osol_plot, osol)
-    <=#
 
     print("\n----- Lsq Single Shooting Estimator -----\n")
     function lsq_ss_estimator(time_array, phi)
@@ -443,6 +442,7 @@ for i in [1,2] #range(1, stop=2)
     oprob = ODEProblem(ode_fun, ini_cond, tspan, fit.param)
     osol  = solve(oprob, Tsit5(), saveat=t)
     plot!(osol_plot, osol)
+    <=#
 
     display(osol_plot)
 end
