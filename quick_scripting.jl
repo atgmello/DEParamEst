@@ -371,7 +371,7 @@ using DifferentialEquations
 using DiffEqParamEstim
 import Distributions: Uniform
 
-for i in 1:6 #range(1, stop=2)
+for i in 1:1 #range(1, stop=2)
     println("\n----- Solving problem $i -----\n")
     ode_fun = ode_fun_array[i]
     t = t_array[i]
@@ -427,7 +427,7 @@ for i in 1:6 #range(1, stop=2)
     plot!(osol_plot, osol, label="SS", color="yellow")
 
     print("\n----- Classic Estimator -----\n")
-    cost_function = build_loss_objective(oprob,lsoda(),L2Loss(t,data),
+    cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(t,data),
                                  maxiters=10000,verbose=false)
     res_cla = optimize(cost_function, lower,
                  upper, phi, Fminbox(NelderMead()))
@@ -476,7 +476,7 @@ for i in 1:6 #range(1, stop=2)
         tspan = (t[1], t[end])
         ini_cond = data[:,1]
         oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-        osol  = solve(oprob, Tsit5(), saveat=t)
+        osol  = solve(oprob, Tsi)t5(), saveat=t)
         estimated = reduce(hcat, osol.u)
     end
 
@@ -502,3 +502,91 @@ end
     #println(res)
     println("\nEstimated:\n$(res_ss.minimizer)\nReal:\n$phi\n")
 <=#
+
+using PyCall
+
+py_opt = pyimport("scipy.optimize")
+py_int = pyimport("scipy.integrate")
+
+i = 1
+data = floudas_samples_array[i]
+t = floudas_samples_times_array[i]
+ode_fun = ode_fun_array[i]
+phi = phi_array[i]
+ini_cond = ini_cond_array[i]
+
+tspan = (t[1], t[end])
+oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+osol  = solve(oprob, lsoda(), saveat=reduce(vcat, t))
+osol_plot = scatter(osol)
+display(osol_plot)
+
+function wrapper(x)
+    res = single_shooting_estimator_residuals(x, data, t, ode_fun)
+    return res
+end
+
+function single_shooting_estimator_residuals(phi, data, t, ode_fun)
+    function wrapped_ode_fun(z, t, phi)
+        dz_dt = zeros(length(t)*length(z))
+        ode_fun(dz_dt, z, phi, t)
+        return dz_dt
+    end
+    estimated_values = py_int.odeint(wrapped_ode_fun, data[:,1], t)
+
+    if plot_estimated
+        p = scatter(transpose(estimated), title="Plot of $phi")
+        display(p)
+    end
+    residuals = (data-estimated)
+    return reduce(vcat, residuals)
+end
+
+function wrapped_ode_fun(z, t, phi)
+    dz_dt = zeros(length(t)*length(z))
+    ode_fun(dz_dt, z, phi, t)
+    return dz_dt
+end
+
+function py_ode_fun_test_p_one(Z, t, Phi)
+    #a, b, x = x
+    r_1 = Phi[1]*Z[1]
+    r_2 = Phi[2]*Z[2]
+
+    dZ1_dt = -r_1
+    dZ2_dt = r_1 - r_2
+
+    res = [dZ1_dt, dZ2_dt]
+    return res
+end
+
+a = py_ode_fun_test_p_one([1., 1], 0, phi)
+b = wrapped_ode_fun([1., 1.], 0, phi)
+print(a == b)
+
+estimated_values = py_int.odeint(py_ode_fun_test_p_one, [0., 1.], [1, 2, 3])
+
+print(single_shooting_estimator_residuals(phi, data, t, ode_fun))
+
+
+single_shooting_estimator_residuals(phi, data[1,:], t, ode_fun)
+
+print(wrapper(phi))
+print(single_shooting_estimator_residuals(phi, data, t, ode_fun))
+res = py_opt.least_squares(wrapper, phi, loss="linear")
+print(res)
+
+
+function F(x)
+ f1 = 4 - x[1]^2
+ return f1
+end
+
+x0 = 2.
+x = py_opt.fsolve(F, [x0])
+print(x)
+
+x = py_opt.minimize(F, x0)
+print(x)
+
+[4.00273, 2.01261, 39.9663, 19.9744]

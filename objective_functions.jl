@@ -1,5 +1,4 @@
 using LSODA
-
 function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
@@ -48,7 +47,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
         for i in 1:steps
             tspan = (t_0, t_1)
             oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-            osol  = solve(oprob, lsoda(), saveat=tspan)
+            osol  = solve(oprob, lsoda(), saveat=reduce(vcat, tspan))
 
             x_k_1 = x_k_0 + delta_t*(osol.u[end])
             x_k_0 = x_k_1
@@ -69,7 +68,7 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, lsoda(), saveat=t)
+    osol  = solve(oprob, lsoda(), saveat=reduce(vcat, t))
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
@@ -79,6 +78,21 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
 
     residuals = (data-estimated)
     return .5*sum(residuals.^2)
+end
+
+function single_shooting_estimator_residuals(phi, data, t, ode_fun; plot_estimated=false)
+    tspan = (t[1], t[end])
+    ini_cond = data[:,1]
+    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+    osol  = solve(oprob, lsoda(), saveat=reduce(vcat, t))
+    estimated = reduce(hcat, osol.u)
+
+    if plot_estimated
+        p = scatter(transpose(estimated), title="Plot of $phi")
+        display(p)
+    end
+    residuals = (data-estimated)
+    return reduce(vcat, residuals)
 end
 
 function soft_l1(z)
