@@ -25,7 +25,7 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
     end
 
     residuals = (data-estimated)
-    return sum(residuals.^2)
+    return .5*sum(residuals.^2)
 end
 
 
@@ -60,7 +60,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
     end
 
     residuals = (data-estimated)
-    return sum(residuals.^2)
+    return .5*sum(residuals.^2)
 end
 
 function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
@@ -76,5 +76,9 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     end
 
     residuals = (data-estimated)
-    return sum(residuals.^2)
+    return .5*sum(residuals.^2)
+end
+
+function soft_l1(z)
+    return (2 .* ((1 .+ z).^0.5 .- 1))
 end
