@@ -68,7 +68,7 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, lsoda(), saveat=reduce(vcat, t))
+    osol  = solve(oprob, Tsit5(), saveat=reduce(vcat, t))
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
@@ -84,7 +84,7 @@ function single_shooting_estimator_residuals(phi, data, t, ode_fun; plot_estimat
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, lsoda(), saveat=reduce(vcat, t))
+    osol  = solve(oprob, Tsit5(), saveat=reduce(vcat, t))
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
