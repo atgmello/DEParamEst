@@ -14,10 +14,10 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
         f_eval_0 = zeros(num_state_variables)
         ode_fun(f_eval_0, x_k_0, phi, 0)
         f_eval_1 = zeros(num_state_variables)
-        ode_fun(f_eval_1, x_k_0, phi, 0)
+        ode_fun(f_eval_1, x_k_1, phi, 0)
 
-        x_k_1 = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
-        estimated[:, i+1] = x_k_1
+        x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
+        estimated[:, i+1] = x_k_1_est
     end
 
     if plot_estimated
