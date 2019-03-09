@@ -29,7 +29,7 @@ function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am")
     for i in range(1, stop=length(x))
         for j in range(1, stop=length(y))
             phi_eval = [x[i], y[j]]
-            obj_eval = obj_fun(phi_eval, data, t, ode_fun)
+            obj_eval = sum_square(soft_l1(obj_fun(phi_eval, data, t, ode_fun)))
             push!(z, obj_eval)
         end
     end
@@ -38,7 +38,7 @@ function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am")
     contour_3d_plots(x, y, z, phi, title="$fun for num_samples=$num_samples")
 end
 
-for i in [1,4,6]
+for i in [6]
     println("\n----- Plots for problem $i -----\n")
     ode_fun = ode_fun_array[i]
     t = t_array[i]
