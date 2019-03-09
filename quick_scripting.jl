@@ -304,6 +304,7 @@ body!(w, p)
 body!(w, ui)
 
 # ----- Julia Discourse Question -----
+using LsqFit
 
 function floudas_one(dz_dt, z, phi, t)
     r_1 = phi[1]*z[1]
@@ -325,11 +326,17 @@ function lsq_ss_estimator(time_array, phi)
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
     osol  = solve(oprob, Tsit5(), saveat=t)
     estimated = reduce(hcat, osol.u)
-    return estimated
+    return vec(estimated)
 end
 
 p0 = [5., 5.]
-fit = curve_fit(lsq_ss_estimator, t, data, p0)
+fit = curve_fit(lsq_ss_estimator, t, vec(data), p0, lower=[0., 0.], upper=[10., 10.])
+print(fit.param)
+
+lsq_wraper(t,p) = soft_l1(vec(adams_moulton_estimator(p, data, t, ode_fun)))
+
+fit = curve_fit(lsq_wraper, t, vec(data), p0, lower=[0., 0.], upper=[10., 10.])
+print(fit.param)
 
 # ----- Blackbox solver -----
 
@@ -366,13 +373,19 @@ print("Testing commit from Juno.")
 # ----- Testando problema Floudas -----
 
 using Optim
-using LsqFit
 using DifferentialEquations
 using DiffEqParamEstim
 import Distributions: Uniform
+using NLsolve
+import LeastSquaresOptim
+const lso = LeastSquaresOptim
+import LsqFit
+const lsf = LsqFit
+loss = soft_l1
+
 
 for i in 1:6 #range(1, stop=2)
-    for sample_size in 3:20:23
+    for sample_size in 11:1:11
         println("\n----- Solving problem $i with $sample_size samples -----\n")
         ode_fun = ode_fun_array[i]
         t = t_array[i]
@@ -386,9 +399,13 @@ for i in 1:6 #range(1, stop=2)
         osol_plot = scatter(osol)
         display(osol_plot)
         data = reduce(hcat, osol.u)
+        bounds = bounds_array[i]
+        lb = vec([bounds[1] for i in 1:length(phi)])
+        ub = vec([bounds[end] for i in 1:length(phi)])
 
         #data = floudas_samples_array[i]
-        #t = floudas_samples_times_array[i]
+        #sample_t = floudas_samples_times_array[i]
+
         rand_range = rand_range_array[i]
 
         initial_guess = desired_precision[]
@@ -396,53 +413,66 @@ for i in 1:6 #range(1, stop=2)
             rand_num = rand(Uniform(rand_range[1], rand_range[end]))
             push!(initial_guess, rand_num)
         end
+
+        initial_guess = phi
+
         print("Initial guess:\n$initial_guess\n")
 
         lower = desired_precision[]
         upper = desired_precision[]
 
-        for i in range(1, stop=length(phi))
-            push!(lower, rand_range[1])
-            push!(upper, rand_range[2])
+        for i in 1:length(phi)
+            push!(lower, bounds[1])
+            push!(upper, bounds[2])
         end
 
         print("\n----- Adams-Moulton Estimator -----\n")
-        res_am = optimize(p -> soft_l1(adams_moulton_estimator(p, data, sample_t, ode_fun)),
-                        lower, upper,
-                        initial_guess,
-                        Fminbox(NelderMead())
-                        )
+        am_optim(p) = sum(abs2.(loss.(adams_moulton_estimator(p, data, sample_t, ode_fun))))
+        res_am = optimize(am_optim, lower, upper, initial_guess)
         println("\nReal:\n$phi\nEstimated:\n$(res_am.minimizer)\n")
         print(res_am)
 
+        #initial_guess = res_am.minimizer
+
+        #=>
         oprob = ODEProblem(ode_fun, ini_cond, tspan, res_am.minimizer)
         osol  = solve(oprob, Tsit5())
         plot!(osol_plot, osol, label="AM", color="red")
+        <=#
+
+        print("\n----- Adams-Moulton Residual Estimator -----\n")
+        lsq_am(p) = vec(loss.(abs2.(adams_moulton_estimator(p, data, sample_t, ode_fun))))
+        float64_guess = [Float64(ini) for ini in initial_guess]
+        res_am_resid = lso.optimize(lsq_am, float64_guess,
+                                    lower=lb, upper=ub,
+                                    lso.Dogleg())
+        println("\nReal:\n$phi\nEstimated:\n$(res_am_resid.minimizer)")
+        print(res_am_resid)
 
         print("\n----- Single Shooting Estimator -----\n")
-        res_ss = optimize(p -> soft_l1(single_shooting_estimator(p, data, sample_t, ode_fun)),
-                        lower, upper,
-                        res_am.minimizer
-                        )
+        ss_optim(p) = sum(loss.(abs2.(single_shooting_estimator(p, data, sample_t, ode_fun))))
+        res_ss = optimize(ss_optim, lower, upper, initial_guess)
         println("\nReal:\n$phi\nEstimated:\n$(res_ss.minimizer)\n")
         print(res_ss)
 
-        oprob = ODEProblem(ode_fun, ini_cond, tspan, res_ss.minimizer)
-        osol  = solve(oprob, Tsit5())
-        plot!(osol_plot, osol, label="SS", color="yellow")
+
+        print("\n----- Single Shooting Residual Estimator -----\n")
+        lsq_ss(p) = vec(loss.(abs2.(single_shooting_estimator(p, data, sample_t, ode_fun))))
+        float64_guess = [Float64(ini) for ini in initial_guess]
+        res_ss_resid = lso.optimize(lsq_ss, float64_guess,
+                                    lower=lb, upper=ub,
+                                    lso.Dogleg())
+        println("\nReal:\n$phi\nEstimated:\n$(res_ss_resid.minimizer)")
+        print(lsq_ss)
 
         print("\n----- Classic Estimator -----\n")
         cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(sample_t,data),
                                      maxiters=10000,verbose=false)
         res_cla = optimize(cost_function,
                             lower, upper,
-                            res_am.minimizer)
+                            initial_guess)
         println("\nReal:\n$phi\nEstimated:\n$(res_cla.minimizer)")
         println(res_cla)
-
-        oprob = ODEProblem(ode_fun, ini_cond, tspan, res_cla.minimizer)
-        osol  = solve(oprob, Tsit5())
-        plot!(osol_plot, osol, label="CLA", color="blue")
 
         #=>
         print("\n----- Lsq Adams-Moulton Estimator -----\n")
@@ -493,7 +523,7 @@ for i in 1:6 #range(1, stop=2)
         oprob = ODEProblem(ode_fun, ini_cond, tspan, fit.param)
         osol  = solve(oprob, Tsit5(), saveat=t)
         plot!(osol_plot, osol)
-        <=#
+        <=#end
 
         display(osol_plot)
     end
@@ -509,6 +539,54 @@ end
     #println(res)
     println("\nEstimated:\n$(res_ss.minimizer)\nReal:\n$phi\n")
 <=#
+
+
+println("\n----- Solving problem $i with $sample_size samples -----\n")
+i = 1
+ode_fun = ode_fun_array[i]
+t = t_array[i]
+phi = phi_array[i]
+ini_cond = ini_cond_array[i]
+
+#sample_t = range(t[1], stop=t[end], length=sample_size)
+tspan = (t[1], t[end])
+oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+osol  = solve(oprob, Tsit5(), saveat=sample_t)
+osol_plot = scatter(osol)
+display(osol_plot)
+data = reduce(hcat, osol.u)
+bounds = bounds_array[i]
+lb = vec([bounds[1] for i in 1:length(phi)])
+ub = vec([bounds[end] for i in 1:length(phi)])
+
+data = floudas_samples_array[i]
+sample_t = floudas_samples_times_array[i]
+rand_range = rand_range_array[i]
+
+initial_guess = desired_precision[]
+for i in range(1, stop=length(phi))
+    rand_num = rand(Uniform(rand_range[1], rand_range[end]))
+    push!(initial_guess, rand_num)
+end
+print("Initial guess:\n$initial_guess\n")
+
+lower = desired_precision[]
+upper = desired_precision[]
+
+for i in 1:length(phi)
+    push!(lower, bounds[1])
+    push!(upper, bounds[2])
+end
+
+initial_guess = initial_guess
+
+print("\n----- Adams-Moulton Residual Estimator -----\n")
+lsq_am(p) = loss.(abs2.(adams_moulton_estimator(p, data, sample_t, ode_fun)))
+float64_geuss = [Float64(ini) for ini in initial_guess]
+res_am_resid = lso.optimize(lsq_am, x0, lower=lb, upper=ub, lso.Dogleg())
+print(res_am_resid)
+
+
 
 using PyCall
 
