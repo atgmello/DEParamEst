@@ -79,21 +79,6 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     return residuals
 end
 
-function single_shooting_estimator_residuals(phi, data, t, ode_fun; plot_estimated=false)
-    tspan = (t[1], t[end])
-    ini_cond = data[:,1]
-    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Tsit5(), saveat=reduce(vcat, t))
-    estimated = reduce(hcat, osol.u)
-
-    if plot_estimated
-        p = scatter(transpose(estimated), title="Plot of $phi")
-        display(p)
-    end
-    residuals = (data-estimated)
-    return reduce(vcat, residuals)
-end
-
 function soft_l1(z)
     return (2 * ((1 + z)^0.5 - 1))
 end
