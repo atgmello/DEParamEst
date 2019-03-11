@@ -54,7 +54,7 @@ for i in [1,2,3,4,5,6] #range(1, stop=2)
 
 
         print("\n----- Adams-Moulton Estimator -----\n")
-        am_optim(p) = sum(abs2.(loss.(adams_moulton_estimator(p, data, sample_t, ode_fun))))
+        am_optim(p) = sum(loss.(abs2.(adams_moulton_estimator(p, data, sample_t, ode_fun))))
         res_am = optimize(am_optim, lower, upper, initial_guess, Fminbox(NelderMead()))
         println("\nReal:\n$phi\nEstimated:\n$(res_am.minimizer)\n")
         print(res_am)
