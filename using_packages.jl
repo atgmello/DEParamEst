@@ -24,3 +24,6 @@ const lso = LeastSquaresOptim
 
 import LsqFit
 const lsf = LsqFit
+
+# For optimization_options.jl
+using Distances
