@@ -1,12 +1,3 @@
-import Optim
-const opt = Optim
-import LeastSquaresOptim
-const lso = LeastSquaresOptim
-import LsqFit
-const lsf = LsqFit
-using DifferentialEquations
-using DiffEqParamEstim
-
 function floudas_one(dz_dt, z, phi, t)
     r_1 = phi[1]*z[1]
     r_2 = phi[2]*z[2]

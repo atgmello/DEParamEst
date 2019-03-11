@@ -1,8 +1,3 @@
-using Plots
-gui()
-plotly()
-gr()
-
 loss = soft_l1
 
 function contour_3d_plots(x, y, z, phi; title="")

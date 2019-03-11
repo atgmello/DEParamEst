@@ -1,15 +1,3 @@
-using Optim
-using DifferentialEquations
-using DiffEqParamEstim
-import Distributions: Uniform
-using NLsolve
-import LeastSquaresOptim
-const lso = LeastSquaresOptim
-import LsqFit
-const lsf = LsqFit
-loss = soft_l1
-
-
 for i in [1,2,3,4,5,6] #range(1, stop=2)
     for sample_size in 11:1:11
         println("\n----- Solving problem $i with $sample_size samples -----\n")

@@ -1,11 +1,5 @@
-using DifferentialEquations
-using ParameterizedFunctions
-using DifferentialEquations
-using Plots
-gr()
-
-#desired_precision = Float64
-desired_precision = BigFloat
+desired_precision = Float64
+#desired_precision = BigFloat
 
 ode_fun_array = []
 bounds_array = Vector{desired_precision}[]

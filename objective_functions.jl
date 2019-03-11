@@ -1,4 +1,3 @@
-using LSODA
 function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
