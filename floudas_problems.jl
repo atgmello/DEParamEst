@@ -11,6 +11,7 @@ ini_cond_array = Vector{desired_precision}[]
 t_array = Vector{desired_precision}[]
 floudas_samples_array = Array{desired_precision}[]
 floudas_samples_times_array = Array{desired_precision}[]
+floudas_plots = []
 
 # ----- Problem 1 -----
 
@@ -53,7 +54,7 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
 
 # ----- Problem 2 -----
 
@@ -92,7 +93,7 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
 
 # ----- Problem 3 -----
 
@@ -127,7 +128,7 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
 
 # ----- Problem 4 -----
 
@@ -155,7 +156,7 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
 
 # ----- Problem 5 -----
 
@@ -190,7 +191,7 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
 
 # ----- Problem 6 -----
 
@@ -220,4 +221,10 @@ floudas_samples_times = [
                         ]
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
-display(p)
+push!(floudas_plots, p)
+
+# ----- Plotting -----
+for p in 1:length(floudas_plots)
+    print("\n----- Plot for Floudas Problem $p-----\n")
+    display(floudas_plots[p])
+end
