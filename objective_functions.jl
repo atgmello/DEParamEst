@@ -46,7 +46,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
         for i in 1:steps
             tspan = (t_0, t_1)
             oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-            osol  = solve(oprob, lsoda(), saveat=reduce(vcat, tspan))
+            osol  = solve(oprob, Tsit5(), saveat=reduce(vcat, tspan))
 
             x_k_1 = x_k_0 + delta_t*(osol.u[end])
             x_k_0 = x_k_1
