@@ -1,7 +1,7 @@
 function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
-    estimated = zeros(num_samples*num_state_variables)
+    estimated = zeros(desired_precision, num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
     estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
@@ -32,7 +32,7 @@ end
 function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
-    estimated = zeros(num_samples*num_state_variables)
+    estimated = zeros(desired_precision, num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
     estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
