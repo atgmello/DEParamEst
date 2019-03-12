@@ -30,7 +30,6 @@ t = [0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 
 <=#
 
 for i in 1:6
-    desired_precision = Float64
     res_lsf_ss_dist_array = []
     res_lso_ss_dist_array = []
     res_opt_ss_dist_array = []
@@ -64,8 +63,6 @@ for i in 1:6
     #ode_prob = ODEProblem(ode_fun, ini_cond, tspan, phi)
     #ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
     #data = reduce(hcat, ode_sol.u)
-
-    desired_precision = Float64
 
     linear(x) = x
     #loss = soft_l1
@@ -107,7 +104,7 @@ for i in 1:6
 
     for j in 1:15
         print("\n--- Iteration $j---\n")
-        p0 = [rand(Uniform(rand_range[1], rand_range[end])) for i in 1:length(phi)]
+        p0 = desired_precision[rand(Uniform(rand_range[1], rand_range[end])) for i in 1:length(phi)]
 
         # ----- Adams-Moulton -----
 
@@ -176,7 +173,9 @@ for i in 1:6
     #plot!(p_ss, res_opt_am_dist_array, label="Optim")
     display(p_ss)
 
-    p_am_ss = plot(res_lsf_ss_dist_array, title="SS vs AM Errors for Problem $i", label="Single Shooting")
-    plot!(p_am_ss, res_lsf_am_dist_array, label="Adams-Moulton")
+    p_am_ss = plot(res_lsf_ss_dist_array, title="SS vs AM Errors for Problem $i", label="Single Shooting LsqFit")
+    plot!(p_am_ss, res_lsf_am_dist_array, label="Adams-Moulton LsqFit")
+    plot!(p_am_ss, res_lso_ss_dist_array, label="Single Shooting LSOptim")
+    plot!(p_am_ss, res_lso_am_dist_array, label="Adams-Moulton LSOptim")
     display(p_am_ss)
 end
