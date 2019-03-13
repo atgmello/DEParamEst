@@ -38,7 +38,6 @@ res_lsf_ss = lsf.curve_fit(lsq_ss_curvefit, t, vec(data), p0, lower=lb, upper=ub
 
 lsq_ss(p) = lsq_ss_curvefit(t,p)-vec(data)
 res_lso_ss = lso.optimize(lsq_ss, p0, lso.Dogleg(), lower=lb, upper=ub)
-res_lso_ss = lso.optimize(lsq_ss, p0)
 
 euclidean(res_lso_ss.minimizer, phi_array[1])
 
@@ -55,3 +54,10 @@ res_opt_two_stage = opt.optimize(two_obj, p0)
 los_obj = build_loss_objective(prob_one, Tsit5(), L2Loss(t,data))
 res_opt_build = opt.optimize(los_obj, p0)
 <=#
+
+function rosenbrock(x)
+	[1 - x[1], 100 * (x[2]-x[1]^2)]
+end
+x0 = zeros(desired_precision,2)
+lso.optimize(rosenbrock, x0)
+lso.optimize(rosenbrock, x0, lso.LevenbergMarquardt())
