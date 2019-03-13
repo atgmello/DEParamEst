@@ -29,7 +29,7 @@ t = [0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 
 
 <=#
 
-for i in 1:6
+for i in 6:6
     res_lsf_ss_dist_array = []
     res_lso_ss_dist_array = []
     res_opt_ss_dist_array = []
@@ -102,52 +102,40 @@ for i in 1:6
         return vec(estimated)
     end
 
-    for j in 1:10
+    for j in 1:5
         print("\n--- Iteration $j---\n")
         p0 = desired_precision[rand(Uniform(rand_range[1], rand_range[end])) for i in 1:length(phi)]
 
         # ----- Adams-Moulton -----
 
-        try
-            lsq_am(p) = adams_moulton_estimator(p, data, t, ode_fun)
-            res_lso_am = lso.optimize(lsq_am, p0, lso.Dogleg(), lower=lb, upper=ub)
-            res_lso_am_dist = euclidean(phi, res_lso_am.minimizer)
-            push!(res_lso_am_dist_array, res_lso_am_dist)
-            #p0 = res_lso_am.minimizer
-        catch
-            push!(res_lso_am_dist_array, -.5)
-        end
+        lsq_am(p) = adams_moulton_estimator(p, data, t, ode_fun)
+        res_lso_am = lso.optimize(lsq_am, p0, lso.Dogleg(), lower=lb, upper=ub)
+        res_lso_am_dist = euclidean(phi, res_lso_am.minimizer)
+        push!(res_lso_am_dist_array, res_lso_am_dist)
+        p0 = res_lso_am.minimizer
 
-        try
-            res_lsf_am = lsf.curve_fit(lsq_am_curvefit, t, vec(data), p0, lower=lb, upper=ub)
-            res_lsf_am_dist = euclidean(phi, res_lsf_am.param)
-            push!(res_lsf_am_dist_array, res_lsf_am_dist)
-            #p0 = res_lsf_am.param
-        catch
-            push!(res_lsf_am_dist_array, -.5)
-        end
+        res_lsf_am = lsf.curve_fit(lsq_am_curvefit, t, vec(data), p0, lower=lb, upper=ub)
+        res_lsf_am_dist = euclidean(phi, res_lsf_am.param)
+        push!(res_lsf_am_dist_array, res_lsf_am_dist)
+        p0 = res_lsf_am.param
 
+        lsq_am_sum(p) = sum(abs2.(loss.(adams_moulton_estimator(p, data, t, ode_fun))))
+        res_opt_am = opt.optimize(lsq_am_sum, p0)
+        res_opt_am_dist = euclidean(phi, res_opt_am.minimizer)
+        push!(res_opt_am_dist_array, res_opt_am_dist)
 
-        try
-            lsq_am_sum(p) = sum(abs2.(loss.(adams_moulton_estimator(p, data, t, ode_fun))))
-            res_opt_am = opt.optimize(lsq_am_sum, lb, ub, p0, opt.Fminbox(opt.LBFGS()))
-            res_opt_am_dist = euclidean(phi, res_opt_am.minimizer)
-            push!(res_opt_am_dist_array, res_opt_am_dist)
-        catch
-            push!(res_opt_am_dist_array, -.5)
-        end
 
         # ----- Single Shooting -----
 
 
-        res_lsf_ss = lsf.curve_fit(lsq_ss_curvefit, t, vec(data), p0, lower=lb, upper=ub)
-        res_lsf_ss_dist = euclidean(phi, res_lsf_ss.param)
-        push!(res_lsf_ss_dist_array, res_lsf_ss_dist)
+        #res_lsf_ss = lsf.curve_fit(lsq_ss_curvefit, t, vec(data), p0, lower=lb, upper=ub)
+        #res_lsf_ss_dist = euclidean(phi, res_lsf_ss.param)
+        #push!(res_lsf_ss_dist_array, res_lsf_ss_dist)
 
         lsq_ss(p) = vec(single_shooting_estimator(p, data, t, ode_fun))
-        res_lso_ss = lso.optimize(lsq_ss, p0, lso.Dogleg(), lower=lb, upper=ub)
-        res_lso_ss_dist = euclidean(phi, res_lso_ss.minimizer)
-        push!(res_lso_ss_dist_array, res_lso_ss_dist)
+        #res_lso_ss = lso.optimize(lsq_ss, p0, lso.Dogleg(), lower=lb, upper=ub)
+        #res_lso_ss_dist = euclidean(phi, res_lso_ss.minimizer)
+        #push!(res_lso_ss_dist_array, res_lso_ss_dist)
 
         lsq_ss_sum(p) = sum(abs2.(loss.(lsq_ss(p))))
         res_opt_ss = opt.optimize(lsq_ss_sum, lb, ub, p0, opt.Fminbox(opt.LBFGS()))
