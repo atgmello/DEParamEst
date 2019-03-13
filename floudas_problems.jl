@@ -48,7 +48,7 @@ floudas_samples_times = [
                         0. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
                         ]
 
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 1")
 push!(floudas_plots, p)
 
 p_one = ChemKinProblem(floudas_one, phi, bounds, floudas_samples, floudas_samples_times)
@@ -73,8 +73,8 @@ k3 = 40.013
 k4 = 20.007
 phi = [k1, k2, k3, k4]
 ini_cond = [1., 0., 0.]
-bounds = [[0. 0. 10. 10.],
-        [10. 10. 50. 50.]]
+bounds = [[0., 0., 10., 10.],
+        [10., 10., 50., 50.]]
 floudas_samples = [
                     1. 0.8241 0.6852 0.5747 0.4867 0.4166 0.3608 0.3164 0.2810 0.2529 0.2304 0.2126 0.1984 0.1870 0.1870 0.1709 0.1651 0.1606 0.1570 0.1541 0.1518;
                     0. 0.0937 0.1345 0.1654 0.1899 0.2094 0.2249 0.2373 0.2472 0.2550 0.2613 0.2662 0.2702 0.2733 0.2759 0.2779 0.2794 0.2807 0.2817 0.2825 0.2832;
@@ -83,7 +83,7 @@ floudas_samples = [
 floudas_samples_times = [
                         0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0
                         ]
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 2")
 push!(floudas_plots, p)
 
 p_two = ChemKinProblem(floudas_two, phi, bounds, floudas_samples, floudas_samples_times)
@@ -114,7 +114,7 @@ floudas_samples = [
 floudas_samples_times = [
                         0. .025 .05 .075 .1 .125 .150 .175 .2 .225 .25 .3 .35 .4 .45 .5 .55 .65 .75 .85 .95
                         ]
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 3")
 push!(floudas_plots, p)
 
 p_three = ChemKinProblem(floudas_three, phi, bounds, floudas_samples, floudas_samples_times)
@@ -138,7 +138,7 @@ floudas_samples = [
 floudas_samples_times = [
                         0. 1.0 2.0 3.0 4.0 5.0 6.0 7.0 9.0 11.0 14.0 19.0 24.0 29.0 39.0
                         ]
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 4")
 push!(floudas_plots, p)
 
 p_four = ChemKinProblem(floudas_four, phi, bounds, floudas_samples, floudas_samples_times)
@@ -169,7 +169,7 @@ floudas_samples = [
 floudas_samples_times = [
                         0. 0.050 0.065 0.080 0.123 0.233 0.273 0.354 0.397 0.418 0.502 0.553 0.681 0.750 0.916 0.937 1.122
                         ]
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 5")
 push!(floudas_plots, p)
 
 p_five = ChemKinProblem(floudas_five, phi, bounds, floudas_samples, floudas_samples_times)
@@ -195,7 +195,7 @@ floudas_samples = [
 floudas_samples_times = [
                         0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10.
                         ]
-p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
+p = scatter(transpose(floudas_samples_times), transpose(floudas_samples), title="Problem 6")
 push!(floudas_plots, p)
 
 p_six = ChemKinProblem(floudas_six, phi, bounds, floudas_samples, floudas_samples_times)
@@ -203,6 +203,5 @@ push!(problem_set, p_six)
 
 # ----- Plotting -----
 for p in 1:length(floudas_plots)
-    print("\n----- Plot for Floudas Problem $p-----\n")
     display(floudas_plots[p])
 end
