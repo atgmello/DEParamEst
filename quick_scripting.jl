@@ -506,3 +506,21 @@ x = py_opt.minimize(F, x0)
 print(x)
 
 [4.00273, 2.01261, 39.9663, 19.9744]
+
+# ----- Testando JuMP
+
+using Ipopt
+using JuMP
+model = Model(with_optimizer(Ipopt.Optimizer))
+@variable(model, x, start = BigFloat(0.0))
+@variable(model, y, start = BigFloat(0.0))
+
+@NLobjective(model, Min, (1 - x)^2 + 100 * (y - x^2)^2)
+
+optimize!(model)
+println("x = ", value(x), " y = ", value(y))
+
+# adding a (linear) constraint
+@constraint(model, x + y == BigFloat(10))
+optimize!(model)
+println("x = ", value(x), " y = ", value(y))
