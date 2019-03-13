@@ -1,5 +1,13 @@
-desired_precision = Float64
-#desired_precision = BigFloat
+#desired_precision = Float64
+desired_precision = BigFloat
+
+struct ChemKinProblem
+    fun
+    phi
+    bounds
+    data
+    t
+end
 
 ode_fun_array = []
 bounds_array = Vector{desired_precision}[]
@@ -38,6 +46,7 @@ k1 = 5.0035
 k2 = 1.
 phi = [k1, k2]
 push!(phi_array, phi)
+bounds = [0., 10.]
 push!(bounds_array, [0.,10.])
 push!(rand_range_array, [0.,10.])
 ini_cond = [1., 0.]
@@ -55,6 +64,8 @@ floudas_samples_times = [
 push!(floudas_samples_times_array, floudas_samples_times)
 p = scatter(transpose(floudas_samples_times), transpose(floudas_samples))
 push!(floudas_plots, p)
+
+p_one = ChemKinProblem(floudas_one, phi, bounds, floudas_samples, floudas_samples_times)
 
 # ----- Problem 2 -----
 
