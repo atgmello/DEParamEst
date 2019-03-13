@@ -91,7 +91,7 @@ for i in 1:6
         return vec(estimated)
     end
 
-    for j in 1:5
+    for j in 1:30
         print("\n--- Iteration $j---\n")
         p0 = [rand(Uniform(p_solve.bounds[1][i], p_solve.bounds[end][i]))
                         for i in 1:length(p_solve.phi)]
