@@ -524,3 +524,34 @@ println("x = ", value(x), " y = ", value(y))
 @constraint(model, x + y == BigFloat(10))
 optimize!(model)
 println("x = ", value(x), " y = ", value(y))
+
+# ----- Checking lower and upper bounds -----
+
+problem_set[2].bounds[1]
+
+f(x) = (x[1] - x[2])^2
+f([10., 9.])
+res_lso_am = lso.optimize(f, [.5, 1.5], lso.Dogleg(), lower=[0., 1.], upper=[1., 2.])
+
+function rosenbrock(x)
+	[1 - x[1] 100 * (x[2]-x[1]^2)]
+end
+rosenbrock([2, 2])
+rosenbrock([2 2])
+rosenbrock([2; 2])
+
+# Works
+[1.9, 1.4]
+reshape([1.9 1.4], 2)
+
+# Does not
+transpose([1.9, 1.4])
+[1.9 1.4]
+
+lso.optimize(rosenbrock, reshape([1.9 1.4], 2), lso.Dogleg(), lower=[-.1, -.5], upper=[2., 1.5])
+lso.optimize(rosenbrock, [1.9, 1.4], lso.LevenbergMarquardt(), lower=[-.1, -.5], upper=[2., 1.5])
+
+reshape(convert(Array{Float64}, [2 2]), 2)
+
+
+reshape([i for i in 1:10], 10)
