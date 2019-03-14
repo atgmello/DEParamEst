@@ -215,8 +215,8 @@ p = [.05, .13572, .36840, .1]
 phi = [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, .1,
        1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-bounds = [Float64[10^(-12) for i in 1:length(phi)],
-        Float64[10^(12) for i in 1:length(phi)]]
+bounds = [Float64[10^(-1) for i in 1:length(phi)],
+        Float64[10^(1) for i in 1:length(phi)]]
 
 ini_cond = [.5, .5, .5, .5, .5, .5, .5, .5]
 t = 0.0:120.0
@@ -836,7 +836,7 @@ function fun_b4(dx_dt, x, par, t)
     dx_dt[35] = y[70]
 end
 
-p_b4 = ChemKinProblem(fun_b4, p, bounds, x, t)
+p_b4 = ChemKinProblem(fun_b4, p, bounds, x0, t)
 push!(problem_set, p_b4)
 
 # ----- Plotting -----
