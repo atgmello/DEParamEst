@@ -20,11 +20,20 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
     end
 
     if plot_estimated
-        p = scatter(transpose(estimated), title="Plot of $phi")
+        p = scatter(transpose(estimated))
         display(p)
+        println("Plot for\n$phi\n")
     end
 
-    residuals = (data-estimated)
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
+    #=>
+    if findmin(estimated)[1] < 0
+        for i in 1:length(residuals)
+            residuals[i] = 10^10
+        end
+    end
+    <=#
     return residuals
 end
 
@@ -55,8 +64,10 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
     end
 
     if plot_estimated
-        p = scatter(transpose(estimated), title="Plot of $phi")
+        p = scatter(transpose(estimated))
         display(p)
+        println("Plot for\n$phi\n")
+
     end
 
     residuals = (data-estimated)
@@ -71,19 +82,14 @@ function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false)
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
-        p = scatter(transpose(estimated), title="Plot of $phi")
+        p = scatter(transpose(estimated))
         display(p)
+        println("Plot for\n$phi\n")
     end
 
-    residuals = (data-estimated)
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = Inf
-        end
-    end
-    return residuals
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
+    return  residuals
 end
 
-function soft_l1(z)
-    return (2 * ((1 + z)^0.5 - 1))
-end
+soft_l1(z) = (2 * ((1 + z)^0.5 - 1))
