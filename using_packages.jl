@@ -3,8 +3,8 @@ using DifferentialEquations
 using ParameterizedFunctions
 
 using Plots
-plotlyjs()
-#gr()
+#plotlyjs()
+gr()
 
 # For objective_functions.jl
 using LSODA
@@ -27,3 +27,6 @@ const lsf = LsqFit
 
 # For optimization_options.jl
 using Distances
+
+import BlackBoxOptim
+const bbo = BlackBoxOptim
