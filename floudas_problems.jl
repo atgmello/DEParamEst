@@ -1,5 +1,5 @@
 #desired_precision = Float64
-desired_precision = BigFloat
+desired_precision = Float64
 
 struct ChemKinProblem
     fun::Function
@@ -212,14 +212,16 @@ push!(problem_set, p_six)
 s = [.1, .46416, 2.1544, 10]
 p = [.05, .13572, .36840, .1]
 
-phi = [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, .1,
-       1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+phi = [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0,
+        1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0,
+        .1, 1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0,
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-bounds = [Float64[10^(-1) for i in 1:length(phi)],
-        Float64[10^(1) for i in 1:length(phi)]]
+bounds = [Float64[10^(-12) for i in 1:length(phi)],
+        Float64[10^(12) for i in 1:length(phi)]]
 
 ini_cond = [.5, .5, .5, .5, .5, .5, .5, .5]
-t = 0.0:120.0
+t = 0.0:5.0:120.0
 
 function f_tsp(dz_dt, z, phi, t)
     G1 = z[1]
