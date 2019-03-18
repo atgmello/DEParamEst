@@ -691,7 +691,7 @@ function fun_b4(dx_dt, x, par, t)
     #endif /* FIXED */
 
     #ifdef ASSIGNMENT
-    y = zeros(102)
+    y = zeros(promote_type(eltype(x),typeof(t)),102)
     y[1] = log(x[1])
     y[2] = log(x[2])
     y[3] = log(x[3])
