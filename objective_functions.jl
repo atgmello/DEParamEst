@@ -1,7 +1,7 @@
 function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false)
     num_state_variables, num_samples = size(data)
 
-    estimated = zeros(desired_precision, num_samples*num_state_variables)
+    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
     estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
@@ -10,9 +10,9 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
         x_k_0 = data[:, i]
         x_k_1 = data[:, i+1]
 
-        f_eval_0 = zeros(num_state_variables)
+        f_eval_0 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
         ode_fun(f_eval_0, x_k_0, phi, 0)
-        f_eval_1 = zeros(num_state_variables)
+        f_eval_1 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
         ode_fun(f_eval_1, x_k_1, phi, 0)
 
         x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
