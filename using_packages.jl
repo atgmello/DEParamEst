@@ -30,3 +30,8 @@ using Distances
 
 import BlackBoxOptim
 const bbo = BlackBoxOptim
+
+using Flux
+using DiffEqFlux
+
+using Random
