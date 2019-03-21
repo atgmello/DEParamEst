@@ -33,5 +33,6 @@ const bbo = BlackBoxOptim
 
 using Flux
 using DiffEqFlux
+using CuArrays
 
 using Random
