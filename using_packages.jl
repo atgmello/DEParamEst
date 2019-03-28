@@ -33,6 +33,11 @@ const bbo = BlackBoxOptim
 
 using Flux
 using DiffEqFlux
-using CuArrays
+#using CuArrays
 
 using Random
+
+#import NODAL
+#const nod = NODAL
+
+#using Distributed
