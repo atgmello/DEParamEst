@@ -22,15 +22,10 @@ function floudas_one(dz_dt, z, phi, t)
     dz_dt[2] = r_1 - r_2
 end
 
-#==>
 floudas_one_lambda = @ode_def begin
-    r_1 = α*x
-    r_2 = β*y
-
-    dx = - r_1
-    dy = r_1 - r_2
+    dx = - α*x
+    dy = α*x - β*y
 end α β
-<=#
 
 
 k1 = 5.0035
