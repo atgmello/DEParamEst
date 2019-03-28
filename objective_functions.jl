@@ -130,6 +130,16 @@ function sm_mean_shooting(phi, data, time_array, ode_fun; plot_estimated=false, 
     return residuals
 end
 
+function sm_adaptative_shooting(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
+    ss_estimated = single_shooting_estimator(phi, data, time_array, ode_fun)
+    am_estimated = adams_moulton_estimator(phi, data, time_array, ode_fun)
+    sum_ss_estimated = sum(abs2.(data-ss_estimated))
+    sum_am_estimated = sum(abs2.(data-am_estimated))
+    total = sum_am_estimated+sum_ss_estimated
+
+    residuals = (sum_am_estimated/total).*ss_estimated + (sum_ss_estimated/total).*am_estimated
+end
+
 function adams_moulton_fourth_estimator(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
     num_state_variables, num_samples = size(data)
 
