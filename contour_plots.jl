@@ -1,6 +1,7 @@
 linear(x) = x
 #loss = soft_l1
 loss = linear
+
 desired_precision = Float64
 
 function contour_3d_plots(x, y, z, phi; title="", reduced=false)
@@ -22,15 +23,34 @@ function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am", reduced=false)
         obj_fun = adams_moulton_estimator
     elseif fun=="cla"
         obj_fun = single_shooting_estimator
+    elseif fun=="SMS"
+        obj_fun = single_multiple_adams_shooting
+    elseif fun=="SMSM"
+        obj_fun = sm_mean_shooting
     end
 
     for i in range(1, stop=length(x))
         for j in range(1, stop=length(y))
             phi_eval = [x[i], y[j]]
-            obj_eval = sum(loss.(abs2.(obj_fun(convert(Array{desired_precision}, phi_eval),
+            if fun == "am" || fun == "cla" || fun == "SMS" || fun=="SMSM"
+                obj_eval = sum(loss.(abs2.(obj_fun(convert(Array{desired_precision}, phi_eval),
                                 convert(Array{desired_precision}, data),
                                 convert(Array{desired_precision}, t),
                                 ode_fun))))
+            else
+                t_span = (t[1], t[end])
+                de_prob = ODEProblem(ode_fun, data[:,1], t_span, phi_eval)
+                if fun == "DiffEqCla"
+                    f = build_loss_objective(de_prob,Tsit5(),L2Loss(t,data))
+                    obj_eval = f(phi_eval)
+                elseif fun == "DiffEqHeu"
+                    f = two_stage_method(de_prob,t,data)
+                    obj_eval = f(phi_eval)
+                elseif fun == "DiffEqMS"
+                    f = multiple_shooting_objective(de_prob,Tsit5(),L2Loss(t,data))
+                    obj_eval = f(phi_eval)
+                end
+            end
             push!(z, obj_eval)
             #println("$i,$j\nPhi: $phi_eval\nRes: $obj_eval")
         end
@@ -43,7 +63,7 @@ function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am", reduced=false)
     return a
 end
 
-for i in [6]
+for i in [1,4,6]
     println("\n----- Plots for problem $i -----\n")
     p_solve = problem_set[i]
     ode_fun = p_solve.fun
@@ -56,7 +76,7 @@ for i in [6]
     max_range = rand_range[end][end]
     delta_t = desired_precision(.1)
 
-    for num_samples in 3:20:23
+    for num_samples in 3:47:50
         tspan = (t[1], t[end])
         oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
         #saveat_t = range(t[1], stop=t[end], length=num_samples)
@@ -71,15 +91,95 @@ for i in [6]
         y = range(min_range, max_range, step=.05)
 
         println("\n----- Adams-Moulton Estimator -----")
-        f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="am")
-        x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
-        y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
-        calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="am", reduced=true)
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="am")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="am", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+            println("Error on big grid.\n$e")
+        end
+
+        println("\n----- SMS Estimator -----")
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="SMS")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="SMS", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+                println("Error on big grid.\n$e")
+        end
+
+        println("\n----- SMSM Estimator -----")
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="SMSM")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="SMSM", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+                println("Error on big grid.\n$e")
+        end
 
         println("\n----- Classic Estimator -----")
-        f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="cla")
-        x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
-        y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
-        calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="cla", reduced=true)
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="cla")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="cla", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+                println("Error on big grid.\n$e")
+        end
+
+        #=>
+        println("\n----- DiffEq Two Stage Estimator -----")
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="DiffEqHeu")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="DiffEqHeu", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+            println("Error on big grid.\n$e")
+        end
+
+        println("\n----- DiffEq Classic Estimator -----")
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="DiffEqCla")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="DiffEqCla", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+            println("Error on big grid.\n$e")
+        end
+        <=#
+
+        #println("\n----- DiffEq Multi Shooting Estimator -----")
+        #f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="DiffEqMS")
+        #x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+        #y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+        #calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="DiffEqMS", reduced=true)
     end
 end
