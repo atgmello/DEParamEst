@@ -612,13 +612,6 @@ bbo.best_candidate(res)
 
 # ----- Testing Stochastic Search -----
 using NODAL
-i = 1
-p_solve = problem_set[i]
-ode_fun = p_solve.fun
-t = p_solve.t
-phi = p_solve.phi
-bounds = p_solve.bounds
-ode_data = p_solve.data
 t = range(t[1], stop=t[end], length=10)
 tspan = (t[1], t[end])
 ini_cond = p_solve.data[:,1]
@@ -627,46 +620,62 @@ ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
 data_original = reduce(hcat, ode_sol.u)
 ode_data = copy(data_original)
 res_lso_am = two_stage_method(ode_prob,t,ode_data; mpg_autodiff=true)
-res_lso_am([1., 2.])
+
+test_fun_ss = single_shooting_estimator(phi, ode_data, t, ode_fun)
+sum(abs2.(test_fun_ss))
+
+test_fun_adapt = sm_adaptative_shooting(phi, ode_data, t, ode_fun)
+sum(abs2.(test_fun))
+
+test_fun_sma = single_multiple_adams_shooting(phi, ode_data, t, ode_fun)
+sum(abs2.(test_fun_sma))
+
+test_fun_mean = sm_mean_shooting(phi, ode_data, t, ode_fun)
+sum(abs2.(test_fun_mean))
+
+test_fun_am = adams_moulton_estimator(phi, ode_data, t, ode_fun)
+sum(abs2.(test_fun_am))
+
+#function noldal_solve(p_solve, fun)
+
+fun = single_shooting_estimator
+i = 1
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+t = p_solve.t
+phi = p_solve.phi
+bounds = p_solve.bounds
+ode_data = p_solve.data
+
 nodal_parameters = Dict{Symbol,Any}([(Symbol("phi_$i"), rand(0.01:100.0)) for i in 1:length(phi)])
 nodal_parameters
 
-function NODAL_f(x::Configuration, parameters::Dict{Symbol,Any})
+function nodal_f(x::Configuration, parameters::Dict{Symbol,Any})
     nodal_phi = Float64[]
     for i in 1:length(phi)
         key = String(collect(keys(parameters))[i])
         push!(nodal_phi, x[key].value)
     end
-    res = adams_moulton_estimator(nodal_phi,ode_data,t,ode_fun)
+    res = fun(nodal_phi,ode_data,t,ode_fun)
     res = sum(abs2.(res))
     return res
 end
 
-function NODAL_f(x::Configuration, parameters::Dict{Symbol,Any})
-    nodal_phi = Float64[]
-    for i in 1:length(phi)
-        key = String(collect(keys(parameters))[i])
-        push!(nodal_phi, x[key].value)
-    end
-    res = single_shooting_estimator(nodal_phi,ode_data,t,ode_fun)
-    res = sum(abs2.(res))
-    return res
-end
-
-configuration = Configuration([FloatParameter(0.0001, 100.0, rand(0.01:0.01:100),
+conf = Configuration([FloatParameter(0.0001, 100.0, rand(0.01:0.01:100),
                                     String(collect(keys(nodal_parameters))[i])) for i in 1:length(phi)],
-                               "NODAL_f")
+                               "nodal_f")
 
-tuning_run_other = Run(cost                = NODAL_f,
+tuning_run = Run(cost                = nodal_f,
                  cost_arguments = nodal_parameters,
-                 starting_point      = configuration,
+                 starting_point      = conf,
                  stopping_criterion  = elapsed_time_criterion,
-                 report_after        = 100,
+                 report_after        = 10,
                  reporting_criterion = elapsed_time_reporting_criterion,
-                 duration            = 600,
+                 duration            = 30,
                  methods             = [:simulated_annealing 1])
-optimize(tuning_run_other)
-result = take!(tuning_run_other.channel)
+optimize(tuning_run)
+
+result = take!(tuning_run.channel)
 result.is_final
 print(result)
 
@@ -711,3 +720,42 @@ annotate!([(5, y[5], text("this is #5",16,:red,:center)),
 scatter!(range(2, stop=8, length=6), rand(6), marker=(50,0.2,:orange),
          series_annotations = ["series","annotations","map","to","series",
                                text("data",:green)])
+
+
+# ----- Testing NLOpt -----
+import NLopt
+const nlo = NLopt
+
+funcs = [adams_moulton_estimator, single_shooting_estimator, sm_adaptative_shooting, sm_adaptative_hard_shooting]
+fnames = ["adams_moulton_estimator", "single_shooting_estimator", "sm_adaptative_shooting", "sm_adaptative_hard_shooting"]
+
+function nlopt_solve(p_solve, fun, rand_phi)
+    ode_fun = p_solve.fun
+    ode_data = p_solve.data
+    t = p_solve.t
+    bounds = p_solve.bounds
+    phi = p_solve.phi
+
+    nlop_opt = nlo.Opt(nlo.:LN_BOBYQA, length(phi))
+    nlo.upper_bounds!(nlop_opt, bounds[end])
+    nlo.lower_bounds!(nlop_opt, bounds[1])
+    nlo.xtol_rel!(nlop_opt,1e-9)
+
+    myfunc(x,y) = sum(abs2.(fun(x,ode_data,t,ode_fun)))
+    nlo.min_objective!(nlop_opt, myfunc)
+
+    (minf,minx,ret) = nlo.optimize(nlop_opt, rand_phi)
+    numevals = nlop_opt.numevals # the number of function evaluations
+    println("Got\t$minf\nAt\t$minx\nAfter\t$numevals iterations (returned $ret)\n")
+end
+
+for j in 7:7
+    println("\n----- Solving problem $j -----\n")
+    for i in 1:length(funcs)
+        println("--- Solving for $(fnames[i]) ---")
+        p_solve = problem_set[j]
+        p_rand = rand_guess(p_solve.bounds)
+        println("Initial guess:\n$p_rand\n")
+        nlopt_solve(p_solve, funcs[i], p_rand)
+    end
+end
