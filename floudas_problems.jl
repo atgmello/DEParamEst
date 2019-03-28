@@ -199,6 +199,34 @@ push!(problem_set, p_six)
 
 # ----- Problem 7 -----
 #=>
+- FitzHugh-Nagumo neural spike
+<=#
+
+phi = [0.2, 0.2, 3.0]
+
+bounds = [Float64[10^(-5) for i in 1:length(phi)],
+        Float64[10^(5) for i in 1:length(phi)]]
+
+ini_cond = [-1.0, 1.0]
+t = range(0.0, stop=20.0, length=21)
+
+function f_fhn(dz_dt, z, phi, t)
+    a, b, c = phi
+    V, R = z
+    u = 0
+    dz_dt[1] = c*(V - (V^3)/3 + R) + u
+    dz_dt[2] = -(1/c)*(V - a + b*R)
+end
+
+de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, Tsit5(), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+p_seven = ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
+push!(problem_set, p_seven)
+
+# ----- Problem 8 -----
+#=>
 - Trhee Step Pathway from:
  Parameter Estimation in Biochemical Pathways:
  A Comparison of Global Optimization Methods
