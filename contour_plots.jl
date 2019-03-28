@@ -27,12 +27,16 @@ function calc_z_plot(x, y, data, ode_fun, phi, t; fun="am", reduced=false)
         obj_fun = single_multiple_adams_shooting
     elseif fun=="SMSM"
         obj_fun = sm_mean_shooting
+    elseif fun=="Adapt"
+        obj_fun = sm_adaptative_shooting
+    elseif fun=="AdaptH"
+        obj_fun = sm_adaptative_hard_shooting
     end
 
     for i in range(1, stop=length(x))
         for j in range(1, stop=length(y))
             phi_eval = [x[i], y[j]]
-            if fun == "am" || fun == "cla" || fun == "SMS" || fun=="SMSM"
+            if fun == "am" || fun == "cla" || fun == "SMS" || fun=="SMSM" || fun=="Adapt" || fun=="AdaptH"
                 obj_eval = sum(loss.(abs2.(obj_fun(convert(Array{desired_precision}, phi_eval),
                                 convert(Array{desired_precision}, data),
                                 convert(Array{desired_precision}, t),
@@ -118,13 +122,27 @@ for i in [1,4,6]
                 println("Error on big grid.\n$e")
         end
 
-        println("\n----- SMSM Estimator -----")
+        println("\n----- Adapt Estimator -----")
         try
-            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="SMSM")
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="Adapt")
             x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
             y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
             try
-                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="SMSM", reduced=true)
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="Adapt", reduced=true)
+            catch e
+                println("Error on small grid.\n$e")
+            end
+        catch e
+                println("Error on big grid.\n$e")
+        end
+
+        println("\n----- Adapt Hard Estimator -----")
+        try
+            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, phi, saveat_t, fun="AdaptH")
+            x_reduced = range(x[f_min_idx[2]]-.5, x[f_min_idx[2]]+.5, step=.05)
+            y_reduced = range(y[f_min_idx[1]]-.5, y[f_min_idx[1]]+.5, step=.05)
+            try
+                calc_z_plot(x_reduced, y_reduced, data, ode_fun, phi, saveat_t, fun="AdaptH", reduced=true)
             catch e
                 println("Error on small grid.\n$e")
             end
