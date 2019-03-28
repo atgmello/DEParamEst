@@ -375,29 +375,28 @@ print("Testing commit from Juno.")
 
 println("\n----- Solving problem $i with $sample_size samples -----\n")
 i = 1
-ode_fun = ode_fun_array[i]
-t = t_array[i]
-phi = phi_array[i]
-ini_cond = ini_cond_array[i]
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+t = p_solve.t
+phi = p_solve.phi
+ini_cond = p_solve.data[:,1]
+bounds = p_solve.bounds
+true_data = p_solve.data
 
 #sample_t = range(t[1], stop=t[end], length=sample_size)
 tspan = (t[1], t[end])
 oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-osol  = solve(oprob, Tsit5(), saveat=sample_t)
+osol  = solve(oprob, Tsit5(), saveat=t)
 osol_plot = scatter(osol)
 display(osol_plot)
 data = reduce(hcat, osol.u)
-bounds = bounds_array[i]
 lb = vec([bounds[1] for i in 1:length(phi)])
 ub = vec([bounds[end] for i in 1:length(phi)])
 
-data = floudas_samples_array[i]
-sample_t = floudas_samples_times_array[i]
-rand_range = rand_range_array[i]
 
 initial_guess = desired_precision[]
 for i in range(1, stop=length(phi))
-    rand_num = rand(Uniform(rand_range[1], rand_range[end]))
+    rand_num = rand(Uniform(bounds[1], bounds[end]))
     push!(initial_guess, rand_num)
 end
 print("Initial guess:\n$initial_guess\n")
@@ -414,10 +413,11 @@ initial_guess = initial_guess
 
 oprob = ODEProblem(ode_fun, ini_cond, tspan, [1 10])
 
-cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(sample_t,data),
+cost_function = build_loss_objective(oprob,Tsit5(),L2Loss(t,true_data),
                              maxiters=10000,verbose=false)
 
-cost_function([.1 .1])
+cost_function = multiple_shooting_objective(oprob,lsoda(),L2Loss(t,true_data))
+cost_functio([5.0 1.0])
 
 using PyCall
 
@@ -555,3 +555,159 @@ reshape(convert(Array{Float64}, [2 2]), 2)
 
 
 reshape([i for i in 1:10], 10)
+
+# ----- Problem B4 CHO (8) causes errors -----
+
+using LSODA
+i = 7
+p_solve = problem_set[i]
+t = p_solve.t
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+# Works with lsoda but not with others
+ode_sol  = solve(ode_prob, Tsit5())
+plot(ode_sol)
+
+x0 = zeros(Float64, length(p_solve.data))
+p_solve.fun(x0, p_solve.data, p_solve.phi, t[2])
+x0
+
+# ----- Avoid domain error -----
+# DomainError(-6.516112690059482, "log will only return a complex result if called with a complex argument. Try log(Complex(x)).")
+f(x) = x[2] > 5.0 ? Inf : abs2(x[1]^2-x[2])
+f(x) = abs2(x[1]^2-x[2])
+f([1., 6.])
+
+res = opt.optimize(f, [0.0, 0.0], [10.0, 10.0], [7., 0.])
+f(res.minimizer)
+
+b = zeros(10)
+function fun_bb(dx_dt, x, par, t)
+    if x == 0
+        for i in 1:length(dx_dt)
+            dx_dt[i] = Inf
+        end
+        return
+    end
+    for i in 1:length(dx_dt)
+        dx_dt[i] = 1
+    end
+end
+c = fun_bb(b, 0, 0, 0)
+c
+b
+
+# ----- Testing BBox -----
+import BlackBoxOptim
+const bbo = BlackBoxOptim
+
+function rosenbrock2d(x)
+  return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+end
+
+res = bbo.bboptimize(rosenbrock2d; SearchRange = (-5.0, 5.0), NumDimensions = 2)
+bbo.best_candidate(res)
+
+
+# ----- Testing Stochastic Search -----
+using NODAL
+i = 1
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+t = p_solve.t
+phi = p_solve.phi
+bounds = p_solve.bounds
+ode_data = p_solve.data
+t = range(t[1], stop=t[end], length=10)
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+ode_data = copy(data_original)
+res_lso_am = two_stage_method(ode_prob,t,ode_data; mpg_autodiff=true)
+res_lso_am([1., 2.])
+nodal_parameters = Dict{Symbol,Any}([(Symbol("phi_$i"), rand(0.01:100.0)) for i in 1:length(phi)])
+nodal_parameters
+
+function NODAL_f(x::Configuration, parameters::Dict{Symbol,Any})
+    nodal_phi = Float64[]
+    for i in 1:length(phi)
+        key = String(collect(keys(parameters))[i])
+        push!(nodal_phi, x[key].value)
+    end
+    res = adams_moulton_estimator(nodal_phi,ode_data,t,ode_fun)
+    res = sum(abs2.(res))
+    return res
+end
+
+function NODAL_f(x::Configuration, parameters::Dict{Symbol,Any})
+    nodal_phi = Float64[]
+    for i in 1:length(phi)
+        key = String(collect(keys(parameters))[i])
+        push!(nodal_phi, x[key].value)
+    end
+    res = single_shooting_estimator(nodal_phi,ode_data,t,ode_fun)
+    res = sum(abs2.(res))
+    return res
+end
+
+configuration = Configuration([FloatParameter(0.0001, 100.0, rand(0.01:0.01:100),
+                                    String(collect(keys(nodal_parameters))[i])) for i in 1:length(phi)],
+                               "NODAL_f")
+
+tuning_run_other = Run(cost                = NODAL_f,
+                 cost_arguments = nodal_parameters,
+                 starting_point      = configuration,
+                 stopping_criterion  = elapsed_time_criterion,
+                 report_after        = 100,
+                 reporting_criterion = elapsed_time_reporting_criterion,
+                 duration            = 600,
+                 methods             = [:simulated_annealing 1])
+optimize(tuning_run_other)
+result = take!(tuning_run_other.channel)
+result.is_final
+print(result)
+
+print("End")
+
+while !result.is_final
+    result = take!(tuning_run_other.channel)
+    println(result)
+end
+#close(tuning_run.channel)
+result
+
+print("h")
+
+# ----- NODAL Example -----
+
+function rosenbrock(x::Configuration, parameters::Dict{Symbol, Any})
+    return (1.0 - x["i0"].value)^2 + 100.0 * (x["i1"].value - x["i0"].value^2)^2
+end
+
+configuration = Configuration([FloatParameter(-2.0, 2.0, 0.0, "i0"),
+                               FloatParameter(-2.0, 2.0, 0.0, "i1")],
+                               "rosenbrock_config")
+
+tuning_run = Run(cost                = rosenbrock,
+                starting_point      = configuration,
+                stopping_criterion  = elapsed_time_criterion,
+                report_after        = 10,
+                reporting_criterion = elapsed_time_reporting_criterion,
+                duration            = 60,
+                methods             = [:simulated_annealing 1])
+
+optimize(tuning_run)
+result = take!(tuning_run.channel)
+print(result)
+
+# ----- Plots -----
+y = rand(10)
+plot(y, annotations = (3,y[3],text("this is #3",:left)), leg=false)
+annotate!([(5, y[5], text("this is #5",16,:red,:center)),
+          (10, y[10], text("this is #10",:right,20,"courier"))])
+scatter!(range(2, stop=8, length=6), rand(6), marker=(50,0.2,:orange),
+         series_annotations = ["series","annotations","map","to","series",
+                               text("data",:green)])
