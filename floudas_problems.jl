@@ -227,7 +227,7 @@ push!(problem_set, p_seven)
 
 # ----- Problem 8 -----
 #=>
-- Trhee Step Pathway from:
+- Three Step Pathway from:
  Parameter Estimation in Biochemical Pathways:
  A Comparison of Global Optimization Methods
 <=#
