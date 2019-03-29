@@ -211,7 +211,7 @@ function adams_moulton_fourth_estimator(phi, data, time_array, ode_fun; plot_est
 end
 
 
-function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false)
+function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false, euler=false)
     num_state_variables, num_samples = size(data)
 
     estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
@@ -224,13 +224,18 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
         delta_t = t_1 - t_0
 
         x_k_0 = data[:, i]
-
+        x_k_1 = 0.0
         for i in 1:steps
-            tspan = (t_0, t_1)
-            oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-            osol  = solve(oprob, lsoda(), saveat=reduce(vcat, tspan))
-
-            x_k_1 = x_k_0 + delta_t*(osol.u[end])
+            if !euler
+                tspan = (t_0, t_1)
+                oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
+                osol  = solve(oprob, AutoVern9(Rodas5()), saveat=reduce(vcat, tspan))
+                x_k_1 = osol.u[end]
+            else
+                f_eval = zeros(promote_type(eltype(data),eltype(phi)), num_state_variables)
+                ode_fun(f_eval, x_k_0, phi, 0)
+                x_k_1 = x_k_0 + delta_t.*f_eval
+            end
             x_k_0 = x_k_1
         end
         estimated[:, i+1] = x_k_1
