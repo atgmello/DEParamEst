@@ -37,6 +37,9 @@ using DiffEqFlux
 
 using Random
 
+import NLopt
+const nlo = NLopt
+
 #import NODAL
 #const nod = NODAL
 
