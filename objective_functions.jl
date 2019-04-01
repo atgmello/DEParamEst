@@ -229,8 +229,8 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
             if !euler
                 tspan = (t_0, t_1)
                 oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-                osol  = solve(oprob, AutoVern9(Rodas5()), saveat=reduce(vcat, tspan))
-                x_k_1 = osol.u[end]
+                osol  = solve(oprob, AutoVern9(Rodas5()), save_everystep=false)
+                x_k_1 = osol.u
             else
                 f_eval = zeros(promote_type(eltype(data),eltype(phi)), num_state_variables)
                 ode_fun(f_eval, x_k_0, phi, 0)
@@ -247,7 +247,8 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
         println("Plot for\n$phi\n")
     end
 
-    residuals = (data-estimated)
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
     return residuals
 end
 
@@ -278,6 +279,8 @@ function data_shooting_estimator_node(phi, data, t, ode_fun; steps=1)
 end
 
 function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false, return_estimated=false)
+    data = convert(Array{eltype(phi)}, data)
+
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
