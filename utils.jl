@@ -47,6 +47,7 @@ function mrae(actual::AbstractArray, forecast::AbstractArray)
     stat = (1/n)*sum(e./abs.(actual))
 end
 
+#=>
 a = [1. 1. 1.]
 b = [2. 2. 2.]
 c = [100. 10. 33.]
@@ -64,3 +65,4 @@ mrae(a,c)
 mrae(c,a)
 euclidean(a,b)
 euclidean(a,c)
+<=#
