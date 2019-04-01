@@ -285,7 +285,7 @@ function f_mapk(dz_dt, z, phi, t)
     dz_dt[3] = - RJ2 + RJ5
     dz_dt[4] = RJ2 - RJ3 + RJ4 - RJ5
     dz_dt[5] = RJ3 - RJ4
-    dz_dt[6] = RJ6 + RJ9
+    dz_dt[6] = - RJ6 + RJ9
     dz_dt[7] = RJ6 - RJ7 + RJ8 - RJ9
     dz_dt[8] = RJ7 - RJ8
 end
@@ -330,7 +330,7 @@ push!(problem_set, new_prob)
 """
  TGF - β signalling pathway model
 """
-phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
+phi = [0.00015, 0.023, 0.01, 0.01, 0.01, 0.1, 0.000403, 0.0026, 0.0056, 0.002, 0.016, 5.7, 0.00657, 0.0017, 1.0, 0.0008, 0.0001, 0.0021, 0.001, 9000.0, 1800.0]
 
 bounds = [Float64[10^(-3) for i in 1:length(phi)],
         Float64[10^(3) for i in 1:length(phi)]]
@@ -340,6 +340,7 @@ ini_cond = [0.1, 0.2, 2.5]
 t = range(0.0, stop=240.0, length=10)
 
 function f_gosc(dz_dt, z, phi, t)
+    CTGFb, CTGFbR, CTGFbTGFbR, CTGFbTGFbRP, CISmadTGFbTGFbRP, CSmad, CSmadP, CCoSmad, CSmadPSmaP, CSmadPCoSmad, CSmadN, CSmadPSmadPN, CSmadPN, CSmadPCoSmadN, CCoSmadN, CISmadmRNA1, CISmadmRNA2, CISmad = z
     k1, k2, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19 = phi
     k3 = 0.01
     k20 = 9000.0
@@ -374,7 +375,24 @@ function f_gosc(dz_dt, z, phi, t)
     r28 = k18*CISmadmRNA2
     r29 = k19*CISmad
 
-    dz_dt[1] =
+    dz_dt[1] = r1 - r2
+    dz_dt[1] = r1 - r2
+    dz_dt[1] = - r1 + r2 - r3 + r4 + r6
+    dz_dt[1] = r3 - r4 - r5
+    dz_dt[1] = r5 - r6
+    dz_dt[1] = - r7 - r8 + r9
+    dz_dt[1] = r7 - r10 + r11 - r12 + r13 - r17 + r18
+    dz_dt[1] = - r12 + r13 - r14 + r15
+    dz_dt[1] = r10 - r11 - r16
+    dz_dt[1] = r12 - r13 - r19
+    dz_dt[1] = r8 - r9 + r20
+    dz_dt[1] = r16 + r21 - r22
+    dz_dt[1] = r17 - r18 - r20 - r21 + r22 - r23 + r24
+    dz_dt[1] = r19 + r23 - r24
+    dz_dt[1] = r14 - r15 - r23 + r24
+    dz_dt[1] = r25 - r26
+    dz_dt[1] = r26 - r27
+    dz_dt[1] = r28 - r29 - r5 + r6
 end
 
 de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
@@ -1037,8 +1055,14 @@ p_b4 = ChemKinProblem(f_cho, p, bounds, ode_data, t)
 push!(problem_set, p_b4)
 
 # ----- Plotting -----
-for i in 1:length(problem_set)
+for i in 1:6
     p = problem_set[i]
-    plot_canvas = scatter(p.data')
+    plot_canvas = scatter(p.t',p.data', title="Problem $i")
+    display(plot_canvas)
+end
+
+for i in 7:12
+    p = problem_set[i]
+    plot_canvas = scatter(p.t,p.data', title="Problem $i")
     display(plot_canvas)
 end
