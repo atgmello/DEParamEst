@@ -197,10 +197,37 @@ p_six = ChemKinProblem(floudas_six, phi, bounds, floudas_samples, floudas_sample
 push!(problem_set, p_six)
 
 
-# ----- Problem 7 -----
-#=>
-- FitzHugh-Nagumo neural spike
-<=#
+# ----- BBG -----
+"""
+Biomass Batch Growth
+"""
+
+phi = [0.4, 5, 0.05, 0.5]
+
+bounds = [Float64[10^(-5) for i in 1:length(phi)],
+        Float64[10^(2) for i in 1:length(phi)]]
+
+ini_cond = [2.0, 30.0]
+t = range(0.0, stop=12.0, length=7)
+
+function f_bbg(dz_dt, z, phi, t)
+    mi, Ks, Kd, yield = phi
+    Cb, Cs = z
+    dz_dt[1] = mi*(Cs*Cb/(Ks+Cs))-Kd*Cb
+    dz_dt[2] = -(mi/yield)*(Cs*Cb/(Ks+Cs))
+end
+
+de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+new_prob = ChemKinProblem(f_bbg, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
+
+# ----- FHN -----
+"""
+FitzHugh-Nagumo neural spike
+"""
 
 phi = [0.2, 0.2, 3.0]
 
@@ -208,7 +235,7 @@ bounds = [Float64[10^(-5) for i in 1:length(phi)],
         Float64[10^(5) for i in 1:length(phi)]]
 
 ini_cond = [-1.0, 1.0]
-t = range(0.0, stop=20.0, length=21)
+t = range(0.0, stop=20.0, length=7)
 
 function f_fhn(dz_dt, z, phi, t)
     a, b, c = phi
@@ -222,15 +249,148 @@ de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
 de_sol = solve(de_prob, Tsit5(), saveat=t)
 ode_data = reduce(hcat, de_sol.u)
 
-p_seven = ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
-push!(problem_set, p_seven)
+new_prob = ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
 
-# ----- Problem 8 -----
+# ----- MPK -----
+"""
+Kholodenko MAPK signalling pathway (MAPK)
+"""
+phi = [2.5, 0.25, 0.75, 0.75, 0.5, 0.5]
+
+bounds = [Float64[0.01 for i in 1:length(phi)],
+        Float64[50.0 for i in 1:length(phi)]]
+
+ini_cond = [90.0, 10.0, 280.0, 10.0, 10.0, 280.0, 10.0, 10.0]
+#t = range(0.0, stop=20.0, length=7)
+t = [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0, 800.0, 1000.0]
+
+function f_mapk(dz_dt, z, phi, t)
+    J0V1, J1V2, J4V5, J5V6, J8V9, J9V10 = phi
+    J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4, J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8, J8KK9, J9KK10 = [9.0, 1.0, 10.0, 8.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0]
+
+    RJ0 = J0V1*(z[1]/(1+((z[8]/J0Ki)^J0n)*(J0k1+z[1])))
+    RJ1 = J1V2*(z[2]/(J1KK2+z[2]))
+    RJ2 = J2k3*(z[2]*z[3]/(J2KK3+z[3]))
+    RJ3 = J3k4*(z[2]*z[4]/(J3KK4+z[4]))
+    RJ4 = J4V5*(z[5]/(J4KK5+z[5]))
+    RJ5 = J5V6*(z[4]/(J5KK6+z[4]))
+    RJ6 = J6k7*(z[5]*z[6]/(J6KK7+z[6]))
+    RJ7 = J7k8*(z[5]*z[7]/(J7KK8+z[7]))
+    RJ8 = J8V9*(z[8]/(J8KK9+z[8]))
+    RJ9 = J9V10*(z[7]/(J9KK10+z[7]))
+
+    dz_dt[1] = - RJ0 + RJ1
+    dz_dt[2] = RJ0 - RJ1
+    dz_dt[3] = - RJ2 + RJ5
+    dz_dt[4] = RJ2 - RJ3 + RJ4 - RJ5
+    dz_dt[5] = RJ3 - RJ4
+    dz_dt[6] = RJ6 + RJ9
+    dz_dt[7] = RJ6 - RJ7 + RJ8 - RJ9
+    dz_dt[8] = RJ7 - RJ8
+end
+
+de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+new_prob = ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
+
+# ----- GOsc -----
+"""
+ Goodwin Oscillator
+"""
+phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
+
+bounds = [Float64[10^(-3) for i in 1:length(phi)],
+        Float64[10^(3) for i in 1:length(phi)]]
+bounds[1][end] = 1.0
+bounds[2][end] = 12.0
+
+ini_cond = [0.1, 0.2, 2.5]
+t = range(0.0, stop=240.0, length=10)
+
+function f_gosc(dz_dt, z, phi, t)
+    k1, k2, k3, k4, k5, k6, Ki, n = phi
+    dz_dt[1] = k1*Ki^n/(Ki^n + z[3]^n) - k2*z[1]
+    dz_dt[2] = k3*z[1] - k4*z[2]
+    dz_dt[3] = k5*z[2] - k6*z[3]
+end
+
+de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, Tsit5(), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+new_prob = ChemKinProblem(f_gosc, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
+
 #=>
+# ----- TGFB -----
+"""
+ TGF - β signalling pathway model
+"""
+phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
+
+bounds = [Float64[10^(-3) for i in 1:length(phi)],
+        Float64[10^(3) for i in 1:length(phi)]]
+bounds[:,end] = [1, 12]
+
+ini_cond = [0.1, 0.2, 2.5]
+t = range(0.0, stop=240.0, length=10)
+
+function f_gosc(dz_dt, z, phi, t)
+    k1, k2, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19 = phi
+    k3 = 0.01
+    k20 = 9000.0
+    k21 = 1800.0
+    r1 = k1*CTGFbTGFbR
+    r2 = k2*CTGFbR*CTGFb
+    r3 = k3*CTGFbTGFbR*(1-e^(-((t-k20)/(k21)))^10)
+    r4 = k4*CTGFbTGFbRP
+    r5 = k5*CTGFbTGFbRP*CISmad
+    r6 = k6*CISmadTGFbTGFbRP
+    r7 = k7*C Smad*CTGFbTGFbRP
+    r8 = k8*CSmad
+    r9 = k9*CSmadN
+    r10 = k10*2*CSmadP*CSmadP
+    r11 = k11*CSmadPCoSmad
+    r12 = k12*CSmadP*CCoSmad
+    r13 = k11*CSmadP*CoSmad
+    r14 = k8*CCoSmad
+    r15 = k9*CCoSmadN
+    r16 = k12*k8*CSmadPSmaP
+    r17 = k8*CSmadP
+    r18 = k9*CSmadPN
+    r19 = k12*k8*CSmadPCoSmad
+    r20 = k13*CSmadPN
+    r21 = k10*2*CSmadPNCSmadPN
+    r22 = k11*CSmadPSmadPN
+    r23 = k10*CSmadPN*CCoSmadN
+    r24 = k11*CSmadPCoSmadN
+    r25 = k14*((CSmadPCoSmadN^2)\(CSmadPCoSmadN^2+k15^2))
+    r26 = k16*CISmadmRNA1
+    r27 = k17*CISmadmRNA2
+    r28 = k18*CISmadmRNA2
+    r29 = k19*CISmad
+
+    dz_dt[1] =
+end
+
+de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, Tsit5(), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+new_prob = ChemKinProblem(f_gosc, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
+<=#
+
+# ----- TSP -----
+"""
 - Three Step Pathway from:
  Parameter Estimation in Biochemical Pathways:
  A Comparison of Global Optimization Methods
-<=#
+ """
 
 s = [.1, .46416, 2.1544, 10]
 p = [.05, .13572, .36840, .1]
@@ -240,11 +400,15 @@ phi = [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0,
         .1, 1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0,
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-bounds = [Float64[10^(-12) for i in 1:length(phi)],
-        Float64[10^(12) for i in 1:length(phi)]]
+bounds = [Float64[10^(-5) for i in 1:length(phi)],
+        Float64[10^(5) for i in 1:length(phi)]]
+for i in [2,4,8,10,14,16]
+    bounds[1][i] = 0.1
+    bounds[2][i] = 10
+end
 
-ini_cond = [.5, .5, .5, .5, .5, .5, .5, .5]
-t = 0.0:5.0:120.0
+ini_cond = [.6667, .5725, .4176, .4, .3641, .2946, 1.419, .9346]
+t = range(0, stop=120, length=21)
 
 function f_tsp(dz_dt, z, phi, t)
     G1 = z[1]
@@ -310,10 +474,14 @@ function f_tsp(dz_dt, z, phi, t)
     dz_dt[8] = ((kcat2*E2*(1/Km3)*(M1-M2)))/(1+(M1/Km3)+(M2/Km4)) - ((kcat3*E3*(1/Km5)*(M2-P)))/(1+(M2/Km5)+(P/Km6))
 end
 
-p_pst = ChemKinProblem(f_tsp, phi, bounds, ini_cond, t)
+de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
+de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+p_pst = ChemKinProblem(f_tsp, phi, bounds, ode_data, t)
 push!(problem_set, p_pst)
 
-# ----- Problem 8 -----
+# ----- CHO -----
 
 x0 = zeros(Float64, 35)
 x0[1] = 5
@@ -471,11 +639,11 @@ p[115] = 0.7
 p[116] = 0.2
 p[117] = 0.2
 
-t = 1.0:20.0
-bounds = [Float64[0.0 for i in 1:length(p)],
-        Float64[100*p[i] for i in 1:length(p)]]
+t = collect(1.0:20.0)
+bounds = [Float64[10^-5 for i in 1:length(p)],
+        Float64[10^5 for i in 1:length(p)]]
 
-function fun_b4(dx_dt, x, par, t)
+function f_cho(dx_dt, x, par, t)
     p = zeros(347)
     p[118] = 1
     p[119] = 1
@@ -861,10 +1029,16 @@ function fun_b4(dx_dt, x, par, t)
     dx_dt[35] = y[70]
 end
 
-p_b4 = ChemKinProblem(fun_b4, p, bounds, x0, t)
+de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
+de_sol = solve(de_prob, lsoda(), saveat=t)
+ode_data = reduce(hcat, de_sol.u)
+
+p_b4 = ChemKinProblem(f_cho, p, bounds, ode_data, t)
 push!(problem_set, p_b4)
 
 # ----- Plotting -----
-for p in 1:length(floudas_plots)
-    display(floudas_plots[p])
+for i in 1:length(problem_set)
+    p = problem_set[i]
+    plot_canvas = scatter(p.data')
+    display(plot_canvas)
 end
