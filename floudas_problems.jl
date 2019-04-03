@@ -294,7 +294,7 @@ de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
 de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
 ode_data = reduce(hcat, de_sol.u)
 
-new_prob = ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
+new_prob = ChemKinProblem(f_mapk, phi, bounds, ode_data, t)
 push!(problem_set, new_prob)
 
 # ----- GOsc -----
@@ -319,7 +319,7 @@ function f_gosc(dz_dt, z, phi, t)
 end
 
 de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
-de_sol = solve(de_prob, Tsit5(), saveat=t)
+de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
 ode_data = reduce(hcat, de_sol.u)
 
 new_prob = ChemKinProblem(f_gosc, phi, bounds, ode_data, t)
@@ -496,8 +496,8 @@ de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
 de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
 ode_data = reduce(hcat, de_sol.u)
 
-p_pst = ChemKinProblem(f_tsp, phi, bounds, ode_data, t)
-push!(problem_set, p_pst)
+new_prob = ChemKinProblem(f_tsp, phi, bounds, ode_data, t)
+push!(problem_set, new_prob)
 
 # ----- CHO -----
 
