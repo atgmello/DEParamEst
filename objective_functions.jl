@@ -210,7 +210,6 @@ function adams_moulton_fourth_estimator(phi, data, time_array, ode_fun; plot_est
     return residuals
 end
 
-
 function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false, euler=false)
     num_state_variables, num_samples = size(data)
 
@@ -252,39 +251,14 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
     return residuals
 end
 
-function data_shooting_estimator_node(phi, data, t, ode_fun; steps=1)
-    num_state_variables, num_samples  = size(data)
-
-    estimated = zeros(promote_type(eltype(data),eltype(phi)), num_samples*num_state_variables)
-    estimated = reshape(estimated, (num_state_variables, num_samples))
-    estimated[:,1] = data[:,1]
-
-    for i in 1:num_samples-1
-        t_1 = t[i+1]
-        t_0 = t[i]
-        delta_t = (t_1 - t_0)/steps
-
-        x_k_0 = data[:, i]
-
-        x_k_1 = 0
-        for j in 1:steps
-            f_eval = zeros(promote_type(eltype(data),eltype(phi)), num_state_variables)
-            ode_fun(f_eval, x_k_0, phi, 0)
-            x_k_1 = x_k_0 + delta_t.*f_eval
-            x_k_0 = x_k_1
-        end
-        estimated[:, i+1] = x_k_1
-    end
-    estimated
-end
-
 function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false, return_estimated=false)
     data = convert(Array{eltype(phi)}, data)
+    t = convert(Array{eltype(phi)}, t)
 
     tspan = (t[1], t[end])
     ini_cond = data[:,1]
     oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, AutoTsit5(Rosenbrock23()), saveat=t)
+    osol  = solve(oprob, Rodas5(), saveat=t)
     estimated = reduce(hcat, osol.u)
 
     if plot_estimated
