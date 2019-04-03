@@ -8,35 +8,34 @@ gr()
 
 samin = true
 
-for var in [0.001, 0.05, 0.1, 0.2]
-    for sam in 10:40:50
-        for i_prob in 1:9
-            res_am = []
-            push!(res_am, [])
-            push!(res_am, [])
+struct ErrorTimeData
+    error::AbstractArray
+    time::AbstractArray
+end
 
-            res_ds = []
-            push!(res_ds, [])
-            push!(res_ds, [])
+for var in [0.1]
+    for sam in 50:40:50
+        for i_prob in 7:9
+            res_am = ErrorTimeData([], [])
 
-            res_ss = []
-            push!(res_ss, [])
-            push!(res_ss, [])
+            res_ds = ErrorTimeData([], [])
 
-            res_ss_am = []
-            push!(res_ss_am, [])
-            push!(res_ss_am, [])
+            res_am_g = ErrorTimeData([], [])
 
-            res_ms = []
-            push!(res_ms, [])
-            push!(res_ms, [])
+            res_ds_g = ErrorTimeData([], [])
 
-            res = []
+            res_ss = ErrorTimeData([], [])
+
+            res_ss_am = ErrorTimeData([], [])
+
+            res_ms = ErrorTimeData([], [])
 
             #print("\n----- Getting results for Flouda's Problem number $i -----\n")
             p_solve = problem_set[i_prob]
+            fun = p_solve.fun
             phi = p_solve.phi
             bounds = p_solve.bounds
+            ini_cond = p_solve.data[:,1]
             lb = bounds[1]
             ub = bounds[end]
 
@@ -56,7 +55,6 @@ for var in [0.001, 0.05, 0.1, 0.2]
                 t = range(t[1], stop=t[end], length=sam)
             end
             tspan = (t[1], t[end])
-            ini_cond = p_solve.data[:,1]
             ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, phi)
             ode_sol  = solve(ode_prob, AutoVern9(Rodas5()), saveat=reduce(vcat, t))
             data_original = reduce(hcat, ode_sol.u)
@@ -73,7 +71,7 @@ for var in [0.001, 0.05, 0.1, 0.2]
             Grad_options = opt.Options(x_tol=10^-10, f_tol=10^-20, iterations=10^10)
             inner_optimizer = opt.LBFGS()
 
-            for rep in 1:50
+            for rep in 1:10
                 data = copy(data_original)
                 add_noise!(data, var)
                 p0 = rand_guess(bounds)
@@ -87,9 +85,10 @@ for var in [0.001, 0.05, 0.1, 0.2]
                         od = opt.OnceDifferentiable(lsq_am_sum, p0; autodiff = :forward)
                         timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
                     end
-                    dist = mape(phi, res_obj.minimizer[1:length(phi)])
-                    push!(res_ds[1], dist)
-                    push!(res_ds[2], timed)
+                    #dist = mape(phi, res_obj.minimizer[1:length(phi)])
+                    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+                    push!(res_ds.error, dist)
+                    push!(res_ds.time, timed)
                     p0_est = res_obj.minimizer[1:length(phi)]
                 catch e
                     @show e
@@ -116,9 +115,10 @@ for var in [0.001, 0.05, 0.1, 0.2]
                         od = opt.OnceDifferentiable(lsq_am_sum, p0; autodiff = :forward)
                         timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
                     end
-                    dist = mape(phi, res_obj.minimizer[1:length(phi)])
-                    push!(res_am[1], dist)
-                    push!(res_am[2], timed)
+                    #dist = mape(phi, res_obj.minimizer[1:length(phi)])
+                    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+                    push!(res_am.error, dist)
+                    push!(res_am.time, timed)
                     #p0_est = res_obj.minimizer[1:length(phi)]
                 catch e
                     @show e
@@ -145,15 +145,16 @@ for var in [0.001, 0.05, 0.1, 0.2]
                 lsq_ss_sum(p) = sum(abs2.(loss.(lsq_ss(p))))
                 try
                     if samin
-                        od = opt.OnceDifferentiable(lsq_ss_sum, p0; autodiff = :forward)
                         timed = @elapsed res_obj = opt.optimize(lsq_ss_sum, lb, ub, p0, opt.SAMIN(verbosity=0), SAMIN_options)
                     else
+                        od = opt.OnceDifferentiable(lsq_ss_sum, p0; autodiff = :forward)
                         #timed = @elapsed res_obj = opt.optimize(od, convert(Array{BigFloat}, p0), convert(Array{BigFloat}, p_solve.bounds[1]), convert(Array{BigFloat}, p_solve.bounds[end]), opt.LBFGS())
                         timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
                     end
-                    dist = mape(phi, res_obj.minimizer[1:length(phi)])
-                    push!(res_ss[1], dist)
-                    push!(res_ss[2], timed)
+                    #dist = mape(phi, res_obj.minimizer[1:length(phi)])
+                    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+                    push!(res_ss.error, dist)
+                    push!(res_ss.time, timed)
                 catch e
                     @show e
                 end
@@ -211,9 +212,10 @@ for var in [0.001, 0.05, 0.1, 0.2]
                         #timed = @elapsed res_obj = opt.optimize(od, convert(Array{BigFloat}, p0_am), opt.LBFGS())
                         timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0_est, opt.Fminbox(inner_optimizer), Grad_options)
                     end
-                    dist = mape(phi, res_obj.minimizer[1:length(phi)])
-                    push!(res_ss_am[1], dist)
-                    push!(res_ss_am[2], timed)
+                    #dist = mape(phi, res_obj.minimizer[1:length(phi)])
+                    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+                    push!(res_ss_am.error, dist)
+                    push!(res_ss_am.time, timed)
                 catch e
                     @show e
                 end
@@ -237,32 +239,40 @@ for var in [0.001, 0.05, 0.1, 0.2]
             #med = sta.quantile(res, 0.85)
             canvas_new_res = plot(title="DS: Error vs Run")
             #ylims!(canvas_new_res, (-Inf, med+0.2*med))
-            plot!(canvas_new_res, res_am[1], label="Adams-Moulton")
-            plot!(canvas_new_res, res_ds[1], label="Data Shooting")
+            plot!(canvas_new_res, res_am.error, label="Adams-Moulton")
+            plot!(canvas_new_res, res_ds.error, label="Data Shooting")
             display(canvas_new_res)
 
             #res = (1/4)*(res_am[2] + res_ds_1[2] + res_ds_2[2] + res_ds_50[2])
             #med = sta.quantile(res, 0.85)
             canvas_new_time = plot(title="DS: Time vs Run: $sam samples, $var noise")
             #ylims!(canvas_new_time, (-Inf, med+0.2*med))
-            plot!(canvas_new_time, res_am[2][2:end], label="Adams-Moulton")
-            plot!(canvas_new_time, res_ds[2][2:end], label="Data Shooting")
+            plot!(canvas_new_time, res_am.time[2:end], label="Adams-Moulton")
+            plot!(canvas_new_time, res_ds.time[2:end], label="Data Shooting")
             display(canvas_new_time)
 
             #res = (1/2)*(res_ss[1] + res_ss_am[1])
             #med = sta.quantile(res, 0.85)
             canvas_cla_res = plot(title="SS: Error vs Run: $sam samples, $var noise")
             #ylims!(canvas_cla_res, (-Inf, med+0.2*med))
-            plot!(canvas_cla_res, res_ss[1], label="Single Shooting")
-            plot!(canvas_cla_res, res_ss_am[1], label="DS + Single Shooting")
+            plot!(canvas_cla_res, res_ss.error, label="Single Shooting")
+            plot!(canvas_cla_res, res_ss_am.error, label="DS + Single Shooting")
+            display(canvas_cla_res)
+
+            canvas_cla_res = plot(title="SS: Error vs Run: $sam samples, $var noise")
+            plot!(canvas_cla_res, res_ss_am.error, label="DS + Single Shooting")
             display(canvas_cla_res)
 
             #res = (1/2)*(res_ss[2] + res_ss_am[2])
             #med = sta.quantile(res, 0.85)
             canvas_cla_time = plot(title="SS: Time vs Run")
             #ylims!(canvas_cla_time, (-Inf, med+0.2*med))
-            plot!(canvas_cla_time, res_ss[2][2:end], label="Single Shooting")
-            plot!(canvas_cla_time, res_ss_am[2][2:end], label="DS + Single Shooting")
+            plot!(canvas_cla_time, res_ss.time[2:end], label="Single Shooting")
+            plot!(canvas_cla_time, res_ss_am.time[2:end], label="DS + Single Shooting")
+            display(canvas_cla_time)
+
+            canvas_cla_time = plot(title="SS: Time vs Run")
+            plot!(canvas_cla_time, res_ss_am.time[2:end], label="DS + Single Shooting")
             display(canvas_cla_time)
 
             #=>
