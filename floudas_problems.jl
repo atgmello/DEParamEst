@@ -267,7 +267,7 @@ t = [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0, 800.0, 1000.0]
 
 function f_mapk(dz_dt, z, phi, t)
     J0V1, J1V2, J4V5, J5V6, J8V9, J9V10 = phi
-    J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4, J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8, J8KK9, J9KK10 = [9.0, 1.0, 10.0, 8.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0]
+    J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4, J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8, J8KK9, J9KK10 = convert(Array{eltype(phi)}, [9.0, 1.0, 10.0, 8.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0])
 
     RJ0 = J0V1*(z[1]/(1+((z[8]/J0Ki)^J0n)*(J0k1+z[1])))
     RJ1 = J1V2*(z[2]/(J1KK2+z[2]))
@@ -318,7 +318,7 @@ function f_gosc(dz_dt, z, phi, t)
     dz_dt[3] = k5*z[2] - k6*z[3]
 end
 
-de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
+de_prob = ODEProblem(f_gosc, ini_cond, (t[1],t[end]), phi)
 de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
 ode_data = reduce(hcat, de_sol.u)
 
