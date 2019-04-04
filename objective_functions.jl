@@ -217,7 +217,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
     estimated = reshape(estimated, (num_state_variables, num_samples))
     estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
-    for i in range(1, stop=num_samples-1)
+    for i in 1:num_samples-1
         t_1 = t[i+1]
         t_0 = t[i]
         delta_t = t_1 - t_0
@@ -229,7 +229,7 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
                 tspan = (t_0, t_1)
                 oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
                 osol  = solve(oprob, AutoVern9(Rodas5()), save_everystep=false)
-                x_k_1 = osol.u
+                x_k_1 = osol.u[end]
             else
                 f_eval = zeros(promote_type(eltype(data),eltype(phi)), num_state_variables)
                 ode_fun(f_eval, x_k_0, phi, 0)
