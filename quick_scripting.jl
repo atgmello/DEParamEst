@@ -736,10 +736,12 @@ function nlopt_solve(p_solve, fun, rand_phi)
     bounds = p_solve.bounds
     phi = p_solve.phi
 
-    nlop_opt = nlo.Opt(nlo.:LN_BOBYQA, length(phi))
+    nlop_opt = nlo.Opt(nlo.:GN_CRS2_LM, length(phi))
     nlo.upper_bounds!(nlop_opt, bounds[end])
     nlo.lower_bounds!(nlop_opt, bounds[1])
     nlo.xtol_rel!(nlop_opt,1e-9)
+    #nlo.local_optimizer!()
+    nlo.maxtime!(nlop_opt, 60)
 
     myfunc(x,y) = sum(abs2.(fun(x,ode_data,t,ode_fun)))
     nlo.min_objective!(nlop_opt, myfunc)
@@ -749,13 +751,199 @@ function nlopt_solve(p_solve, fun, rand_phi)
     println("Got\t$minf\nAt\t$minx\nAfter\t$numevals iterations (returned $ret)\n")
 end
 
-for j in 7:7
+for j in 1:6
     println("\n----- Solving problem $j -----\n")
+    p_solve = problem_set[j]
+    p_rand = rand_guess(p_solve.bounds)
+    println("Initial guess:\n$p_rand\n")
     for i in 1:length(funcs)
         println("--- Solving for $(fnames[i]) ---")
-        p_solve = problem_set[j]
-        p_rand = rand_guess(p_solve.bounds)
-        println("Initial guess:\n$p_rand\n")
         nlopt_solve(p_solve, funcs[i], p_rand)
     end
 end
+
+
+# --- Testing ForwardDiff AD -----
+import ForwardDiff
+const fdf = ForwardDiff
+
+f(x) = x.^2 .- 1
+function f(x)
+    return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+end
+#od = opt.OnceDifferentiable(f, [0.0]; autodiff = :forward)
+inner_optimizer = opt.LBFGS()
+
+res_obj = 0
+timed = @elapsed res_obj = opt.optimize(f, [10.0, 10.0], opt.NewtonTrustRegion(); autodiff=:forward)
+res_obj
+timed
+
+timed = @elapsed res_obj = opt.optimize(f, [10.0, 10.0], opt.LBFGS(); autodiff=:forward)
+timed
+res_obj
+
+timed = @elapsed res_obj = opt.optimize(f, BigFloat[10.0, 10.0], opt.NewtonTrustRegion(); autodiff=:forward)
+timed
+res_obj
+
+timed = @elapsed res_obj = opt.optimize(f, [-1.0, -1.0],
+	[40.0, 40.0], [10.0, 10.0], opt.Fminbox(opt.LBFGS()); autodiff=:forward)
+res_obj
+timed
+
+g = x->fdf.gradient!(r, f, x)
+g = x->fdf.gradient(f, x)
+timed = @elapsed res_obj = opt.optimize(f, g, [-1.0, -1.0],
+	[40.0, 40.0], [10.0, 10.0], opt.Fminbox(opt.LBFGS()))
+res_obj
+timed
+
+timed = @elapsed res_obj = opt.optimize(f, [-1.0, -1.0],
+	[40.0, 40.0], [10.0, 10.0], opt.Fminbox(opt.LBFGS()))
+timed
+res_obj
+
+# --- Testing missing states optimization ---
+i_prob = "floudas_1"
+p_solve = get_ode_problem(i_prob)
+fun = p_solve.fun
+phi = p_solve.phi
+bounds = p_solve.bounds
+ini_cond = p_solve.data[:,1]
+
+t = p_solve.t
+t = range(t[1], stop=t[end], length=length(t))
+tspan = (t[1], t[end])
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, phi)
+ode_sol  = solve(ode_prob, AutoVern9(Rodas5()), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+data = copy(data_original)
+
+# -- Estimation using only partial data?? --
+plot_data = plot(t,data')
+
+states = [1,2]
+unknown_states = []
+known_states = setdiff(1:length(states),unknown_states)
+data = data[filter(x -> x in known_states, states),:]
+
+plot_data = plot(t,data')
+
+var = 0.05
+add_noise!(data, var)
+plot_data = plot(t,data')
+display(plot_data)
+
+linear(x) = x
+#loss = soft_l1
+loss = linear
+
+lb = []
+append!(lb,bounds[1])
+append!(lb,0.0)
+lb = convert(Array{Float64,1},lb)
+
+ub = []
+append!(ub,bounds[end])
+append!(ub,100.0)
+ub = convert(Array{Float64,1},ub)
+
+# -- Why is p0 [4]???
+p0 = rand_guess(bounds)
+push!(p0, 0.001)
+
+p0 = [5.0,1.0,1.0]
+
+# Add guess for initial value of state
+
+SAMIN_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
+Grad_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
+inner_optimizer = opt.LBFGS()
+function time_res!(f, obj, opt_type)
+	if opt_type == "G"
+		timed = @elapsed res_obj = opt.optimize(f, lb, ub, p0, opt.SAMIN(verbosity=0), SAMIN_options)
+	else
+    	#od = opt.OnceDifferentiable(adams_moulton_error, p0; autodiff = :forward)
+    	#timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
+    	timed = @elapsed res_obj = opt.optimize(f, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
+	end
+    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+    print(dist)
+    print(timed)
+end
+
+res_am = ErrorTimeData([], [])
+adams_moulton_error(p) = sum(
+                            abs2.(
+                                loss.(adams_moulton_estimator_x(p, data,
+                                                                t, p_solve.fun;
+                                                                unknown_states=unknown_states,
+                                                                plot_estimated=true)
+                                                                )
+                                    )
+                            )
+
+single_shooting_error(p) = sum(
+                            abs2.(
+                                loss.(single_shooting_estimator(p, data,
+                                                                t, p_solve.fun;
+                                                                unknown_states=unknown_states,
+                                                                plot_estimated=true)
+                                                                )
+                                    )
+                            )
+
+
+time_res!(adams_moulton_error, res_am, "L")
+
+time_res!(single_shooting_error, res_am, "L")
+
+transpose(data[:,1])
+data[4:end]
+
+a = [
+    1 2 3;
+    1 2 3
+    ]
+typeof(a)
+b = [4,5,6]
+bb = b[:,:]
+typeof(bb)
+
+c = zeros((5,3))
+c[:,1] = vcat(a[:,1], b)
+c
+vcat(a[:,1],b[0])
+b[end:end]
+d = zeros(size(p_solve.data))
+d[:,1] = p_solve.data[:,1]
+d
+
+
+# --- Testing DAE ---
+
+function f(out,du,u,p,t)
+  out[1] = - 0.04u[1]              + 1e4*u[2]*u[3] - du[1]
+  out[2] = + 0.04u[1] - 3e7*u[2]^2 - 1e4*u[2]*u[3] - du[2]
+  out[3] = u[1] + u[2] + u[3] - 1.0
+end
+
+u₀ = [1.0, 0, 0]
+du₀ = [-0.04, 0.04, 0.0]
+tspan = (0.0,100000.0)
+
+differential_vars = [true,true,false]
+prob = DAEProblem(f,du₀,u₀,tspan,differential_vars=differential_vars)
+
+using Sundials
+
+sol = solve(prob,IDA())
+plot(sol, xscale=:log10, tspan=(1e-6, 1e5), layout=(3,1))
+
+delta_t=tspan[2]-tspan[1]
+
+a = [1,2]
+b = copy(a)
+b[1] = 2
+a
