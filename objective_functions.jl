@@ -1,5 +1,7 @@
-function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
+function adams_moulton_estimator(phi::AbstractArray, data::AbstractArray, time_array::AbstractArray, ode_fun::Function; plot_estimated=false, return_estimated=false)
     num_state_variables, num_samples = size(data)
+    data = convert(Array{eltype(phi)}, data)
+    time_array = convert(Array{eltype(phi)}, time_array)
 
     estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
@@ -7,6 +9,8 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
 
     for i in range(1, stop=num_samples-1)
         delta_t = time_array[i+1] - time_array[i]
+        delta_t = convert(eltype(phi), delta_t)
+
         x_k_0 = data[:, i]
         x_k_1 = data[:, i+1]
 
@@ -39,6 +43,195 @@ function adams_moulton_estimator(phi, data, time_array, ode_fun; plot_estimated=
         return estimated
     end
     return residuals
+end
+
+function adams_moulton_estimator_x(params::AbstractArray,
+                                data::Matrix,
+                                time_array::AbstractArray,
+                                ode_fun::Function;
+                                unknown_states=[],plot_estimated=false, return_estimated=false)
+    """
+    params: Parameters to be optimized. Can be comprized of rate constants and initial values.
+    num_phi: Number of rate constants.
+    data: Observed data for optimization.
+    time_array: Time intervals in which the data has been colected.
+    ode_fun: ODE that describes the data.
+    """
+
+    num_state_variables, num_samples = size(data)
+
+    phi = params[1:length(params)-length(unknown_states)]
+
+    data = convert(Array{eltype(phi)}, data)
+    time_array = convert(Array{eltype(phi)}, time_array)
+
+    if unknown_states != []
+        # If the initial values of some states are not known
+        known_states = collect(1:num_state_variables+length(unknown_states))
+        setdiff!(known_states,unknown_states)
+
+        num_state_variables += length(unknown_states)
+        estimated = reshape(
+                        zeros(
+                            promote_type(
+                                eltype(phi),eltype(data)
+                            ),
+                            num_samples*num_state_variables
+                        ),
+                        (num_state_variables, num_samples)
+                    )
+
+        #Initial conditions are stored at x_dot_num's first column
+        i = 1
+        for k in known_states
+            estimated[k,1] = data[i,1]
+            i+=1
+        end
+        i = 1
+        for k in unknown_states
+            estimated[k,1] = params[length(params)-length(unknown_states)+i]
+            i+=1
+        end
+
+        #Numerical method
+        tspan = (time_array[1], time_array[end])
+
+        ini_cond = estimated[:,1]
+
+        oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+        osol  = solve(oprob, Rodas5(), saveat=time_array)
+        partial_estimate = reduce(hcat, osol.u)
+
+        #Now make array comprised of all the states, the ones calculated by the
+        #numerical method above and the known ones, from the data
+        partial_data = Matrix{Float64}(undef,0,num_samples)
+        i = 1
+        j = 1
+        for k in states
+            if k in known_states
+                partial_data = vcat(partial_data,(data[i,:]'))
+                i+=1
+            else
+                partial_data = vcat(partial_data,(partial_estimate[j,:]'))
+                j+=1
+            end
+        end
+        data = partial_data
+        # TODO
+        # Try to avoid so much array transpositions
+
+    else
+        estimated = reshape(
+                        zeros(
+                            promote_type(
+                                eltype(phi),eltype(data)
+                            ),
+                            num_samples*num_state_variables
+                        ),
+                        (num_state_variables, num_samples)
+                    )
+        #Initial conditions are stored at x_dot_num's first column
+        estimated[:, 1] = data[:,1]
+    end
+
+    for i in 1:num_samples-1
+        delta_t = time_array[i+1] - time_array[i]
+        delta_t = convert(eltype(phi), delta_t)
+
+        x_k_0 = data[:, i]
+        x_k_1 = data[:, i+1]
+
+        f_eval_0 = zeros(num_state_variables)
+        ode_fun(f_eval_0, x_k_0, phi, 0)
+        f_eval_1 = zeros(num_state_variables)
+        ode_fun(f_eval_1, x_k_1, phi, 0)
+
+        x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
+        estimated[:, i+1] = x_k_1_est
+    end
+
+    if plot_estimated
+        p_data = plot(transpose(estimated), linewidth=2)
+        plot!(p_data, transpose(data))
+        display(p_data)
+        println("Plot for\n$params\n")
+    end
+
+    # TODO
+    # Fix weighting
+    if unknown_states != []
+        data = data[filter(x -> x in known_states, states),:]
+        estimated = estimated[filter(x -> x in known_states, states),:]
+        weight = abs2(1/findmax(data)[1])
+        residuals = weight .* (data-estimated)
+    else
+        weight = abs2(1/findmax(data)[1])
+        residuals = weight .* (data-estimated)
+    end
+    #=>
+    if findmin(estimated)[1] < 0
+        for i in 1:length(residuals)
+            residuals[i] = 10^10
+        end
+    end
+    <=#
+    if return_estimated
+        return estimated
+    end
+    return residuals
+end
+
+function single_shooting_estimator(params::AbstractArray,
+                                    data::AbstractArray,
+                                    t::AbstractArray,
+                                    ode_fun::Function;
+                                    unknown_states = [],
+                                    plot_estimated=false, return_estimated=false)
+
+    data = convert(Array{eltype(params)}, data)
+    t = convert(Array{eltype(params)}, t)
+
+    num_state_variables, num_samples = size(data)
+    # Check whether all state variables are known
+    if unknown_states == []
+        idxs = 1:num_state_variables
+        # If there are no unknown states, then there are no initial condition
+        # values to be optimized among the "params". This way, "params"
+        # stores only to the rate constants to be found.
+        ini_cond = data[:,1]
+        phi = params
+    else
+        ini_cond = data[:,1]
+        for (idx,val) in zip(unknown_states,params)
+            insert!(ini_cond, idx, val)
+        end
+
+        idxs = collect(1:num_state_variables+length(unknown_states))
+        setdiff!(idxs,unknown_states)
+        phi = params[1:length(params)-length(unknown_states)]
+    end
+
+    tspan = (t[1], t[end])
+    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
+    osol  = solve(oprob, Rodas5(), saveat=t, save_idxs=idxs)
+    estimated = reduce(hcat, osol.u)
+
+    if plot_estimated
+        p_data = plot(transpose(estimated), linewidth=2)
+        plot!(p_data, transpose(data))
+        display(p_data)
+        println("Plot for\n$params\n")
+    end
+
+    if return_estimated
+        return estimated
+    end
+
+    # TODO
+    # Fix weighting
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
+    return  residuals
 end
 
 function single_multiple_adams_shooting(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
@@ -213,7 +406,10 @@ end
 function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false, euler=false)
     num_state_variables, num_samples = size(data)
 
-    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
+    data = convert(Array{eltype(phi)}, data)
+    t = convert(Array{eltype(phi)}, t)
+
+    estimated = zeros(eltype(phi), num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
     estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
@@ -251,28 +447,5 @@ function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=
     return residuals
 end
 
-function single_shooting_estimator(phi, data, t, ode_fun; plot_estimated=false, return_estimated=false)
-    data = convert(Array{eltype(phi)}, data)
-    t = convert(Array{eltype(phi)}, t)
-
-    tspan = (t[1], t[end])
-    ini_cond = data[:,1]
-    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Rodas5(), saveat=t)
-    estimated = reduce(hcat, osol.u)
-
-    if plot_estimated
-        p = scatter(transpose(estimated))
-        display(p)
-        println("Plot for\n$phi\n")
-    end
-
-    if return_estimated
-        return estimated
-    end
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    return  residuals
-end
 
 soft_l1(z) = (2 * ((1 + z)^0.5 - 1))
