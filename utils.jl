@@ -1,3 +1,13 @@
+module Utils
+
+import Distributions: Uniform
+using Random
+
+struct ErrorTimeData
+    error::AbstractArray
+    time::AbstractArray
+end
+
 function rand_guess(bounds)
     [rand(Uniform(bounds[1][i], bounds[end][i]))
         for i in 1:length(bounds[1])]
@@ -107,3 +117,5 @@ mrae(c,a)
 euclidean(a,b)
 euclidean(a,c)
 <=#
+
+end
