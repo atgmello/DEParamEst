@@ -1,51 +1,11 @@
-function adams_moulton_estimator(phi::AbstractArray, data::AbstractArray, time_array::AbstractArray, ode_fun::Function; plot_estimated=false, return_estimated=false)
-    num_state_variables, num_samples = size(data)
-    data = convert(Array{eltype(phi)}, data)
-    time_array = convert(Array{eltype(phi)}, time_array)
+module ObjectiveFunctions
 
-    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
-    estimated = reshape(estimated, (num_state_variables, num_samples))
-    estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
+using LSODA
+using DifferentialEquations
 
-    for i in range(1, stop=num_samples-1)
-        delta_t = time_array[i+1] - time_array[i]
-        delta_t = convert(eltype(phi), delta_t)
+export data_shooting, single_shooting
 
-        x_k_0 = data[:, i]
-        x_k_1 = data[:, i+1]
-
-        f_eval_0 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
-        ode_fun(f_eval_0, x_k_0, phi, 0)
-        f_eval_1 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
-        ode_fun(f_eval_1, x_k_1, phi, 0)
-
-        x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
-        estimated[:, i+1] = x_k_1_est
-    end
-
-    if plot_estimated
-        p_data = scatter(transpose(estimated))
-        scatter!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$phi\n")
-    end
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    #=>
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = 10^10
-        end
-    end
-    <=#
-    if return_estimated
-        return estimated
-    end
-    return residuals
-end
-
-function adams_moulton_estimator_x(params::AbstractArray,
+function data_shooting(params::AbstractArray,
                                 data::Matrix,
                                 time_array::AbstractArray,
                                 ode_fun::Function;
@@ -104,9 +64,11 @@ function adams_moulton_estimator_x(params::AbstractArray,
 
         #Now make array comprised of all the states, the ones calculated by the
         #numerical method above and the known ones, from the data
-        partial_data = Matrix{Float64}(undef,0,num_samples)
+        partial_data = Matrix{Float64}(undef,0,length(time_array))
         i = 1
         j = 1
+
+        states = collect(1:num_state_variables)
         for k in states
             if k in known_states
                 partial_data = vcat(partial_data,(data[i,:]'))
@@ -181,7 +143,7 @@ function adams_moulton_estimator_x(params::AbstractArray,
     return residuals
 end
 
-function single_shooting_estimator(params::AbstractArray,
+function single_shooting(params::AbstractArray,
                                     data::AbstractArray,
                                     t::AbstractArray,
                                     ode_fun::Function;
@@ -234,22 +196,25 @@ function single_shooting_estimator(params::AbstractArray,
     return  residuals
 end
 
-function single_multiple_adams_shooting(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
-    partial_estimate = single_shooting_estimator(phi, data, time_array, ode_fun; return_estimated=true)
-    num_state_variables, num_samples = size(partial_estimate)
+function adams_moulton_estimator(phi::AbstractArray, data::AbstractArray, time_array::AbstractArray, ode_fun::Function; plot_estimated=false, return_estimated=false)
+    num_state_variables, num_samples = size(data)
+    data = convert(Array{eltype(phi)}, data)
+    time_array = convert(Array{eltype(phi)}, time_array)
 
-    estimated = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_samples*num_state_variables)
+    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_variables)
     estimated = reshape(estimated, (num_state_variables, num_samples))
-    estimated[:, 1] = partial_estimate[:,1] #Initial conditions are stored at x_dot_num's first column
+    estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
 
     for i in range(1, stop=num_samples-1)
         delta_t = time_array[i+1] - time_array[i]
-        x_k_0 = partial_estimate[:, i]
-        x_k_1 = partial_estimate[:, i+1]
+        delta_t = convert(eltype(phi), delta_t)
 
-        f_eval_0 = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_state_variables)
+        x_k_0 = data[:, i]
+        x_k_1 = data[:, i+1]
+
+        f_eval_0 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
         ode_fun(f_eval_0, x_k_0, phi, 0)
-        f_eval_1 = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_state_variables)
+        f_eval_1 = zeros(promote_type(eltype(phi),eltype(data)), num_state_variables)
         ode_fun(f_eval_1, x_k_1, phi, 0)
 
         x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
@@ -323,28 +288,6 @@ function sm_mean_shooting(phi, data, time_array, ode_fun; plot_estimated=false, 
     return residuals
 end
 
-function sm_adaptative_shooting(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
-    ss_estimated = single_shooting_estimator(phi, data, time_array, ode_fun)
-    am_estimated = adams_moulton_estimator(phi, data, time_array, ode_fun)
-    sum_ss_estimated = sum(abs2.(data-ss_estimated))
-    sum_am_estimated = sum(abs2.(data-am_estimated))
-    total = sum_am_estimated+sum_ss_estimated
-
-    residuals = (sum_am_estimated/total).*ss_estimated + (sum_ss_estimated/total).*am_estimated
-end
-
-function sm_adaptative_hard_shooting(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
-    ss_estimated = single_shooting_estimator(phi, data, time_array, ode_fun)
-    am_estimated = adams_moulton_estimator(phi, data, time_array, ode_fun)
-    sum_ss_estimated = sum(abs2.(data-ss_estimated))
-    sum_am_estimated = sum(abs2.(data-am_estimated))
-    if sum_ss_estimated < sum_am_estimated
-        return ss_estimated
-    else
-        return am_estimated
-    end
-end
-
 function adams_moulton_fourth_estimator(phi, data, time_array, ode_fun; plot_estimated=false, return_estimated=false)
     num_state_variables, num_samples = size(data)
 
@@ -403,49 +346,6 @@ function adams_moulton_fourth_estimator(phi, data, time_array, ode_fun; plot_est
     return residuals
 end
 
-function data_shooting_estimator(phi, data, t, ode_fun; steps=1, plot_estimated=false, euler=false)
-    num_state_variables, num_samples = size(data)
-
-    data = convert(Array{eltype(phi)}, data)
-    t = convert(Array{eltype(phi)}, t)
-
-    estimated = zeros(eltype(phi), num_samples*num_state_variables)
-    estimated = reshape(estimated, (num_state_variables, num_samples))
-    estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
-
-    for i in 1:num_samples-1
-        t_1 = t[i+1]
-        t_0 = t[i]
-        delta_t = t_1 - t_0
-
-        x_k_0 = data[:, i]
-        x_k_1 = 0.0
-        for i in 1:steps
-            if !euler
-                tspan = (t_0, t_1)
-                oprob = ODEProblem(ode_fun, x_k_0, tspan, phi)
-                osol  = solve(oprob, AutoVern9(Rodas5()), save_everystep=false)
-                x_k_1 = osol.u[end]
-            else
-                f_eval = zeros(promote_type(eltype(data),eltype(phi)), num_state_variables)
-                ode_fun(f_eval, x_k_0, phi, 0)
-                x_k_1 = x_k_0 + delta_t.*f_eval
-            end
-            x_k_0 = x_k_1
-        end
-        estimated[:, i+1] = x_k_1
-    end
-
-    if plot_estimated
-        p = scatter(transpose(estimated))
-        display(p)
-        println("Plot for\n$phi\n")
-    end
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    return residuals
-end
-
-
 soft_l1(z) = (2 * ((1 + z)^0.5 - 1))
+
+end
