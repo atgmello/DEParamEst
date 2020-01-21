@@ -1,3 +1,4 @@
-.ipynb_checkpoints/*
+*checkpoint*
 quick_scripting.jl
 replicate_error*
+plots
