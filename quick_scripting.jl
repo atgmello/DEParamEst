@@ -2,6 +2,19 @@ using Plots
 using DifferentialEquations
 plotly()
 
+# ----- Plotting -----
+for i in 1:6
+    p = get_ode_problem(get_problem_keys(i))
+    plot_canvas = scatter(p.t',p.data', title="Problem $i")
+    display(plot_canvas)
+end
+
+for i in 7:12
+    p = problem_set[i]
+    plot_canvas = scatter(p.t,p.data', title="Problem $i")
+    display(plot_canvas)
+end
+
 phi = BigFloat[5.0035, 1]
 ini_cond = BigFloat[1,0]
 delta_t = BigFloat(.1)
@@ -805,8 +818,13 @@ timed
 res_obj
 
 # --- Testing missing states optimization ---
+include("./utils.jl")
+using .Utils
+include("./floudas_problems.jl")
+using .ODEProblems
+
 i_prob = "floudas_1"
-p_solve = get_ode_problem(i_prob)
+p_solve = get_problem(i_prob)
 fun = p_solve.fun
 phi = p_solve.phi
 bounds = p_solve.bounds
@@ -857,47 +875,75 @@ p0 = [5.0,1.0,1.0]
 
 # Add guess for initial value of state
 
-SAMIN_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
-Grad_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
+SAMIN_options = opt.Options(x_tol=10^-6, f_tol=10^-12, iterations=10^4, store_trace=true, show_trace=true)
+Grad_options = opt.Options(x_tol=10^-6, f_tol=10^-12, iterations=10^4, store_trace=true, show_trace=true)
 inner_optimizer = opt.LBFGS()
 function time_res!(f, obj, opt_type)
 	if opt_type == "G"
 		timed = @elapsed res_obj = opt.optimize(f, lb, ub, p0, opt.SAMIN(verbosity=0), SAMIN_options)
 	else
     	#od = opt.OnceDifferentiable(adams_moulton_error, p0; autodiff = :forward)
-    	#timed = @elapsed res_obj = opt.optimize(od, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
     	timed = @elapsed res_obj = opt.optimize(f, lb, ub, p0, opt.Fminbox(inner_optimizer), Grad_options)
+    	#timed = @elapsed res_obj = opt.optimize(f, p0, store_trace=true)
 	end
-    dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
-    print(dist)
-    print(timed)
+    println("Trace")
+    println(opt.trace(res_obj))
+    println("F Trace")
+    println(opt.f_trace(res_obj))
+    #dist = diff_states(fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)])
+    opt.trace(res_obj)
 end
 
-res_am = ErrorTimeData([], [])
+res_am = Dict("time" => [], "error" => [])
 adams_moulton_error(p) = sum(
                             abs2.(
-                                loss.(adams_moulton_estimator_x(p, data,
+                                loss.(data_shooting(p, data,
                                                                 t, p_solve.fun;
-                                                                unknown_states=unknown_states,
-                                                                plot_estimated=true)
+                                                                unknown_vars=unknown_states,
+                                                                plot_estimated=false)
                                                                 )
                                     )
                             )
 
 single_shooting_error(p) = sum(
                             abs2.(
-                                loss.(single_shooting_estimator(p, data,
+                                loss.(single_shooting(p, data,
                                                                 t, p_solve.fun;
-                                                                unknown_states=unknown_states,
-                                                                plot_estimated=true)
+                                                                unknown_vars=unknown_states,
+                                                                plot_estimated=false)
                                                                 )
                                     )
                             )
 
 
-time_res!(adams_moulton_error, res_am, "L")
+trace = time_res!(adams_moulton_error, res_am, "L")
+trace
+plot(log10.(opt.f_trace(res)))
 
-time_res!(single_shooting_error, res_am, "L")
+trace_err = []
+trace_time = []
+for i in 1:length(trace)
+    append!(trace_err, parse(Float64, split(string(trace[i]))[2]))
+    append!(trace_time, parse(Float64, split(string(trace[i]))[end]))
+end
+
+plot(log10.(cumsum(trace_time)), log10.(trace_err/trace_err[end]))
+
+trace = time_res!(single_shooting_error, res_am, "L")
+trace
+print(trace)
+plot(log10.(opt.f_trace(res)))
+opt.f_trace(res)
+opt.minimum(res)
+
+trace_err = []
+trace_time = []
+for i in 1:length(trace)
+    append!(trace_err, parse(Float64, split(string(trace[i]))[2]))
+    append!(trace_time, parse(Float64, split(string(trace[i]))[2]))
+end
+
+plot(log10.(cumsum(trace_time)), log10.(trace_err/trace_err[end]))
 
 transpose(data[:,1])
 data[4:end]
@@ -922,28 +968,284 @@ d
 
 
 # --- Testing DAE ---
+using DifferentialEquations
+using Sundials
+using Plots
+plotlyjs()
+gr()
+
+phi_stiff = [0.04, 3e7,1e4]
+phi = [4.0,3.0,1.0]
 
 function f(out,du,u,p,t)
-  out[1] = - 0.04u[1]              + 1e4*u[2]*u[3] - du[1]
-  out[2] = + 0.04u[1] - 3e7*u[2]^2 - 1e4*u[2]*u[3] - du[2]
+  out[1] = - 4u[1]              + u[2]*u[3] - du[1]
+  out[2] = + 4u[1] - 3*u[2]^2 - u[2]*u[3] - du[2]
   out[3] = u[1] + u[2] + u[3] - 1.0
 end
 
 u₀ = [1.0, 0, 0]
 du₀ = [-0.04, 0.04, 0.0]
-tspan = (0.0,100000.0)
+tspan = (0.0,2.5)
+tspan_stiff = (0.0,1e6)
 
 differential_vars = [true,true,false]
-prob = DAEProblem(f,du₀,u₀,tspan,differential_vars=differential_vars)
-
-using Sundials
+prob = DAEProblem(f,du₀,u₀,tspan,p=phi_stiff,differential_vars=differential_vars)
+prob_stiff = DAEProblem(f,du₀,u₀,tspan_stiff,p=phi_stiff,differential_vars=differential_vars)
 
 sol = solve(prob,IDA())
-plot(sol, xscale=:log10, tspan=(1e-6, 1e5), layout=(3,1))
+sol_stiff = solve(prob_stiff,IDA())
+# Normal
+plot(sol, tspan=(tspan[1], tspan[end]))
+# Stiff
+plot(sol_stiff, xscale=:log10, tspan=(1e-6, 1e5), layout=(3,1))
 
-delta_t=tspan[2]-tspan[1]
 
-a = [1,2]
-b = copy(a)
-b[1] = 2
-a
+function f(du,u,p,t)
+  # Algebrical constraints
+  du[3] = - u[1] - u[2] + 1.0
+  u[3] = du[3]
+  # Differential equations
+  du[1] = - 4u[1]              + u[2]*u[3] - du[1]
+  du[2] = + 4u[1] - 3*u[2]^2 - u[2]*u[3] - du[2]
+end
+
+u0 = [1.0, 0, 0]
+tspan = (0.0,2.5)
+delta_t = 0.005
+num_samples = trunc(Int, tspan[end]/delta_t)
+delta_t_stiff = 0.5
+num_samples_stiff = trunc(Int, tspan_stiff[end]/delta_t_stiff)
+
+differential_vars = [true,true,false]
+ode_fun = f
+num_states = 3
+
+estimated = zeros(num_states,num_samples)
+estimated[:, 1] = u0
+
+for i in 1:num_samples-1
+    x_k_0 = estimated[:, i]
+
+    f_eval_0 = zeros(num_states)
+    ode_fun(f_eval_0, x_k_0, phi, 0)
+
+    x_k_1_est = zeros(num_states)
+    x_k_1_est = x_k_0 + delta_t*f_eval_0
+
+    estimated[:, i+1] = x_k_1_est
+end
+
+plot(estimated')
+plot!(sol, tspan=(tspan[1], tspan[end]))
+
+plot(range(1e-5,stop=tspan_stiff[end],length=Integer(num_samples_stiff)),estimated',xscale=:log10,layout=(3,1))
+plot!(sol_stiff, tspan=(1e-5, tspan_stiff[end]), xscale=:log10, layout=(3,1))
+
+
+function f_enzyme(du,u,p,t)
+  # Algebrical constraints
+  du[1] = 1.0 - u[3]
+  u[1] = du[1]
+  du[2] = 1.0 - (u[3] + u[4])
+  u[2] = du[2]
+  # Differential equations
+  du[3] = p[1]*u[1]*u[2] - (p[2]+p[3])*u[3]
+  du[4] = p[3]*u[3]
+end
+
+u0 = [1.0, 1.0, 0.0, 0.0]
+tspan = (0.0,10.0)
+delta_t = 0.01
+num_samples = trunc(Int, tspan[end]/delta_t)
+
+differential_vars = [false,false,true,true]
+ode_fun = f_enzyme
+num_states = 4
+
+phi = [1.0,0.5,0.5,0.5]
+
+estimated = zeros(num_states,num_samples)
+estimated[:, 1] = u0
+
+
+for i in 1:num_samples-1
+    x_k_0 = estimated[:, i]
+
+    f_eval_0 = zeros(num_states)
+    ode_fun(f_eval_0, x_k_0, phi, 0)
+
+    x_k_1_est = zeros(num_states)
+    x_k_1_est[differential_vars]  = x_k_0[differential_vars] + delta_t*f_eval_0[differential_vars]
+    x_k_1_est[.~differential_vars] .= f_eval_0[.~differential_vars]
+
+    estimated[:, i+1] = x_k_1_est
+end
+
+
+plot(range(tspan[1], stop=tspan[end], length=num_samples),
+    estimated')
+
+function f_enzyme_dae(out,du,u,p,t)
+  # Algebrical constraints
+  out[1] = 1.0 - u[3] - u[1]
+  out[2] = 1.0 - (u[3] + u[4]) - u[2]
+  # Differential equations
+  out[3] = p[1]*u[1]*u[2] - (p[2]+p[3])*u[3] - du[3]
+  out[4] = p[3]*u[3] - du[4]
+end
+
+du0 = [0.0, 0.0, 0.0, 0.0]
+tspan = (0.0,10.0)
+saveat_t = range(tspan[1], stop=tspan[end], length=15)
+prob = DAEProblem(f_enzyme_dae,du0,u0,tspan,
+    p=phi,differential_vars=differential_vars,saveat=saveat_t)
+
+sol = solve(prob,IDA())
+data = reduce(hcat, sol.u)
+plot(sol)
+
+
+using Revise
+includet("./objective_functions.jl")
+import .ObjectiveFunctions: data_shooting
+
+data_shooting(phi,data,saveat_t,f_enzyme,
+    plot_estimated=true,differential_vars=differential_vars)
+
+includet("./floudas_problems.jl")
+import .ODEProblems: get_ode_problem
+
+prob = get_problem("floudas_1")
+phi = prob.phi
+data = prob.data[:,1:1:size(prob.data)[end]]
+saveat_t = prob.t[1:1:length(prob.t)]
+fun = prob.fun
+
+data_shooting(phi,data,saveat_t,fun,
+    plot_estimated=true)
+
+
+using Plots
+
+xs = 1:100
+μs = log.(xs)
+σs = rand(length(xs))
+
+plot(xs,μs,grid=false,ribbon=σs,fillalpha=.5)
+
+a = [1,2,3,4,5]
+dp = Float64
+a = dp[x for x in a]
+
+a = Dict()
+a["um"] = Dict("dois" => [1,2])
+a["um"]["dois"]
+for k in keys(a)
+    print(a[k])
+end
+
+
+xs = 1:100
+μs = log.(xs)
+σs = rand(length(xs))
+
+plot(μs,grid=false,ribbon=sum(σs)/length(σs),fillalpha=.5)
+plot!(xs,μs,grid=false,ribbon=σs,fillalpha=.5)
+
+plot(xs,μs, ribbon = 5.0)  # both sides are 5
+plot(xs,μs, ribbon = 1:3) # both sides cycle through 1:3
+plot(xs,μs, ribbon = (5, 1:3))
+
+# --- Fun with Trace ---
+import Optim
+const opt = Optim
+
+trace_errs = []
+trace_times = []
+f = (x) -> sum(x)^4
+for i in 1:10
+    res = opt.optimize(f, [rand(-100.0:100.0),rand(-100.0:100.0)], store_trace=true)
+    trace = opt.trace(res)
+
+    trace_err = []
+    trace_time = []
+    for i in 1:length(trace)
+        append!(trace_err, parse(Float64, split(string(trace[i]))[2]))
+        append!(trace_time, parse(Float64, split(string(trace[i]))[end]))
+    end
+    append!(trace_errs, [trace_err])
+    append!(trace_times, [trace_time])
+end
+
+#plot(log10.(trace_time), log10.(trace_err/trace_err[end]))
+#plot(trace_time, trace_err/trace_err[end])
+#plot(trace_time, trace_err)
+trace_times
+""" Best One: """
+p = plot(mean(trace_times), log10.(mean(trace_errs/trace_errs[end][end])))
+
+for i in 1:length(trace_errs)
+    print(i)
+    plot!(p, trace_times[i], log10.(trace_errs[i]/trace_errs[i][end]))
+end
+display(p)
+
+""" Now comparing """
+
+
+trace_errs = []
+trace_times = []
+for i in 1:10
+    res = opt.optimize((x-> sum(x.^4)), [100.0, 200.0], store_trace=true)
+    trace = opt.trace(res)
+
+    trace_err = []
+    trace_time = []
+    for i in 1:length(trace)
+        append!(trace_err, parse(Float64, split(string(trace[i]))[2]))
+        append!(trace_time, parse(Float64, split(string(trace[i]))[end]))
+    end
+    append!(trace_errs, [trace_err])
+    append!(trace_times, [trace_time])
+end
+
+plot!(p, mean(trace_times), log10.(mean(trace_errs/trace_errs[end][end])))
+
+for i in 1:length(trace_errs)
+    print(i)
+    plot!(p, trace_times[i], log10.(trace_errs[i]/trace_errs[i][end]))
+end
+display(p)
+
+# --- Util for resizing array of arryas ---
+
+a = [1.0, 2.0]
+b = [1.5, 1.5, 0.1]
+mean([a,b])
+
+function fill_to_max_size(array:: AbstractArray)
+    max_array_len = maximum(map(x -> length(x), array))
+    resized = map( x -> append!(x, zeros(max_array_len - length(x))), array)
+    return resized
+end
+
+new_ab = fill_resize([a,b])
+mean(new_ab)
+
+# --- Max and maximum ---
+
+struct Trace
+    time::AbstractArray
+    eval::AbstractArray
+end
+
+a = [1.0, 2.0]
+b = [0.1, 0.2]
+c = [2.0, 3.0]
+d = [0.2, 0.3]
+traces = [Trace(a,b), Trace(c,d)]
+
+maximum(a)
+minimum(a)
+(_,min_idx) = findmin(map(t -> sum(t.time), traces))
+traces[min_idx]
