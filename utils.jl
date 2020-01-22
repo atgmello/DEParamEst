@@ -104,6 +104,21 @@ function filter_outlier(arr; p=2)
     return filter(x -> (x >= minValue) && (x <= maxValue), arr)
 end
 
+struct Trace
+    time::AbstractArray
+    eval::AbstractArray
+end
+
+function make_trace(trace)
+    time = []
+    eval = []
+    for i in 1:length(trace)
+        append!(time, parse(Float64, split(string(trace[i]))[end]))
+        append!(eval, parse(Float64, split(string(trace[i]))[2]))
+    end
+    return Trace(time, eval)
+end
+
 function fill_trace(t::Trace)
     """
     Given a trace, make sure that
@@ -121,19 +136,9 @@ function fill_trace(t::Trace)
     return Trace(resized_t, resized_eval)
 end
 
-struct Trace
-    time::AbstractArray
-    eval::AbstractArray
-end
-
-function make_trace(trace)
-    time = []
-    eval = []
-    for i in 1:length(trace)
-        append!(time, parse(Float64, split(string(trace[i]))[end]))
-        append!(eval, parse(Float64, split(string(trace[i]))[2]))
-    end
-    return Trace(time, eval)
+function scale_eval(t::Trace)
+    scaled_eval = map(e -> e/e[end], t.eval)
+    return Trace(t.time, scaled_eval)
 end
 
 function get_best_worst_traces(traces::AbstractArray)
