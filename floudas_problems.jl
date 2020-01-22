@@ -1,7 +1,15 @@
+module ODEProblems
+
+using DifferentialEquations
+using ParameterizedFunctions
+using LSODA
+
+export get_ode_problem
+
 #desired_precision = Float64
 desired_precision = Float64
 
-struct ChemKinProblem
+struct DEProblem
     fun::Function
     phi::AbstractArray
     bounds::AbstractArray
@@ -9,13 +17,13 @@ struct ChemKinProblem
     t::AbstractArray
 end
 
-function get_problem_keys(i=0)
+function get_problem_key(i=0)
     keys = ["floudas_1","floudas_2",
             "floudas_3","floudas_4",
             "floudas_5","floudas_6",
             "bbg","fhn","mpk",
             "goodwin_oscillator",
-            "tsp","cho"]
+            "tsp","cho","exponential"]
     if i > 0
         return keys[i]
     else
@@ -23,8 +31,27 @@ function get_problem_keys(i=0)
     end
 end
 
-function get_ode_problem(p)
-    if p == "floudas_1"
+function get_problem(p)
+    if p == "exponential"
+        # ----- Problem 0 -----
+
+        function f_exp(dz_dt, z, phi, t)
+            dz_dt[1] = z[1]*phi[1]
+        end
+
+        k1 = 1.0
+        phi = [k1]
+        bounds = [0., 100.]
+        ini_cond = [1.]
+
+        t = range(0.0, stop=10.0, length=10)
+        de_prob = ODEProblem(f_exp, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
+        ode_data = reduce(hcat, de_sol.u)
+
+        return DEProblem(f_exp, phi, bounds, ode_data, t)
+
+    elseif p == "floudas_1"
         # ----- Problem 1 -----
 
         function floudas_one(dz_dt, z, phi, t)
@@ -49,7 +76,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
                                 ]
-        return ChemKinProblem(floudas_one, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_one, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "floudas_2"
         # ----- Problem 2 -----
@@ -81,7 +108,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0
                                 ]
-        return ChemKinProblem(floudas_two, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_two, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "floudas_3"
         # ----- Problem 3 -----
@@ -109,7 +136,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0. .025 .05 .075 .1 .125 .150 .175 .2 .225 .25 .3 .35 .4 .45 .5 .55 .65 .75 .85 .95
                                 ]
-        return ChemKinProblem(floudas_three, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_three, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "floudas_4"
         # ----- Problem 4 -----
@@ -130,7 +157,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0. 1.0 2.0 3.0 4.0 5.0 6.0 7.0 9.0 11.0 14.0 19.0 24.0 29.0 39.0
                                 ]
-        return ChemKinProblem(floudas_four, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_four, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "floudas_5"
         # ----- Problem 5 -----
@@ -158,7 +185,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0. 0.050 0.065 0.080 0.123 0.233 0.273 0.354 0.397 0.418 0.502 0.553 0.681 0.750 0.916 0.937 1.122
                                 ]
-        return ChemKinProblem(floudas_five, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_five, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "floudas_6"
         # ----- Problem 6 -----
@@ -181,7 +208,7 @@ function get_ode_problem(p)
         floudas_samples_times = [
                                 0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10.
                                 ]
-        return ChemKinProblem(floudas_six, phi, bounds, floudas_samples, floudas_samples_times)
+        return DEProblem(floudas_six, phi, bounds, floudas_samples, floudas_samples_times)
 
     elseif p == "bbg"
         # ----- BBG -----
@@ -207,7 +234,7 @@ function get_ode_problem(p)
         de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
-        return ChemKinProblem(f_bbg, phi, bounds, ode_data, t)
+        return DEProblem(f_bbg, phi, bounds, ode_data, t)
 
     elseif p == "fhn"
         # ----- FHN -----
@@ -234,7 +261,7 @@ function get_ode_problem(p)
         de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
-        return ChemKinProblem(f_fhn, phi, bounds, ode_data, t)
+        return DEProblem(f_fhn, phi, bounds, ode_data, t)
 
     elseif p == "mpk"
         # ----- MPK -----
@@ -278,7 +305,7 @@ function get_ode_problem(p)
         de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
-        return ChemKinProblem(f_mapk, phi, bounds, ode_data, t)
+        return DEProblem(f_mapk, phi, bounds, ode_data, t)
 
     elseif p == "goodwin_oscillator"
         # ----- GOsc -----
@@ -306,7 +333,7 @@ function get_ode_problem(p)
         de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
 
-        new_prob = ChemKinProblem(f_gosc, phi, bounds, ode_data, t)
+        new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
 
         #=>
         # ----- TGFB -----
@@ -382,7 +409,7 @@ function get_ode_problem(p)
         de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
 
-        new_prob = ChemKinProblem(f_gosc, phi, bounds, ode_data, t)
+        new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
         push!(problem_set, new_prob)
         <=#
 
@@ -479,7 +506,7 @@ function get_ode_problem(p)
         de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
-        return ChemKinProblem(f_tsp, phi, bounds, ode_data, t)
+        return DEProblem(f_tsp, phi, bounds, ode_data, t)
 
     elseif p == "cho"
         # ----- CHO -----
@@ -1031,22 +1058,11 @@ function get_ode_problem(p)
         end
 
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
-        de_sol = solve(de_prob, lsoda(), saveat=t)
+        de_sol = solve(de_prob, LSODA.lsoda(), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
-        return ChemKinProblem(f_cho, p, bounds, ode_data, t)
+        return DEProblem(f_cho, p, bounds, ode_data, t)
 
     end
 end
 
-# ----- Plotting -----
-for i in 1:6
-    p = get_ode_problem(get_problem_keys(i))
-    plot_canvas = scatter(p.t',p.data', title="Problem $i")
-    display(plot_canvas)
-end
-
-for i in 7:12
-    p = problem_set[i]
-    plot_canvas = scatter(p.t,p.data', title="Problem $i")
-    display(plot_canvas)
 end
