@@ -81,7 +81,7 @@ function calc_z_plot(x, y, data, ode_fun, t, obj_fun;
 end
 
 function experiment_countour(exp, sample_range)
-    cd("/home/andrew/git/ChemParamEst/plots")
+    cd("/home/andrew/git/ChemParamEst/plots/contours/")
     dir = exp["problem_name"]
     mkdir(dir)
     cd(dir)
