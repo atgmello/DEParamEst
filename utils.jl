@@ -1,12 +1,9 @@
 module Utils
 
 import Distributions: Uniform
+import Statistics: quantile
 using Random
-
-struct ErrorTimeData
-    error::AbstractArray
-    time::AbstractArray
-end
+using Distances
 
 function rand_guess(bounds)
     [rand(Uniform(bounds[1][i], bounds[end][i]))
@@ -96,6 +93,64 @@ function diff_states(f, u0::AbstractArray, tspan::Tuple, actual::AbstractArray, 
         dist += euclidean(data_actual, data_forecast)/(size(data_actual)[1]*size(data_actual)[2])
     end
     dist /= runs
+end
+
+function filter_outlier(arr; p=2)
+    q = quantile(arr)
+    iqr = q[3] - q[1]
+    maxValue = q[3] + iqr * p
+    minValue = q[1] - iqr * p
+
+    return filter(x -> (x >= minValue) && (x <= maxValue), arr)
+end
+
+function fill_trace(t::Trace)
+    """
+    Given a trace, make sure that
+    both time and eval arrays have the same size.
+    This is done by repeating the last registered
+    value in each array.
+    """
+
+    max_t_array_len = maximum(map(x -> length(x), t.time))
+    resized_t = map( x -> append!(x, fill(x[end], max_t_array_len - length(x))), t.time)
+
+    max_eval_array_len = maximum(map(x -> length(x), t.eval))
+    resized_eval = map( x -> append!(x, fill(x[end], max_eval_array_len - length(x))), t.eval)
+
+    return Trace(resized_t, resized_eval)
+end
+
+struct Trace
+    time::AbstractArray
+    eval::AbstractArray
+end
+
+function make_trace(trace)
+    time = []
+    eval = []
+    for i in 1:length(trace)
+        append!(time, parse(Float64, split(string(trace[i]))[end]))
+        append!(eval, parse(Float64, split(string(trace[i]))[2]))
+    end
+    return Trace(time, eval)
+end
+
+function get_best_worst_traces(traces::AbstractArray)
+    """
+    Given an array of traces
+    (i.e. iteration time vs error funciton evalutation)
+    select the best trace (the one with the least amount of
+    time spent to get to the optimal solution) and the worst
+    trace (the one with the most)
+    """
+    trace_times = map(t -> sum(t.time), traces)
+    (_,min_idx) = findmin(trace_times)
+    best = traces[min_idx]
+    (_,max_idx) = findmax(trace_times)
+    worst = traces[max_idx]
+
+    return best, worst
 end
 
 #=>
