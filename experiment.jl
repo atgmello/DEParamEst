@@ -16,12 +16,12 @@ const opt = Optim
 
 using Revise
 includet("./utils.jl")
-includet("./floudas_problems.jl")
-includet("./objective_functions.jl")
+includet("./problem_set.jl")
+includet("./objective_function.jl")
 import .ODEProblems: get_problem, get_problem_key
 import .ObjectiveFunctions: data_shooting, single_shooting, soft_l1
 import .Utils: Trace, rand_guess, make_trace, get_best_worst_traces,
-				add_noise!, filter_outlier, fill_trace
+				add_noise!, filter_outlier, fill_trace, scale_eval
 
 old_precision = precision(BigFloat)
 new_precision = 1024
@@ -36,13 +36,17 @@ vars = Float16[0.00, 0.025, 0.05, 0.10, 0.20]
 
 results = Dict()
 
-println("Begin")
-
 #@suppress begin
-    for p in 1:2
+    for p in 1:1
+
 		prob_key = get_problem_key(p)
 		problem = get_problem(prob_key)
 		results[prob_key] = Dict()
+
+		cd("/home/andrew/git/ChemParamEst/plots/experiments/")
+		dir = prob_key
+		mkdir(dir)
+		cd(dir)
 
         #print("\n----- Getting results for Flouda's Problem number $i -----\n")
         fun = problem.fun
@@ -192,50 +196,6 @@ println("Begin")
 		            end
 					<=#
 
-		            """
-		            Multiple shooting: one shooting node for each data point.
-		            Similar to our proposed approach.
-		            """
-		            #=>
-		            #ms_lb = zeros(Float64, (length(t)-1)*(length(data[:,1]))+length(phi))
-		            mesh_div = ceil(Int, length(t)/8)
-		            ms_obj = multiple_shooting_objective(ode_prob,Tsit5(),L2Loss(t,data))
-		            ms_lb = zeros(Float64, floor(Int, (length(t)-1)/mesh_div)*(length(data[:,1]))+length(phi))
-		            ms_ub = zeros(Float64, floor(Int, (length(t)-1)/mesh_div)*(length(data[:,1]))+length(phi))
-		            for curve in 1:length(data[:,1])
-		                for tlen in curve:length(data[:,1]):length(ms_lb)
-		                    ms_lb[tlen] = minimum(data[curve,:])
-		                    ms_ub[tlen] = maximum(data[curve,:])
-		                end
-		            end
-		            ms_lb[end-length(phi)+1:end] = lb
-		            ms_ub[end-length(phi)+1:end] = ub
-		            ms_p0 = rand_guess([ms_lb, ms_ub])
-		            ms_p0[end-length(phi)+1:end] = p0
-
-		            #timed = @elapsed res_obj = opt.optimize(ms_obj, ms_lb, ms_ub, ms_p0, opt.SAMIN(), SAMIN_options)
-
-		            od = opt.OnceDifferentiable(ms_obj, ms_p0; autodiff = :forward)
-		            timed = @elapsed res_obj = opt.optimize(od, ms_lb, ms_ub, ms_p0, opt.Fminbox(inner_optimizer), Grad_options)
-
-		            dist = mape(phi, res_obj.minimizer[end-length(phi)+1:end])
-		            push!(res_ms[1], dist)
-		            push!(res_ms[2], timed)
-		            <=#
-
-		            #=>
-		            opt_gn = nlo.Opt(:LN_NELDERMEAD, length(phi))
-		            nlo.lower_bounds!(opt_gn, lb)
-		            nlo.upper_bounds!(opt_gn, ub)
-		            nlo.min_objective!(opt_gn, lsq_ss_sum)
-		            nlo.xtol_rel!(opt_gn,1e-12)
-		            nlo.maxeval!(opt_gn, 20000)
-		            nlo.maxtime!(opt_gn, 30)
-		            (minf,minx,ret) = NLopt.optimize(opt_gn,p0)
-		            dist = mape(phi, minx)
-		            push!(res_ss, dist)
-		            <=#
-
 					"""
 					Testes: passar resultado de DS como chute inicial para SS
 					"""
@@ -373,15 +333,17 @@ println("Begin")
 				Plots
 				Trace
 				"""
-				#trace_time_filled = fill_to_max_size(res["ss"]["trace_time"])
-				#trace_error_scaled = map(x -> x/x[end], res["ss"]["trace_error"])
-				#trace_error_filled = fill_to_max_size(trace_error_scaled)
-				#p = plot(mean(trace_time_filled), log10.(mean(trace_error_filled)))
+
 				p = plot(xlabel="Time", ylabel="Function Evaluation")
 				for m in method
-					trace = fill_trace(res[m]["trace"])
-					plot!(p, mean(trace.time), log10.(mean(trace.eval/trace.eval[end][end])), label="Mean "*m)
-					display(p)
+					trace = res[m]["trace"]
+					if length(trace.eval) > 0
+						trace = scale_eval(fill_trace(trace))
+						plot!(p, mean(trace.time), log10.(mean(trace.eval)), label="Mean "*m)
+						display(p)
+
+        				savefig(p,"./trace_$(m)_$(sam)_$(replace(string(var),"."=>"")).svg")
+					end
 				end
 		    end
 		end
@@ -400,30 +362,40 @@ println("Begin")
 
 		for var in vars
 			for m in keys(results[prob_key][var])
-				append!(plot_error[m]["error_mean"], mean(results[prob_key][var][m]["error"]))
-				append!(plot_error[m]["error_std"], std(results[prob_key][var][m]["error"]))
+				#error = filter_outlier(results[prob_key][var][m]["error"], p=5)
+				error = results[prob_key][var][m]["error"]
+				append!(plot_error[m]["error_mean"], mean(error))
+				append!(plot_error[m]["error_std"], std(error))
 			end
 		end
 
-		plot(x=vars, xlabel="Noise Percentage", ylabel="Mean Error")
-		for mode in keys(plot_error)
-			if mode == "DS"
+		p = plot(x=vars, xlabel="Noise Percentage", ylabel="Mean Error")
+		ylim_arr = []
+		for m in keys(plot_error)
+			if m == "DS"
 				label = "Data Shooting"
-			elseif mode == "SS"
+			elseif m == "SS"
 				label = "Single Shooting"
 			else
 				lable = "Error"
 			end
-			p = plot!(x=vars, filter_outlier(Float64.(plot_error[mode]["error_mean"]),p=4),
-						grid=false, ribbon=filter_outlier(Float64.(plot_error[mode]["error_std"]),p=4),
+
+			plot!(p, x=vars, plot_error[m]["error_mean"],
+						grid=false, ribbon=plot_error[m]["error_std"],
 						fillalpha=.5,label=label)
-			#=>
-			p = plot!(x=vars, plot_error[mode]["error_mean"],
-						grid=false, ribbon=plot_error[mode]["error_std"],
-						fillalpha=.5,label=label)
-			<=#
 			display(p)
+			push!(ylim_arr, ylims(p))
+
+			savefig(p,"./error_$(m)_$(sam)_$(replace(string(var),"."=>"")).svg")
 		end
+		if ylim_arr[2][1] > -10
+			ylims!(p, (ylim_arr[2][1],ylim_arr[1][2]))
+		else
+			ylims!(p, ylim_arr[1])
+		end
+		display(p)
+
+		savefig(p,"./error_all_$(sam)_$(replace(string(var),"."=>"")).svg")
 
 		"""
 		Plots - End
