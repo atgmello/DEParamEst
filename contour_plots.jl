@@ -1,122 +1,189 @@
+using DifferentialEquations
+using Plots
+gr()
+pyplot()
+plotlyjs()
+
+using Revise
+includet("./utils.jl")
+includet("./floudas_problems.jl")
+includet("./objective_functions.jl")
+import .ODEProblems: get_problem
+import .ObjectiveFunctions: data_shooting, single_shooting, soft_l1
+import .Utils: add_noise!
+
+
 linear(x) = x
 #loss = soft_l1
 loss = linear
-#plotlyjs()
-gr()
 
 desired_precision = Float64
 
-function contour_3d_plots(x, y, z, par; title="", reduced=false)
-    cont = contour(x, y, z, fill=true, title=title)
-    if reduced == false
-        vline!(cont, [par[1]])
-        hline!(cont, [par[2]])
-    end
-    display(cont)
+function contour_3d_plots(x, y, z, par; title="", save_name="")
+    if length(par) > 1
+        cont = contourf(x, y, z, cbar=true, title=title,
+                    xlabel="θ₁", ylabel="θ₂")
+    else
+        cont = plot(x, z', title=title, legend=false,
+                    xlabel="θ₁", ylabel="Error")
+        end
 
-    three_dim = surface(x,y,z, cbar=true, title=title)
-    display(three_dim)
+    if par[1] > x[1] && par[1] < x[end]
+        vline!(cont, [par[1]], label="True θ₁", color=:cyan)
+    end
+    if length(par) > 1
+        if par[2] > y[1] && par[2] < y[end]
+            hline!(cont, [par[2]], label="True θ₂", color=:magenta)
+        end
+
+        three_dim = surface(x, y, z, cbar=true, title=title,
+                            xlabel="θ₁", ylabel="θ₂", zlabel="Error")
+        #display(three_dim)
+        savefig(three_dim,"./3d_$(lowercase(replace(title," " => "_")))_$(save_name).svg")
+    end
+
+    savefig(cont,"./cont_$(lowercase(replace(title," " => "_")))_$(save_name).svg")
+    #display(cont)
+
 end
 
 
-function calc_z_plot(x, y, data, ode_fun, true_par, t, obj_fun;
-                        reduced=false, unknown_states=[],fixed_pars=[-1.0,-1.0])
+function calc_z_plot(x, y, data, ode_fun, t, obj_fun;
+                        unknown_states=[],fixed_pars=[-1.0,-1.0])
     z = desired_precision[]
 
-    for i in x
-        for j in y
+    if length(y) > 1
+        #2D case
+        for i in x
+            for j in y
+                par_eval = copy(fixed_pars)
+                par_eval[par_eval .< 0.0] = [i, j]
+                obj_eval = sum(loss.(abs2.(obj_fun(par_eval, data, t, ode_fun,
+                                            unknown_vars=unknown_states))))
+                push!(z, obj_eval)
+                #println("$i,$j\nPhi: $phi_eval\nRes: $obj_eval")
+            end
+        end
+    else
+        #1D case
+        for i in x
             par_eval = copy(fixed_pars)
-            par_eval[par_eval .< 0.0] = [i, j]
+            par_eval[par_eval .< 0.0] = [i]
             obj_eval = sum(loss.(abs2.(obj_fun(par_eval, data, t, ode_fun,
-                                        unknown_states=unknown_states))))
+                            unknown_vars=unknown_states))))
             push!(z, obj_eval)
             #println("$i,$j\nPhi: $phi_eval\nRes: $obj_eval")
         end
     end
     z = reshape(z, (length(y), length(x)))
-    num_samples = length(data)
-    contour_3d_plots(x, y, z, true_par, title="for num_samples=$num_samples", reduced=reduced)
 
-    a = findmin(z)
-    return a
+    return z
 end
 
-for i in ["floudas_1"]
-    println("\n----- Plots for problem $i -----\n")
-    p_solve = get_ode_problem(i)
-    ode_fun = p_solve.fun
-    t = p_solve.t
-    phi = p_solve.phi
-    bounds = p_solve.bounds
-    ini_cond = p_solve.data[:,1]
-    rand_range = p_solve.bounds
+function experiment_countour(exp, sample_range)
+    cd("/home/andrew/git/ChemParamEst/plots")
+    dir = exp["problem_name"]
+    mkdir(dir)
+    cd(dir)
+
+    ode_problem = exp["ode_problem"]
+    ode_fun = ode_problem.fun
+    t = ode_problem.t
+    phi = ode_problem.phi
+    bounds = ode_problem.bounds
+    ini_cond = ode_problem.data[:,1]
+    rand_range = ode_problem.bounds
 
     min_range = rand_range[1][1]
     max_range = rand_range[end][end]
 
     delta_t = desired_precision(.1)
 
-    fixed_pars=[1.0,-1.0,-1.0]
+    # --- Fine Tune This Part ---
+    fixed_pars = exp["fixed_pars"]
 
-    min_range = 0.0
-    max_range = 10.0
+    min_range = exp["min_range"]
+    max_range = exp["max_range"]
 
-    states = [1,2]
-    unknown_states=[1]
+    states = exp["states"]
+    unknown_states = exp["unknown_states"]
 
-    true_par = [5.0035, 1.0]
+    true_par = exp["true_par"]
 
-    for num_samples in 10:45:55
+    r = exp["reduced_raius"]
+    s = exp["reduced_step"]
+
+    noise = exp["noise"]
+    # -- Fine Tune This Part ---
+
+    for num_samples in sample_range
         tspan = (t[1], t[end])
         oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
         #saveat_t = range(t[1], stop=t[end], length=num_samples)
-        saveat_t = collect(t[1]:((t[end]-t[1])/num_samples):t[end])
+        #saveat_t = collect(t[1]:((t[end]-t[1])/(num_samples-1)):t[end])
+        saveat_t = range(t[1], stop=t[end], length=num_samples)
         osol  = solve(oprob, Tsit5(), saveat=saveat_t)
         plot(osol)
         data = reduce(hcat, osol.u)
         known_states = setdiff(1:length(states),unknown_states)
         data = data[filter(x -> x in known_states, states),:]
-        #add_noise!(data, 0.1)
-        data_plot = scatter(saveat_t, transpose(data))
+        if noise > 0.0
+            add_noise!(data, noise)
+        end
+
+        alphabet='A':'Z'
+        label=reshape(["[$i]" for i in alphabet[1:length(known_states)]],(1,length(known_states)))
+
+        data_plot = scatter(saveat_t, transpose(data),
+                            label=label, xlabel="Time", ylabel="Concentration")
         display(data_plot)
+        savefig(data_plot,"./data_$(length(saveat_t)*length(known_states)).svg")
 
-        x = range(min_range, max_range, step=.1)
-        y = range(min_range, max_range, step=.1)
+        x = range(min_range, max_range, step=(max_range-min_range)/100)
+        if length(states) == 1
+            y = 0.0
+        else
+            y = range(min_range, max_range, step=(max_range-min_range)/100)
+        end
 
-        println("\n----- Adams-Moulton Estimator -----")
-        try
-            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, true_par, t,
-                                        adams_moulton_estimator_x,
-                        reduced=false, unknown_states=unknown_states,
-                        fixed_pars=fixed_pars)
+        println("\n----- Data Shooting Estimator -----")
+            z = calc_z_plot(x, y, data, ode_fun, saveat_t,
+                                        data_shooting,
+                                        unknown_states=unknown_states,
+                                        fixed_pars=fixed_pars)
 
-            x_reduced = range(x[f_min_idx[2]]-.15, x[f_min_idx[2]]+.15, step=.01)
-            y_reduced = range(y[f_min_idx[1]]-.15, y[f_min_idx[1]]+.15, step=.01)
+            contour_3d_plots(x, y, z, true_par, title="Data Shooting Error", save_name="$(length(data))_big")
+            f_min,f_min_idx  = findmin(z)
+
+            x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
+            y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
             try
-                calc_z_plot(x_reduced, y_reduced, data, ode_fun, true_par, t,
-                                        adams_moulton_estimator_x,
-                        reduced=true, unknown_states=unknown_states,
-                        fixed_pars=fixed_pars)
+                z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
+                                            data_shooting,
+                                            unknown_states=unknown_states,
+                                            fixed_pars=fixed_pars)
+
+                contour_3d_plots(x_reduced, y_reduced, z, true_par, title="Data Shooting Error", save_name="$(length(data))_small")
             catch e
                 println("Error on small grid.\n$e")
             end
-        catch e
-            println("Error on big grid.\n$e")
-        end
 
         println("\n----- Classic Estimator -----")
         try
-            f_min,f_min_idx = calc_z_plot(x, y, data, ode_fun, true_par, t,
-                                        single_shooting_estimator,
-                        reduced=false, unknown_states=unknown_states,
-                        fixed_pars=fixed_pars)
-            x_reduced = range(x[f_min_idx[2]]-.15, x[f_min_idx[2]]+.15, step=.01)
-            y_reduced = range(y[f_min_idx[1]]-.15, y[f_min_idx[1]]+.15, step=.01)
+            z = calc_z_plot(x, y, data, ode_fun, saveat_t,
+                                        single_shooting,
+                                        unknown_states=unknown_states,
+                                        fixed_pars=fixed_pars)
+            contour_3d_plots(x, y, z, true_par, title="Single Shooting Error", save_name="$(length(data))_big")
+            f_min,f_min_idx  = findmin(z)
+            x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
+            y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
             try
-                calc_z_plot(x_reduced, y_reduced, data, ode_fun, true_par, t,
-                                        single_shooting_estimator,
-                        reduced=true, unknown_states=unknown_states,
-                        fixed_pars=fixed_pars)
+                z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
+                                            single_shooting,
+                                            unknown_states=unknown_states,
+                                            fixed_pars=fixed_pars)
+                contour_3d_plots(x_reduced, y_reduced, z, true_par, title="Single Shooting Error", save_name="$(length(data))_small")
             catch e
                 println("Error on small grid.\n$e")
             end
@@ -125,3 +192,204 @@ for i in ["floudas_1"]
         end
     end
 end
+
+# --- Interesting Experiments ---
+
+# 0 - exponential
+experiment_1 = Dict(
+    "problem_name" => "exponential",
+    "ode_problem" => get_problem("exponential"),
+    "fixed_pars" => [-1.0],
+    "min_range" => -1.1,
+    "max_range" => 1.15,
+    "reduced_raius" => 1.0,
+    "reduced_step" => 0.02,
+    "noise" => 0.0,
+    "states" => [1],
+    "unknown_states" => [],
+    "true_par" => [1.0])
+
+experiment_countour(experiment_1, 10:60:50)
+
+# 1 - floudas_6
+experiment_1 = Dict(
+    "problem_name" => "floudas_6",
+    "ode_problem" => get_ode_problem("floudas_6"),
+    "fixed_pars" => [-1.0,-1.0],
+    "min_range" => 0.5,
+    "max_range" => 5.0,
+    "reduced_raius" => 1.0,
+    "reduced_step" => 0.02,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [3.2434,0.9209])
+
+experiment_countour(experiment_1, 10:20:50)
+
+# 1 - floudas_6
+# Not so interesting
+experiment = Dict(
+    "problem_name" => "floudas_6_u2",
+    "ode_problem" => get_ode_problem("floudas_6"),
+    "fixed_pars" => [-1.0,0.9209,-1.0],
+    "min_range" => 0.5,
+    "max_range" => 3.5,
+    "reduced_raius" => 0.5,
+    "reduced_step" => 0.05,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [2],
+    "true_par" => [3.2434,1.1])
+
+experiment_countour(experiment, 10:20:50)
+
+# 1 - floudas_6
+# Better
+experiment_1 = Dict(
+    "problem_name" => "floudas_6_u1",
+    "ode_problem" => get_ode_problem("floudas_6"),
+    "fixed_pars" => [-1.0,0.9209,-1.0],
+    "min_range" => 0.5,
+    "max_range" => 5.0,
+    "reduced_raius" => 1.0,
+    "reduced_step" => 0.05,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [1],
+    "true_par" => [3.2434,1.2])
+
+experiment_countour(experiment_1, 10:20:50)
+
+# 2 - floudas_1
+experiment = Dict(
+    "problem_name" => "floudas_1_u1",
+    "ode_problem" => get_ode_problem("floudas_1"),
+    "fixed_pars" => [5.0035,-1.0,-1.0],
+    "min_range" => 0.0,
+    "max_range" => 5.0,
+    "reduced_raius" => 0.5,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [1],
+    "true_par" => [1.0,1.0])
+
+experiment_countour(experiment, 10:20:50)
+
+# 2 - floudas_1
+# Not so interesting
+experiment = Dict(
+    "problem_name" => "floudas_1_u2",
+    "ode_problem" => get_ode_problem("floudas_1"),
+    "fixed_pars" => [-1.0,1.0,-1.0],
+    "min_range" => -1.0,
+    "max_range" => 7.0,
+    "reduced_raius" => 0.5,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [2],
+    "true_par" => [5.0035,0.0])
+
+experiment_countour(experiment, 10:20:50)
+
+
+# 2 - floudas_1
+experiment = Dict(
+    "problem_name" => "floudas_1",
+    "ode_problem" => get_ode_problem("floudas_1"),
+    "fixed_pars" => [-1.0,-1.0],
+    "min_range" => 0.0,
+    "max_range" => 10.0,
+    "reduced_raius" => 0.5,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [5.0035,1.0])
+
+experiment_countour(experiment, 10:20:50)
+
+# 2 - fhn
+experiment = Dict(
+    "problem_name" => "fhn",
+    "ode_problem" => get_ode_problem("fhn"),
+    "fixed_pars" => [-1.0,-1.0, 3.0],
+    "min_range" => 0.0,
+    "max_range" => 1.50,
+    "reduced_raius" => 0.91,
+    "reduced_step" => 0.005,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [0.2,0.2])
+
+experiment_countour(experiment, 10:20:50)
+
+# 2 - floudas_4
+experiment = Dict(
+    "problem_name" => "floudas_4",
+    "ode_problem" => get_ode_problem("floudas_4"),
+    "fixed_pars" => [-1.0,-1.0],
+    "min_range" => 0.0,
+    "max_range" => 0.01,
+    "reduced_raius" => 1e-4,
+    "reduced_step" => 1e-6,
+    "noise" => 0.0,
+    "states" => [1],
+    "unknown_states" => [],
+    "true_par" => [4.5704*10^(-6),2.7845*10^(-4)])
+
+experiment_countour(experiment, 10:20:50)
+
+# 2 - floudas_5
+experiment = Dict(
+    "problem_name" => "floudas_5",
+    "ode_problem" => get_ode_problem("floudas_5"),
+    "fixed_pars" => [-1.0,-1.0,1e-6,1e-6,1e-6],
+    "min_range" => 0.0,
+    "max_range" => 10.0,
+    "reduced_raius" => 0.8,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "noise" => 0.0,
+    "states" => [1,2,3],
+    "unknown_states" => [],
+    "true_par" => [5.2407,1.2176])
+
+experiment_countour(experiment, 10:20:50)
+
+#TODO
+# Up to Here
+# 2 - bbg
+#phi = [0.4, 5, 0.05, 0.5]
+experiment = Dict(
+    "problem_name" => "bbg_1",
+    "ode_problem" => get_ode_problem("bbg"),
+    "fixed_pars" => [-1.0,5.0,-1.0,0.5],
+    "min_range" => 0.0,
+    "max_range" => 5.0,
+    "reduced_raius" => 0.8,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [0.4,0.05])
+
+experiment_countour(experiment, 10:20:50)
+
+experiment = Dict(
+    "problem_name" => "bbg_2",
+    "ode_problem" => get_ode_problem("bbg"),
+    "fixed_pars" => [0.4,-1.0,0.05,-1.0],
+    "min_range" => 0.5,
+    "max_range" => 8.0,
+    "reduced_raius" => 0.1,
+    "reduced_step" => 0.005,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [5.0,0.5])
+
+experiment_countour(experiment, 10:20:50)
