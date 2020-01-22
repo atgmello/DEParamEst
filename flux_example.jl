@@ -231,13 +231,21 @@ Flux.train!(loss, tracking, data, ADAM(0.1))
 tracking
 
 #----- Now to ODEs -----
-i = 2
+i = 1
 p_solve = problem_set[i]
 ode_fun = p_solve.fun
 phi = p_solve.phi
 t = p_solve.t
 ode_data = p_solve.data
 learn_p = param([rand(1:100) for i in 1:length(phi)])
+learn_p
+t = range(t[1], stop=t[end], length=10)
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+ode_data = copy(data_original)
 
 function run_for_steps(steps, learn_p)
     function f_learn(x)
@@ -247,7 +255,13 @@ function run_for_steps(steps, learn_p)
     model_chain = Chain(x -> f_learn(x))
 
     tracking = params(learn_p)
-    loss(x,y) = sum(abs2, model_chain(x) - y)
+    function loss(x,y)
+        res = Flux.mse(model_chain(x), y)
+        if res == NaN
+            res = 10^5
+        end
+        return res
+    end
     data = Iterators.repeated((ode_data, ode_data), 500)
     Flux.train!(loss, tracking, data, ADAM(0.1))
     tracking
@@ -275,17 +289,170 @@ data = Iterators.repeated((ode_data, ode_data), 10000)
 Flux.train!(loss, tracking, data, ADAM(0.1))
 tracking
 
+
+# ----- Testing Adams-Moulton -----
+i = 6
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+phi = p_solve.phi
+t = p_solve.t
+ode_data = p_solve.data
+t = p_solve.t
+t = range(t[1], stop=t[end], length=50)
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+ode_data = copy(data_original)
+plot(transpose(ode_data))
+learn_p = param([rand(0.0001:0.0001:100) for i in 1:length(phi)])
+tracking = params(learn_p)
+function f_learn(x)
+    adams_moulton_fourth_estimator(learn_p,x,t,ode_fun; return_estimated=true)
+end
+# Single layer neural network
+model_chain = Chain(x -> f_learn(x))
+function loss_mse(x,y)
+    res = sum(abs2, model_chain(x) - y) + 10^10
+    return res
+end
+data = Iterators.repeated((ode_data, ode_data), 1000)
+function_error = []
+function cb()
+    err = Tracker.data(loss_mse(ode_data, ode_data))
+    if err < 100
+        push!(function_error, err)
+    end
+end
+@time Flux.train!(loss_mse, tracking, data, ADAM(0.1), cb = cb)
+plot(function_error[2:end])
+tracking
+euclidean(learn_p, phi)
+
+# ----- Adams Moulton One on Each Neuron -----
+i = 7
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+phi = p_solve.phi
+t = p_solve.t
+ode_data = p_solve.data
+t = p_solve.t
+t = range(t[1], stop=t[end], length=50)
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+ode_data = copy(data_original)
+plot(transpose(ode_data))
+learn_p = param([rand(0.0001:0.0001:100) for i in 1:length(phi)])
+tracking = params(learn_p)
+function f_learn(x)
+    adams_moulton_estimator(learn_p,x,t,ode_fun; return_estimated=true)
+end
+# Single layer neural network
+function concat_neurons(args...)
+    reestructure = zeros(eltype(args[1]), length(args[1][:,end]), length(args))
+    for i in 1:length(args)
+        reestructure[:,i] = args[i][:,end]
+    end
+    reestructure
+end
+a1 = adams_moulton_estimator(phi, ode_data[:,1:2], t[1:2], ode_fun; return_estimated=true)
+a2 = adams_moulton_estimator(phi, ode_data[:,2:3], t[2:3], ode_fun; return_estimated=true)
+a3 = adams_moulton_estimator(phi, ode_data[:,3:4], t[3:4], ode_fun; return_estimated=true)
+con = concat_neurons(a1, a2, a3)
+ode_data[:,2:4]
+con - ode_data[:,2:4]
+
+model_chain = Chain(x -> f_learn(x), x -> concat_neurons(x))
+function loss_mse(x,y)
+    res = Flux.mse(model_chain(x), y)
+end
+
+function loss_mse()
+    proc_data = [ode_data[:,i:i+1] for i in 1:size(ode_data)[2]-1]
+    segment = [f_learn(data_piece) for data_piece in proc_data]
+    estimated_data = concat_neurons(segment...)
+    res = Flux.mse(estimated_data, ode_data[:,2:end])
+end
+
+#data = Iterators.repeated([(ode_data[:,i:i+1], ode_data[:,2:end]) for i in 1:size(ode_data)[2]-1], 10000)
+#data = [(ode_data[:,i:i+1], ode_data[:,2:end]) for i in 1:size(ode_data)[2]-1]
+data = Iterators.repeated((), 1000)
+function_error = []
+function cb()
+    err = Tracker.data(loss(ode_data, ode_data))
+    if err < 100
+        push!(function_error, err)
+    end
+end
+@time Flux.train!(loss_mse, tracking, data, ADAM(0.1))
+tracking
+euclidean(learn_p, phi)
+phi
+
+# ----- Another test, adding layers  -----
+i = 7
+p_solve = problem_set[i]
+ode_fun = p_solve.fun
+phi = p_solve.phi
+t = p_solve.t
+ode_data = p_solve.data
+t = p_solve.t
+t = range(t[1], stop=t[end], length=10)
+tspan = (t[1], t[end])
+ini_cond = p_solve.data[:,1]
+ode_prob = ODEProblem(p_solve.fun, ini_cond, tspan, p_solve.phi)
+ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+data_original = reduce(hcat, ode_sol.u)
+ode_data = copy(data_original)
+plot(transpose(ode_data))
+rand_ini = [rand(0.0001:0.0001:100) for i in 1:length(phi)]
+learn_p = param(rand_ini)
+#learn_p = param(phi)
+#tracking = params(learn_p)
+function f_learn(p)
+    vec(adams_moulton_estimator(p, ode_data, t, ode_fun; return_estimated=true))
+end
+# 10 layer neural network
+size(ode_data)
+model_chain = Chain(Dense(length(ode_data),length(phi), σ),
+                    Dense(length(phi),100, σ),
+                    Dense(100,100, σ),
+                    Dense(100,100, σ),
+                    Dense(100,100, σ),
+                    Dense(100,100, σ),
+                    Dense(100,100, σ),
+                    Dense(100,length(phi), abs),
+                    x -> f_learn(x))
+tracking = params(model_chain)
+function loss(x,y)
+    res = Flux.mse(model_chain(x), y)
+    if res == NaN
+        res = 10^10
+    end
+    return res
+end
+data = Iterators.repeated((vec(ode_data), vec(ode_data)), 1000000)
+function_error = []
+function cb()
+    println(Flux.data(loss(vec(ode_data), vec(ode_data))))
+end
+@time Flux.train!(loss, tracking, data, ADAM(0.1))
+print(params(model_chain))
 # ----- Simpler model -----
-learn_p = param([22.71])
+learn_p = param([7.71]) |> gpu
 function f(x)
     x.*learn_p
 end
 # Single layer neural network
-model_chain = Chain(x -> f(x))
+model_chain = Chain(x -> f(x)) |> gpu
 tracking = params(learn_p)
 loss(x,y) = sum(abs2, model_chain(x) - y)
-rand_data = rand((1.0:0.1:100.0),1,100)
-label = rand_data.*[2]
+rand_data = rand((1.0:0.1:100.0),500,500) |> gpu
+label = rand_data.*2 |> gpu
 data = Iterators.repeated((rand_data, label), 5000)
 @time Flux.train!(loss, tracking, data, ADAM(0.1))
 tracking
