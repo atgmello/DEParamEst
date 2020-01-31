@@ -1,47 +1,54 @@
 module Utils
 
+using Distributed
 import Distributions: Uniform
 import Statistics: quantile
 using Random
+using Statistics
 using Distances
+using DifferentialEquations
+using Plots
 
 function rand_guess(bounds)
     [rand(Uniform(bounds[1][i], bounds[end][i]))
         for i in 1:length(bounds[1])]
 end
 
-function add_noise!(data, var)
+function add_noise(data, var)
     if length(size(data)) == 2
         m,n = size(data)
         for i in 1:m
             for j in 1:n
-                if data[i,j] != 0.
-                    if -var*data[i,j] < var*data[i,j]
-                        a = -var*data[i,j]
-                        b = var*data[i,j]
-                    else
-                        b = -var*data[i,j]
-                        a = var*data[i,j]
-                    end
-                    data[i,j] += rand(Uniform(a, b))
+                if data[i,j] == 0.
+                    data[i,j] = mean(data)+10^(-3)
                 end
+                if -var*data[i,j] < var*data[i,j]
+                    a = -var*data[i,j]
+                    b = var*data[i,j]
+                else
+                    b = -var*data[i,j]
+                    a = var*data[i,j]
+                end
+                data[i,j] += rand(Uniform(a, b))
             end
         end
     elseif length(size(data)) == 1
         m = length(data)
         for i in 1:m
-            if data[i] != 0.
-                if -var*data[i] < var*data[i]
-                    a = -var*data[i]
-                    b = var*data[i]
-                else
-                    b = -var*data[i]
-                    a = var*data[i]
-                end
-                data[i] += rand(Uniform(a, b))
+            if data[i] == 0.
+                data[i] = mean(data)+10^(-3)
             end
+            if -var*data[i] < var*data[i]
+                a = -var*data[i]
+                b = var*data[i]
+            else
+                b = -var*data[i]
+                a = var*data[i]
+            end
+            data[i] += rand(Uniform(a, b))
         end
     end
+    return data
 end
 
 function fae(actual::AbstractArray, forecast::AbstractArray)
@@ -70,31 +77,6 @@ function mrae(actual::AbstractArray, forecast::AbstractArray)
     stat = (1/n)*sum(e./abs.(actual))
 end
 
-function diff_states(f, u0::AbstractArray, tspan::Tuple, actual::AbstractArray, forecast::AbstractArray; var=1.5)
-    dist = 0.0
-    t = range(tspan[1], stop=tspan[end], length=1000)
-    runs = 50
-    for i in 1:runs
-        u0_perturb = copy(u0)
-        add_noise!(u0_perturb, var)
-        for j in 1:length(u0_perturb)
-            if u0_perturb[j] < 0
-                u0_perturb[j] = 0
-            end
-        end
-        de_prob_actual = ODEProblem(f,u0_perturb,tspan,actual)
-        de_sol_actual = DifferentialEquations.solve(de_prob_actual, AutoVern9(Rodas5()), saveat=t)
-        data_actual = reduce(hcat, de_sol_actual.u)
-
-        de_prob_forecast = ODEProblem(f,u0_perturb,tspan,forecast)
-        de_sol_forecast = solve(de_prob_forecast, AutoVern9(Rodas5()), saveat=t)
-        data_forecast = reduce(hcat, de_sol_forecast.u)
-
-        dist += euclidean(data_actual, data_forecast)/(size(data_actual)[1]*size(data_actual)[2])
-    end
-    dist /= runs
-end
-
 function filter_outlier(arr; p=2)
     q = quantile(arr)
     iqr = q[3] - q[1]
@@ -105,6 +87,14 @@ function filter_outlier(arr; p=2)
 end
 
 struct Trace
+    """
+    A Trace object is intended to hold
+    multiple pairs of time and eval.
+    Therefore, the attributes time and
+    eval shall be array of arrays, that,
+    when zipped, recreate the pairs
+    mentioned above.
+    """
     time::AbstractArray
     eval::AbstractArray
 end
@@ -141,41 +131,57 @@ function scale_eval(t::Trace)
     return Trace(t.time, scaled_eval)
 end
 
-function get_best_worst_traces(traces::AbstractArray)
+function get_range_traces(trace::Trace)
     """
-    Given an array of traces
-    (i.e. iteration time vs error funciton evalutation)
+    Given a Trace
     select the best trace (the one with the least amount of
     time spent to get to the optimal solution) and the worst
     trace (the one with the most)
     """
-    trace_times = map(t -> sum(t.time), traces)
+    trace_times = map(t -> t[end], trace.time)
     (_,min_idx) = findmin(trace_times)
-    best = traces[min_idx]
-    (_,max_idx) = findmax(trace_times)
-    worst = traces[max_idx]
+    best = Trace(trace.time[min_idx], trace.eval[min_idx])
 
-    return best, worst
+    (_,max_idx) = findmax(trace_times)
+    worst = Trace(trace.time[max_idx], trace.eval[max_idx])
+
+    if length(trace_times)%2 == 0
+        append!(trace_times, 0.0)
+        median_idx = findfirst(x -> x == median(trace_times), trace_times)
+        median_idx -= 1
+    else
+        median_idx = findfirst(x -> x == median(trace_times), trace_times)
+    end
+    med = Trace(trace.time[median_idx], trace.eval[median_idx])
+
+    return best, med, worst
 end
 
-#=>
-a = [1. 1. 1.]
-b = [2. 2. 2.]
-c = [100. 10. 33.]
-mape(b,a)
-mape(a,b)
-mape(a,c)
-smape(b,a)
-smape(a,b)
-smape(a,c)
-fae(a,b)
-fae(b,a)
-mrae(a,b)
-mrae(b,a)
-mrae(a,c)
-mrae(c,a)
-euclidean(a,b)
-euclidean(a,c)
-<=#
+function success_rate(errors::AbstractArray)
+    f = x -> (11)/(10+exp10(x))
+    mean(map(x ->  begin
+                        if x > 0.5
+                            1
+                        else
+                            0
+                        end
+                    end,
+                f.(errors)))
+end
+
+function box_data(arr::AbstractArray)
+    q = quantile(arr,[0.25,0.5,0.75])
+    iqr = q[3] - q[1]
+    min_val = q[1] - 1.5*iqr
+    max_val = q[3] + 1.5*iqr
+    return [maximum([min_val,minimum(arr)]),
+            q[1],q[2],q[3],
+            minimum([max_val,maximum(arr)])]
+end
+
+function box_scatter_plot(arr::AbstractArray)
+    qarr = box_data(arr)
+    return [qarr[3]-qarr[1],qarr[3],qarr[5]-qarr[3]]
+end
 
 end
