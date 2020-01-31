@@ -1163,6 +1163,8 @@ const opt = Optim
 trace_errs = []
 trace_times = []
 f = (x) -> sum(x)^4
+res = opt.optimize(f, [rand(-100.0:100.0),rand(-100.0:100.0)], store_trace=true)
+
 for i in 1:10
     res = opt.optimize(f, [rand(-100.0:100.0),rand(-100.0:100.0)], store_trace=true)
     trace = opt.trace(res)
@@ -1249,3 +1251,71 @@ maximum(a)
 minimum(a)
 (_,min_idx) = findmin(map(t -> sum(t.time), traces))
 traces[min_idx]
+
+# --- Testing Box Plots ---
+using Random
+using Revise
+includet("./utils.jl")
+import Utils
+
+b = randn(10000)
+b = randexp(50)
+med_b = median(b)
+max_b = maximum(b)
+min_b = minimum(b)
+scatter((0.0, med_b),
+		yerror=[(med_b-min_b,
+				max_b-med_b)])
+
+c = quantile(b)
+
+scatter!((1.0, c[3]),
+		yerror=[(c[3]-c[1],
+				c[5]-c[3])])
+
+min_val,med_val,max_val = box_scatter_plot(b)
+
+scatter!((2.0, med_val),
+		yerror=[(min_val,
+				max_val)])
+
+scatter!((3.0, mean(b)),
+		yerror=std(d))
+
+boxplot!(["4.0"],b,leg=false)
+
+violin!(["5.0"],b,leg=false)
+
+
+# --- Testing scaling functions ---
+using Plots
+
+pp = 0:0.1:10
+f1 = [x -> (i+1)/(i+exp2(x)) for i in [1,5,10]]
+f2 = [x -> (i+1)/(i+exp(x)) for i in [1,5,10]]
+f3 = [x -> (i+1)/(i+exp10(x)) for i in [1,5,10]]
+p = plot()
+plot!(p,pp,map(f -> f.(pp),f1))
+plot!(p,pp,map(f -> f.(pp),f2), linestyle=:dash)
+plot!(p,pp,map(f -> f.(pp),f3), linestyle=:dot)
+vline!(p,[1.0])
+success_rate([1.5,0.1,0.1])
+
+# --- Testing error metrics ---
+
+a = [100.0,200.0,400.0]
+b = [150.0,205.0,4050.0]
+
+mae = mean(abs.(a-b))
+smaea = mean(abs.(a-b)./(b))
+smaeb = mean(abs.(a-b)./(a))
+smaec = mean(abs.(a-b)./(maximum(a)-minimum(a)))
+smaec = mean(abs.(a-b)./(maximum(b)-minimum(b)))
+ssmae = mean(abs.(a-b)./(a+b))
+
+mae = mean(abs.(10*a-10*b))
+smaea = mean(abs.(10*a-10*b)./(10*b))
+smaeb = mean(abs.(10*a-10*b)./(10*a))
+ssmae = mean(abs.(10*a-10*b)./(10*a+10*b))
+
+println("$(round(ssmae,digits=3))")
