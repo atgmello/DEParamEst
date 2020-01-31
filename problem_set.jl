@@ -1,4 +1,4 @@
-module ODEProblems
+module ProblemSet
 
 using DifferentialEquations
 using ParameterizedFunctions

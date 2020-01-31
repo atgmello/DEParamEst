@@ -1,4 +1,4 @@
-module ObjectiveFunctions
+module ObjectiveFunction
 
 using LSODA
 using DifferentialEquations
@@ -363,5 +363,13 @@ function adams_moulton_fourth_estimator(phi, data, time_array, f; plot_estimated
 end
 
 soft_l1(z) = (2 * ((1 + z)^0.5 - 1))
+
+function huber(z)
+    if z < 0
+        return z
+    else
+        return soft_l1(z)
+    end
+end
 
 end
