@@ -11,13 +11,13 @@ desired_precision = Float64
 
 struct DEProblem
     fun::Function
-    phi::AbstractArray
-    bounds::AbstractArray
-    data::AbstractArray
-    t::AbstractArray
+    phi::Array{<:AbstractFloat,1}
+    bounds::Array{<:AbstractFloat}
+    data::Array{<:AbstractFloat}
+    t::AbstractArray{<:AbstractFloat}
 end
 
-function get_problem_key(i=0)
+function get_problem_key(i::Int=0)::String
     keys = ["floudas_1","floudas_2",
             "floudas_3","floudas_4",
             "floudas_5","floudas_6",
@@ -31,7 +31,7 @@ function get_problem_key(i=0)
     end
 end
 
-function get_problem(p)
+function get_problem(p)::DEProblem
     if p == "exponential"
         # ----- Problem 0 -----
 
@@ -65,10 +65,9 @@ function get_problem(p)
         k1 = 5.0035
         k2 = 1.
         phi = [k1, k2]
-        bounds = [0., 10.]
         ini_cond = [1., 0.]
-        bounds = [[0. for i in 1:length(phi)],
-                [10. for i in 1:length(phi)]]
+        bounds = hcat([0. for i in 1:length(phi)],
+                [10. for i in 1:length(phi)])
         floudas_samples = [
                             1. 0.606 0.368 0.223 0.135 0.082 0.050 0.030 0.018 0.011 0.007;
                             0. 0.373 0.564 0.647 0.669 0.656 0.642 0.583 0.539 0.494 0.451
@@ -98,8 +97,8 @@ function get_problem(p)
         k4 = 20.007
         phi = [k1, k2, k3, k4]
         ini_cond = [1., 0., 0.]
-        bounds = [[0., 0., 10., 10.],
-                [10., 10., 50., 50.]]
+        bounds = hcat([0., 0., 10., 10.],
+                [10., 10., 50., 50.])
         floudas_samples = [
                             1. 0.8241 0.6852 0.5747 0.4867 0.4166 0.3608 0.3164 0.2810 0.2529 0.2304 0.2126 0.1984 0.1870 0.1870 0.1709 0.1651 0.1606 0.1570 0.1541 0.1518;
                             0. 0.0937 0.1345 0.1654 0.1899 0.2094 0.2249 0.2373 0.2472 0.2550 0.2613 0.2662 0.2702 0.2733 0.2759 0.2779 0.2794 0.2807 0.2817 0.2825 0.2832;
@@ -127,8 +126,8 @@ function get_problem(p)
         k3 = 2.2216
         phi = [k1, k2, k3]
         ini_cond = [1., 0.]
-        bounds = [[0. for i in 1:length(phi)],
-                [20. for i in 1:length(phi)]]
+        bounds = hcat([0. for i in 1:length(phi)],
+                [20. for i in 1:length(phi)])
         floudas_samples = [
                             1. 0.7307 0.5982 0.4678 0.4267 0.3436 0.3126 0.2808 0.2692 0.2210 0.2122 0.1903 0.1735 0.1615 0.1240 0.1190 0.1109 0.0890 0.0820 0.0745 0.0639;
                             0. 0.1954 0.2808 0.3175 0.3047 0.2991 0.2619 0.2391 0.2210 0.1898 0.1801 0.1503 0.1030 0.0964 0.0581 0.0471 0.0413 0.0367 0.0219 0.0124 0.0089
@@ -149,8 +148,8 @@ function get_problem(p)
         k2 = 2.7845*10^(-4)
         phi = [k1, k2]
         ini_cond = [0.]
-        bounds = [[0. for i in 1:length(phi)],
-                [.1 for i in 1:length(phi)]]
+        bounds = hcat([0. for i in 1:length(phi)],
+                [.1 for i in 1:length(phi)])
         floudas_samples = [
                             0. 1.4 6.3 10.4 14.2 17.6 21.4 23.0 27.0 30.4 34.4 38.8 41.6 43.5 45.3
                             ]
@@ -175,8 +174,8 @@ function get_problem(p)
         k5 = 0.
         phi = [k1, k2, k3, k4, k5]
         ini_cond = [1., 0., 0.]
-        bounds = [[0. for i in 1:length(phi)],
-                [100. for i in 1:length(phi)]]
+        bounds = hcat([0. for i in 1:length(phi)],
+                [100. for i in 1:length(phi)])
         floudas_samples = [
                             1. 0.461 0.426 0.383 0.305 0.195 0.170 0.139 0.112  0.112 0.090 0.082 0.066 0.053 0.043 0.041 0.029;
                             0. 0.114 0.135 0.157 0.194 0.231 0.234 0.228 0.228  0.226 0.220 0.214 0.178 0.188 0.183 0.184 0.166;
@@ -199,8 +198,8 @@ function get_problem(p)
         k2 = 0.9209
         phi = [k1, k2]
         ini_cond = [1.2, 1.1]
-        bounds = [[0. for i in 1:length(phi)],
-                [10. for i in 1:length(phi)]]
+        bounds = hcat([0. for i in 1:length(phi)],
+                [10. for i in 1:length(phi)])
         floudas_samples = [
                             1.2 0.7990 0.8731 1.2487 1.0362 0.7483 1.0024 1.2816 0.8944 0.7852 1.1527;
                             1.1 1.0758 0.8711 0.9393 1.1468 1.0027 0.8577 1.0274 1.1369 0.9325 0.9074
@@ -218,8 +217,8 @@ function get_problem(p)
 
         phi = [0.4, 5, 0.05, 0.5]
 
-        bounds = [Float64[10^(-5) for i in 1:length(phi)],
-                Float64[10^(2) for i in 1:length(phi)]]
+        bounds = hcat(Float64[10^(-5) for i in 1:length(phi)],
+                Float64[10^(2) for i in 1:length(phi)])
 
         ini_cond = [2.0, 30.0]
         t = range(0.0, stop=12.0, length=7)
@@ -244,8 +243,8 @@ function get_problem(p)
 
         phi = [0.2, 0.2, 3.0]
 
-        bounds = [Float64[10^(-5) for i in 1:length(phi)],
-                Float64[10^(5) for i in 1:length(phi)]]
+        bounds = hcat(Float64[10^(-3) for i in 1:length(phi)],
+                Float64[10^(3) for i in 1:length(phi)])
 
         ini_cond = [-1.0, 1.0]
         t = range(0.0, stop=20.0, length=7)
@@ -270,8 +269,8 @@ function get_problem(p)
         """
         phi = [2.5, 0.25, 0.75, 0.75, 0.5, 0.5]
 
-        bounds = [Float64[0.01 for i in 1:length(phi)],
-                Float64[50.0 for i in 1:length(phi)]]
+        bounds = hcat(Float64[0.01 for i in 1:length(phi)],
+                Float64[50.0 for i in 1:length(phi)])
 
         ini_cond = [90.0, 10.0, 280.0, 10.0, 10.0, 280.0, 10.0, 10.0]
         #t = range(0.0, stop=20.0, length=7)
@@ -314,10 +313,10 @@ function get_problem(p)
         """
         phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
 
-        bounds = [Float64[10^(-3) for i in 1:length(phi)],
-                Float64[10^(3) for i in 1:length(phi)]]
-        bounds[1][end] = 1.0
-        bounds[2][end] = 12.0
+        bounds = hcat(Float64[10^(-2) for i in 1:length(phi)],
+                Float64[10^(2) for i in 1:length(phi)])
+        bounds[1,end] = 1.0
+        bounds[2,end] = 12.0
 
         ini_cond = [0.1, 0.2, 2.5]
         t = range(0.0, stop=240.0, length=10)
@@ -429,11 +428,11 @@ function get_problem(p)
                 .1, 1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0,
                 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-        bounds = [Float64[10^(-5) for i in 1:length(phi)],
-                Float64[10^(5) for i in 1:length(phi)]]
+        bounds = hcat(Float64[10^(-5) for i in 1:length(phi)],
+                Float64[10^(5) for i in 1:length(phi)])
         for i in [2,4,8,10,14,16]
-            bounds[1][i] = 0.1
-            bounds[2][i] = 10
+            bounds[1,i] = 0.1
+            bounds[2,i] = 10
         end
 
         ini_cond = [.6667, .5725, .4176, .4, .3641, .2946, 1.419, .9346]
@@ -668,8 +667,8 @@ function get_problem(p)
         p[117] = 0.2
 
         t = collect(1.0:20.0)
-        bounds = [Float64[10^-5 for i in 1:length(p)],
-                Float64[10^5 for i in 1:length(p)]]
+        bounds = hcat(Float64[10^-5 for i in 1:length(p)],
+                Float64[10^5 for i in 1:length(p)])
 
         function f_cho(dx_dt, x, par, t)
             p = zeros(347)

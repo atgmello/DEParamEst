@@ -6,13 +6,88 @@ using Plots
 
 export data_shooting, single_shooting
 
-function data_shooting(params::AbstractArray,
-                                data::Matrix,
-                                time_array::AbstractArray,
-                                f::Function;
-                                unknown_vars=[],
-                                differential_vars=[],
-                                plot_estimated=false)
+function data_shooting(phi::Array,
+                        data::Array{<:AbstractFloat},
+                        time_array::StepRangeLen{<:AbstractFloat},
+                        f::Function)::Array
+    """
+    phi: Parameters to be optimized. Can be comprized of rate constants.
+    data: Observed data, used for calculating the residuals.
+    time_array: Time intervals in which the data has been colected.
+    f: DE that describes the phenomena.
+    """
+
+    num_state_vars, num_samples = size(data)
+
+    estimated = zeros(
+                    promote_type(
+                        eltype(phi),eltype(data)
+                    ),
+                    num_state_vars,num_samples
+                )
+
+    # Initial conditions are stored at x_dot_num's first column
+    estimated[:,1] = data[:,1]
+
+    for i in 1:num_samples-1
+        delta_t = time_array[i+1] - time_array[i]
+
+        x_0 = data[:, i]
+        x_1 = data[:, i+1]
+
+        f_0 = zeros(promote_type(eltype(phi),eltype(data)),num_state_vars)
+        f(f_0, x_0, phi, 0)
+        f_1 = zeros(promote_type(eltype(phi),eltype(data)),num_state_vars)
+        f(f_1, x_1, phi, 0)
+
+        x_est = x_0 + (1/2)*delta_t*(f_0+f_1)
+
+        estimated[:, i+1] = x_est
+    end
+
+    # TODO
+    # Fix weighting
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
+    #=>
+    if findmin(estimated)[1] < 0
+        for i in 1:length(residuals)
+            residuals[i] = 10^10
+        end
+    end
+    <=#
+    return vec(residuals)
+end
+
+function single_shooting(phi::Array,
+                        data::Array,
+                        t::AbstractArray,
+                        f::Function)::Array
+    num_state_vars, num_samples = size(data)
+    known_vars = 1:num_state_vars
+    ini_cond = convert.(eltype(phi),data[:,1])
+    tspan = (t[1], t[end])
+
+    prob = ODEProblem(f, ini_cond, tspan, phi)
+    osol  = solve(prob, AutoTsit5(Rosenbrock23()), saveat=t)
+    estimated = reduce(hcat, osol.u)
+
+    # TODO
+    # Fix weighting
+
+    weight = abs2(1/findmax(data)[1])
+    residuals = weight .* (data-estimated)
+
+    return vec(residuals)
+end
+
+function data_shooting_exp(params::Array{<:AbstractFloat,1},
+                        data::Array{<:AbstractFloat},
+                        time_array::StepRangeLen,
+                        f::Function;
+                        unknown_vars::Array{<:Float64,1}=[],
+                        differential_vars::Array{<:Float64,1}=[],
+                        plot_estimated::Bool=false)::Array{<:AbstractFloat,1}
     """
     params: Parameters to be optimized. Can be comprized of rate constants and initial values.
     data: Observed data, used for calculating the residuals.
@@ -23,9 +98,6 @@ function data_shooting(params::AbstractArray,
     num_state_vars, num_samples = size(data)
 
     phi = params[1:length(params)-length(unknown_vars)]
-
-    data = convert(Array{eltype(phi)}, data)
-    time_array = convert(Array{eltype(phi)}, time_array)
 
     # If the initial values of some states are not known
     if unknown_vars != []
@@ -64,7 +136,7 @@ function data_shooting(params::AbstractArray,
         # Now make an array comprised of all the states:
         # the ones calculated by the numerical method above
         # and the known ones, from the data
-        partial_data = Matrix{Float64}(undef,0,length(time_array))
+        partial_data = Array{Float64}(undef,0,length(time_array))
         i = 1
         j = 1
 
@@ -93,9 +165,8 @@ function data_shooting(params::AbstractArray,
         estimated[:,1] = data[:,1]
     end
 
-    for i in 1:num_samples-1
+    @inbounds for i in 1:num_samples-1
         delta_t = time_array[i+1] - time_array[i]
-        delta_t = convert(eltype(phi), delta_t)
 
         x_0 = data[:, i]
         x_1 = data[:, i+1]
@@ -155,15 +226,13 @@ function data_shooting(params::AbstractArray,
     return residuals
 end
 
-function single_shooting(params::AbstractArray,
-                                    data::AbstractArray,
-                                    t::AbstractArray,
-                                    f::Function;
-                                    unknown_vars = [],
-                                    plot_estimated=false, return_estimated=false)
 
-    data = convert(Array{eltype(params)}, data)
-    t = convert(Array{eltype(params)}, t)
+function single_shooting_exp(params::Array{<:AbstractFloat},
+                        data::Array{<:AbstractFloat},
+                        t::StepRangeLen,
+                        f::Function;
+                        unknown_vars::Array{<:AbstractFloat} = [],
+                        plot_estimated::Bool=false, return_estimated::Bool=false)::Array{<:AbstractFloat}
 
     num_state_vars, num_samples = size(data)
     state_vars = collect(1:num_state_vars)
@@ -209,10 +278,10 @@ function single_shooting(params::AbstractArray,
     weight = abs2(1/findmax(data)[1])
     residuals = weight .* (data-estimated)
 
-    return  residuals
+    return residuals
 end
 
-function adams_moulton_estimator(phi::AbstractArray, data::AbstractArray, time_array::AbstractArray, f::Function; plot_estimated=false, return_estimated=false)
+function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{AbstractFloat}, time_array::Array{AbstractFloat}, f::Function; plot_estimated=false, return_estimated=false)::Array{AbstractFloat}
     num_state_vars, num_samples = size(data)
     data = convert(Array{eltype(phi)}, data)
     time_array = convert(Array{eltype(phi)}, time_array)
@@ -362,9 +431,11 @@ function adams_moulton_fourth_estimator(phi, data, time_array, f; plot_estimated
     return residuals
 end
 
-soft_l1(z) = (2 * ((1 + z)^0.5 - 1))
+function soft_l1(z::Array{<:AbstractFloat})::Array{<:AbstractFloat}
+    sz = (2 * ((1 + z)^0.5 - 1))
+end
 
-function huber(z)
+function huber(z::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     if z < 0
         return z
     else
