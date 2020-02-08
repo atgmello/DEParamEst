@@ -1319,3 +1319,173 @@ smaeb = mean(abs.(10*a-10*b)./(10*a))
 ssmae = mean(abs.(10*a-10*b)./(10*a+10*b))
 
 println("$(round(ssmae,digits=3))")
+
+# --- Transducers ---
+using Transducers
+using BenchmarkTools
+
+maximum(Map(x -> x^2),[1,2,3])
+var = 0.1
+runs = 20
+f = (x,y) -> x+y
+g(x,y) = begin
+    sleep(1)
+    x+y
+end
+h(x) = begin
+    a,b = x
+    return a+b
+end
+
+
+u0 = [1.1,2.2]
+arr = eduction(u0 for _ in 1:runs)
+arr2 = eduction(var for _ in 1:runs)
+u0_arr = collect(Map(x -> f.(x,var)),arr)
+
+collect(Map(x -> f.(x,var)), arr)
+arr = tcollect(eduction(u0 for i in 1:3))
+@time u0_arr = collect(Map(x -> abs.(f.(x,var))),eduction(u0 for _ in 1:runs))
+@time tcollect(Map(x -> 2x), 1:1_000_000)
+@time collect(Map(x -> 2x), 1:1_000_000)
+@time eduction(abs.(f.(x,var)) for x in eduction(u0 for _ in 1:runs))
+
+@btime collect(eduction(abs.(f.(x,var)) for x in eduction(u0 for _ in 1:runs)))
+@btime collect(Map(x -> abs.(f.(x,var))), eduction(u0 for _ in 1:runs))
+@btime tcollect(Map(x -> abs.(f.(x,var))), [u0 for _ in 1:runs])
+@btime collect(map(x -> abs.(f.(x,var)), [u0 for _ in 1:runs]))
+@btime [abs.(f.(x,var)) for x in [u0 for _ in 1:runs]]
+
+@time collect(eduction(abs.(g.(u0,var)) for _ in 1:runs))
+@time collect(Map(x->abs.(g.(u0,var))), 1:runs)
+@time tcollect(Map(x->abs.(g.(u0,var))), 1:runs)
+@time collect(map(x->abs.(g.(u0,var)), 1:runs))
+@time [abs.(g.(u0,var)) for _ in 1:runs]
+
+
+collect(Map(x -> abs.(f.(x,var))), eduction(u0 for _ in 1:runs))
+collect(Map((x,y) -> abs.(f.(x,y))), [u0 for _ in 1:runs], [u0 for _ in 1:runs])
+tcollect(Map(x -> abs.(h(x))),
+    collect(zip([u0 for _ in 1:runs], [u0 for _ in 1:runs])))
+collect(zip([u0 for _ in 1:runs], [u0 for _ in 1:runs], [u0 for _ in 1:runs]))
+
+collect(map((x,y) -> abs.(f.(x,y)), [u0 for _ in 1:runs], [u0 for _ in 1:runs]))
+
+# --- DUMP Plot Trace ---
+
+"""
+Plots
+Trace
+"""
+
+p = plot(xlabel="Time", ylabel="Function Evaluation")
+for m in methods
+	p2 = plot(xlabel="Time", ylabel="Function Evaluation")
+	trace = res[m]["trace"]
+	if length(trace.eval) > 0
+		trace = scale_eval(fill_trace(trace))
+		#(best,med,worst) = get_range_traces(trace)
+
+		plot!(p, mean(trace.time), log10.(mean(trace.eval)),
+				label="Mean "*m, color=method_color[m])
+
+		plot!(p2, mean(trace.time), log10.(mean(trace.eval)),
+				label="Mean "*m, color=method_color[m])
+
+		#=>
+		plot!(p, mean(trace.time), log10.(mean(trace.eval)), label="Mean "*m,
+				grid=true,
+				ribbon=log10.(mean(std(trace.eval))),
+				fillalpha=.4)
+
+		plot!(p2, mean(trace.time), log10.(mean(trace.eval)), label="Mean "*m,
+				grid=true,
+				ribbon=log10.(mean(std(trace.eval))),
+				fillalpha=.4)
+		<=#
+
+		#=>
+		plot!(p, med.time, log10.(med.eval), label="Mean "*m,
+				grid=true,
+				ribbon=(log10.(abs.(med.eval-worst.eval)),
+						log10.(abs.(best.eval-med.eval))),
+				fillalpha=.4)
+
+		plot!(p2, med.time, log10.(med.eval), label="Mean "*m,
+				grid=true,
+				ribbon=(log10.(abs.(med.eval-worst.eval)),
+						log10.(abs.(best.eval-med.eval))),
+				fillalpha=.4)
+		<=#
+
+		#=>
+		plot!(p, best.time, log10.(best.eval), label="Best "*m)
+		plot!(p, med.time, log10.(med.eval), label="Median "*m)
+		plot!(p, mean(trace.time), log10.(mean(trace.eval)), label="Mean "*m)
+		plot!(p, worst.time, log10.(worst.eval), label="Worst "*m)
+
+		plot!(p2, best.time, log10.(best.eval), label="Best "*m)
+		plot!(p2, med.time, log10.(med.eval), label="Median "*m)
+		plot!(p2, mean(trace.time), log10.(mean(trace.eval)), label="Mean "*m)
+		plot!(p2, worst.time, log10.(worst.eval), label="Worst "*m)
+		<=#
+
+		display(p2)
+		savefig(p2,"./trace_$(m)_$(sam)_$(replace(string(var),"."=>"")).svg")
+	end
+end
+savefig(p,"./trace_all_$(sam)_$(replace(string(var),"."=>"")).svg")
+
+# --- AD Testing ---
+using DifferentialEquations, Optim, LinearAlgebra
+
+function f(dz_dt, z, phi, t)
+    r_1 = phi[1]*z[1]
+    r_2 = phi[2]*z[2]
+
+    dz_dt[1] = -r_1
+    dz_dt[2] = r_1 - r_2
+end
+
+function prob_sol()::Tuple
+    tspan::T where T<:Tuple = (0.,8.)
+    t::T where T<:AbstractArray = range(0.,stop=8.,length=10)
+    p0::T where T<:AbstractArray{<:AbstractFloat} = [1.,2.]
+    x0::T where T<:AbstractArray{<:AbstractFloat} = [10.,0.]
+
+    prob = ODEProblem(f,x0,tspan,p0)
+
+    sol = DifferentialEquations.solve(prob, Rodas5(); saveat=t)
+
+    sol_u::AbstractArray{<:AbstractFloat} = reduce(hcat,sol.u)
+
+    return (prob,sol_u)
+end
+
+function g(data::Array,t::AbstractArray,prob::DifferentialEquations.ODEProblem)::Function
+    function loss_function(x::Array)
+        _prob = remake(prob;u0=convert.(eltype(x),prob.u0),p=x)
+        sol = DifferentialEquations.solve(_prob; saveat=t)
+        sol_u = reduce(hcat,sol.u)
+        sum(abs2.(sol_u - data))
+    end
+    return loss_function
+end
+
+function get_opt_results(h::Function)::Array
+    res = optimize(h, [2.0,1.0], LBFGS(),autodiff=:forward)
+    res.minimizer
+end
+
+prob, sol_u = prob_sol()
+xdata_arr = [sol_u + randn(size(sol_u)) for _ in 1:10]
+
+g_args = zip(xdata_arr,
+            [t for _ in 1:length(xdata_arr)],
+            [prob for _ in 1:length(xdata_arr)])
+
+gs = [g(arg...) for arg in g_args]
+
+[get_opt_results(f) for f in gs]
+
+minimum([a... for a in [(-1,2),(-10,11)]])
