@@ -65,53 +65,42 @@ const Grad_options = opt.Options(x_tol=x_tol, f_tol=f_tol,
 							iterations=iter, time_limit=t_limit)
 const inner_optimizer = opt.LBFGS()
 
-function optim_res(obj_fun::Function, de_fun::Function, p0::Array,
-					phi::Array,
-					ini_cond::Array,
-					t::AbstractArray)::Array{Array{<:AbstractFloat}}
+function optim_res(obj_fun::Function,
+					problem::ProblemSet.DEProblem,
+					p0::Array)::Array{Array{<:AbstractFloat}}
+
+    lb::Array{<:AbstractFloat} = problem.bounds[:,1]
+    ub::Array{<:AbstractFloat} = problem.bounds[:,2]
 	timed = @elapsed res_obj = opt.optimize(obj_fun, p0, opt.LBFGS(), autodiff=:forward, Grad_options)
-    dist = max_diff_states(de_fun, ini_cond, (t[1],t[end]), phi, res_obj.minimizer[1:length(phi)], 1.5)
+    dist = max_diff_states(problem, res_obj.minimizer[1:length(problem.phi)], 1.5)
 	#trace = make_trace(opt.trace(res_obj))
 
 	#return [dist, timed, trace.time, trace.eval, res_obj.minimizer[1:length(phi)]]
-	return [[dist], [timed], res_obj.minimizer[1:length(phi)]]
+	return [[dist], [timed], res_obj.minimizer[1:length(problem.phi)]]
 end
 
-function get_results(de_fun::Function,
-					m::String,
-	 				args::Tuple)::Array{Array{<:AbstractFloat}}
-
-	data::Array{<:AbstractFloat},
-	p0::Array,
-	phi::Array,
-	ini_cond::Array,
-	t::AbstractArray{<:AbstractFloat} = args
+function get_results(method_label::String,
+					problem::ProblemSet.DEProblem,
+	 				p0::Array{<:AbstractFloat})::Array{Array{<:AbstractFloat}}
 
 	results = [[10_000], [t_limit], p0]
 	p0_ds = p0
 	# ----- Data Shooting -----
-	if m == "DS" || m =="DSS"
-	    ds_fun(p) = sum(abs2.(loss.(data_shooting(p, data, t, de_fun))))
+	if method_label == "DS" || method_label =="DSS"
+	    ds_fun(x) = sum(abs2.(loss.(data_shooting(x, problem.data, problem.t, problem.fun))))
 
-        try
-			results = optim_res(ds_fun, de_fun, p0,
-	                            phi, ini_cond, t)
+			results = optim_res(ds_fun, problem, p0)
 
-			if m == "DS"
+			if method_label == "DS"
 				return results
 			end
 			p0_ds = results[end]
 
-	    catch e
-			println("DS Error:")
-            @show e
-        end
         # ----- Data to Single Shooting -----
-		if m == "DSS"
-            dds_fun(p) = sum(abs2.(loss.(single_shooting(p, data, t, de_fun))))
+		if method_label == "DSS"
+	    	dds_fun(x) = sum(abs2.(loss.(single_shooting(x, problem.data, problem.t, problem.fun))))
 			try
-				partial_res = optim_res(dds_fun, de_fun, p0_ds,
-                                        phi, ini_cond, t)
+				partial_res = optim_res(dds_fun, problem, p0_ds)
 				partial_res[2] += results[2]
 				results = partial_res
 		    catch e
@@ -120,11 +109,10 @@ function get_results(de_fun::Function,
 	        end
 		end
 	# ----- Single Shooting -----
-	elseif m == "SS"
-		ss_fun(p) = sum(abs2.(loss.(single_shooting(p, data, t, de_fun))))
+	elseif method_label == "SS"
+    	ss_fun(x) = sum(abs2.(loss.(single_shooting(x, problem.data, problem.t, problem.fun))))
 		try
-    		results = optim_res(ss_fun, de_fun, p0,
-                                phi, ini_cond, t)
+    		results = optim_res(ss_fun, problem, p0)
 	    catch e
 			println("SS Error:")
             @show e
@@ -133,14 +121,13 @@ function get_results(de_fun::Function,
 	return results
 end
 
-
 #@suppress begin
-function experiment(p::Int64,sams::AbstractArray{<:Int},
+function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 					vars::AbstractArray{<:AbstractFloat},
 					method_arr::Array{<:String},
 					parallel::Bool)::Dict
 	results::Dict = Dict()
-	prob_key::String = get_problem_key(p)
+	prob_key::String = get_problem_key(p_num)
 	problem::ProblemSet.DEProblem = get_problem(prob_key)
 	results[prob_key] = Dict()
 
@@ -153,8 +140,6 @@ function experiment(p::Int64,sams::AbstractArray{<:Int},
     phi::Array = problem.phi
     bounds::Array{<:AbstractFloat} = problem.bounds
     ini_cond::Array = problem.data[:,1]
-    lb::Array{<:AbstractFloat} = bounds[:,1]
-    ub::Array{<:AbstractFloat} = bounds[:,2]
     t::AbstractArray = problem.t
 
 	# Minimum number of data points
@@ -163,40 +148,29 @@ function experiment(p::Int64,sams::AbstractArray{<:Int},
 	for sam in sams.*min_data
 		for v in vars
 	        # Artificial Data
-	        if sam == 1
-	            t = range(t[1], stop=t[end], length=length(t))
-	        else
-	            t = range(t[1], stop=t[end], length=sam)
-	        end
+            _t = range(t[1], stop=t[end], length=sam)
 	        tspan = (t[1], t[end])
 	        ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-	        ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, t))
+	        ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, _t))
 	        data = reduce(hcat, ode_sol.u)
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
 			reps = 100
-			if v > 0.0
-				data_arr = [add_noise(data,v) for _ in 1:reps]
-			else
-				data_arr = [data for _ in 1:reps]
-			end
+			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
+								problem.bounds, add_noise(data,v), _t)
+				 			for _ in 1:reps]
+			bounds_arr = [rand_guess(bounds) for _ in 1:reps]
 
-			get_results_args = zip(data_arr,
-									[rand_guess(bounds) for _ in 1:reps],
-									[phi for _ in 1:reps],
-									[ini_cond for _ in 1:reps],
-									[t for _ in 1:reps]
-									#[lb for _ in 1:reps],
-									#[ub for _ in 1:reps]
-									)
+			get_results_args = zip(problem_arr, bounds_arr)
 
 			res = Dict()
 			for m in method_arr
 				if parallel
-					res[m] = tcollect(Map(x->get_results(fun,m,x)),collect(get_results_args))
+					res[m] = tcollect(Map(x->get_results(m,x...)),
+								collect(get_results_args))
 				else
-					res[m] = [get_results(fun,m,x) for x in get_results_args]
+					res[m] = [get_results(m,x...) for x in get_results_args]
 				end
 			end
 
@@ -225,8 +199,11 @@ function problem_exp_loop(probs::AbstractArray{<:Int},
 end
 
 probs = 1:10
+probs = 1:2
 sams = [5,10,50,100]
+sams = [5,100]
 vars = range(0.0, 0.3, length=4)
+vars = range(0.0, 0.1, length=2)
 
 @time problem_exp_loop(probs,sams,vars,true)
 

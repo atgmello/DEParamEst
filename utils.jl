@@ -7,6 +7,8 @@ using Statistics
 using Distances
 using DifferentialEquations
 using Plots
+using Revise
+using ..ProblemSet: DEProblem
 
 """
 From bounds, generates a random startign point for
@@ -18,6 +20,10 @@ function rand_guess(bounds::Array{<:AbstractFloat})::Array{<:AbstractFloat,1}
 end
 
 function add_noise(data::Array, variance::Float64)::Array
+    if variance == 0.0
+        return data
+    end
+
     noise_data = copy(data)
     m = length(noise_data)
     @inbounds for i in 1:m
@@ -169,31 +175,35 @@ function box_scatter_plot(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     return [qarr[3]-qarr[1],qarr[3],qarr[5]-qarr[3]]
 end
 
-function diff_calc(f::Function, u0::Array, t::AbstractArray,
-                    actual::Array{<:AbstractFloat,1}, forecast::Array{<:AbstractFloat,1})::Float64
-    de_prob_actual = ODEProblem(f,u0,(t[1],t[end]),actual)
-    de_sol_actual = DifferentialEquations.solve(de_prob_actual, AutoTsit5(Rosenbrock23()), saveat=t)
-    data_actual = reduce(hcat, de_sol_actual.u)
+function diff_calc(problem::DEProblem,
+                    estimated::Array{<:AbstractFloat,1},
+                    u0::Array{<:AbstractFloat})::Float64
+    f = problem.fun
+    t = problem.t
+    known = problem.phi
 
-    de_prob_forecast = ODEProblem(f,u0,(t[1],t[end]),forecast)
-    de_sol_forecast = DifferentialEquations.solve(de_prob_forecast, AutoTsit5(Rosenbrock23()), saveat=t)
-    data_forecast = reduce(hcat, de_sol_forecast.u)
+    de_prob = ODEProblem(f,u0,(t[1],t[end]),known)
+    de_sol = DifferentialEquations.solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+    data = reduce(hcat, de_sol.u)
+
+    de_prob_est = ODEProblem(f,u0,(t[1],t[end]),estimated)
+    de_sol_est = DifferentialEquations.solve(de_prob_est, AutoTsit5(Rosenbrock23()), saveat=t)
+    data_est = reduce(hcat, de_sol_est.u)
 
     """
     Absolute Log Difference
     Since the data is required to be positive,
     find the minimum value from both actual and
-    forecast data and lift them up to avoid
+    forecast data and lift up all values to avoid
     zeros and negative numbers.
     """
-
-    min_val = minimum(vcat(data_actual,data_forecast))
+    min_val = minimum(vcat(data,data_est))
     if min_val < 0.0
-        data_actual .= data_actual .- (min_val-0.1)
-        data_forecast .= data_forecast .- (min_val-0.1)
+        data .= data .- (min_val-0.1)
+        data_est .= data_est .- (min_val-0.1)
     end
 
-    ldiff = maximum(abs.(log.(data_actual)-log.(data_forecast)))
+    ldiff = maximum(abs.(log.(data)-log.(data_est)))
 
     #=>
     p = plot(title="$(round(ldiff,digits=3))")
@@ -206,17 +216,31 @@ function diff_calc(f::Function, u0::Array, t::AbstractArray,
     return ldiff
 end
 
-function max_diff_states(f::Function, u0::Array, tspan::Tuple,
-                    actual::Array{<:AbstractFloat,1}, forecast::Array{<:AbstractFloat,1},
-                    variance::Float64)::Float64
-    t = range(tspan[1], stop=tspan[end], length=1000)
-    reps = 5
+function max_diff_states(problem::DEProblem,
+                        estimated::Array{<:AbstractFloat,1},
+                        variance::Float64)::Float64
+
+    _t = range(problem.t[1], stop=problem.t[end], length=1000)
+    _problem = DEProblem(problem.fun, problem.phi,
+                        problem.bounds, problem.data, _t)
+
+    u0 = problem.data[:,1]
+
+    reps = 10
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
     u0_arr = [abs.(add_noise(u0,variance)) for _ in 1:reps]
 
-    max_error = maximum([diff_calc(f,x,t,actual,forecast) for x in u0_arr])
+    max_error = maximum([diff_calc(_problem,estimated,x) for x in u0_arr])
 
     return max_error
+end
+
+function log_scale_time(time::Array{T})::Array{T} where T<:AbstractFloat
+	_arr = copy(arr)
+	while any(_arr .< 1.0)
+		_arr .= _arr .* 10.0
+    end
+	return _arr
 end
 
 

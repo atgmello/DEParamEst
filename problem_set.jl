@@ -4,7 +4,7 @@ using DifferentialEquations
 using ParameterizedFunctions
 using LSODA
 
-export get_ode_problem
+export DEProblem, get_ode_problem, get_problem_key
 
 #desired_precision = Float64
 desired_precision = Float64
@@ -16,6 +16,8 @@ struct DEProblem
     data::Array{<:AbstractFloat}
     t::AbstractArray{<:AbstractFloat}
 end
+
+Base.copy(p::DEProblem) = DEProblem(p.fun, p.phi, p.bounds, p.data, p.t)
 
 function get_problem_key(i::Int=0)::String
     keys = ["floudas_1","floudas_2",
