@@ -226,13 +226,13 @@ function max_diff_states(problem::DEProblem,
 
     u0 = problem.data[:,1]
 
-    reps = 10
+    reps = 2
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
     u0_arr = [abs.(add_noise(u0,variance)) for _ in 1:reps]
 
-    max_error = maximum([diff_calc(_problem,estimated,x) for x in u0_arr])
+    median_max_error = median([diff_calc(_problem,estimated,x) for x in u0_arr])
 
-    return max_error
+    return median_max_error
 end
 
 function log_scale_time(time::Array{T})::Array{T} where T<:AbstractFloat
@@ -277,7 +277,8 @@ function get_plot_data(results::Dict,prob_key::String,
     return plot_data
 end
 
-function error_plots(plot_data::Dict, vars::AbstractArray{<:AbstractFloat},
+function error_plots(plot_data::Dict,
+                    vars::AbstractArray{<:AbstractFloat},
                     method_arr::Array,
                     method_label::Dict,
                     method_color::Dict,
@@ -287,36 +288,44 @@ function error_plots(plot_data::Dict, vars::AbstractArray{<:AbstractFloat},
     xaxis: Noise Percentage
     yaxis: Mean Error
     """
-    p = plot(x=vars, xlabel="Noise Percentage", ylabel="Median Error")
+    p = plot(x=vars, xlabel="Noise Percentage", ylabel="Error")
     ylim_arr = []
     for m in method_arr
-        p2 = plot(x=vars, xlabel="Noise Percentage", ylabel="Median Error")
+        p2 = plot(x=vars, xlabel="Noise Percentage", ylabel="Error")
         error = plot_data[m]["error"]
+        # Proceed only if there are no NaN
         if !any(isnan.(vcat(error...)))
             qerror = hcat(box_scatter_plot.(error)...)
-            plot!(p, vars, qerror[2,:],
-                        grid=true,
-                        ribbon=(qerror[1,:],
-                                qerror[3,:]),
-                        fillalpha=.5, label=method_label[m], color=method_color[m])
-            push!(ylim_arr, ylims(p))
+            # Don't append to plot p if data is too far
+            # from the expected values (i.e. plot only if
+            # data < 20)
+            if !any(qerror[3,:] .> 20.0)
+                plot!(p, vars, qerror[2,:],
+                            grid=true,
+                            ribbon=(qerror[1,:],
+                                    qerror[3,:]),
+                            fillalpha=.5, label=method_label[m], color=method_color[m])
+                push!(ylim_arr, ylims(p))
+            end
 
             plot!(p2, vars, qerror[2,:],
                         grid=true,
                         ribbon=(qerror[1,:],
                                 qerror[3,:]),
                         fillalpha=.5, label=method_label[m], color=method_color[m])
-            display(p2)
+            #display(p2)
 
-            savefig(p2,"./error_$(m)_$(sam).svg")
             savefig(p,"./error_inter_$(m)_$(sam).svg")
+            savefig(p2,"./error_$(m)_$(sam).svg")
         end
     end
+    #=>
     if length(ylim_arr) > 1
         ylims!(p, (minimum(abs.([yl[1] for yl in ylim_arr])),
                     minimum(abs.([yl[2] for yl in ylim_arr]))))
     end
-    display(p)
+    <=#
+    #display(p)
 
     savefig(p,"./error_all_$(sam).svg")
     nothing
@@ -345,44 +354,31 @@ function sr_plots(plot_data::Dict,
         time = plot_data[m]["time"]
         if !any(isnan.(vcat(time...)))
             qtime = hcat(box_scatter_plot.(time)...)
-
             qqtime = box_scatter_plot(qtime[2,:])
             qisr = box_scatter_plot(isr)
-            if qisr[2] < 10.0 || qqtime[2] < 10
+            if qisr[2] < 20.0 || qqtime[2] < 20.0
                 scatter!(p, (qqtime[2],qisr[2]),
                             xerror=[(qqtime[1],qqtime[3])],
                             yerror=[(qisr[1],qisr[3])],
                             label=method_label[m], color=method_color[m])
             end
-            if ylims(p)[2] > 10
-                ylims!(p, (-0.1,10.0))
-            end
-            if xlims(p)[2] > 10
-                xlims!(p, (-0.1,10.0))
-            end
 
             scatter!(p2, (qtime[2,:], isr),
                         label=method_label[m], color=method_color[m])
-            if ylims(p2)[2] > 10
-                ylims!(p2, (-0.1,10.0))
-            end
-            if xlims(p2)[2] > 10
-                xlims!(p2, (-0.1,10.0))
-            end
 
             scatter!(p3, (qtime[2,:], isr),
                         label=method_label[m], color=method_color[m],
                         series_annotations = text.(vars, :top, 11))
 
-            display(p3)
+            #display(p3)
 
             savefig(p3,"./sr_$(m)_$(sam).svg")
         end
     end
-    display(p)
-    display(p2)
+    #display(p)
+    #display(p2)
 
-    savefig(p, "./sr_all_median$(sam).svg")
+    savefig(p, "./sr_all_medians_$(sam).svg")
     savefig(p2, "./sr_all_$(sam).svg")
     nothing
 end
@@ -417,7 +413,7 @@ function oe_plots(plot_data::Dict,
             legend=false)
     bar!(p, method_arr, oe,
             color=[method_color[m] for m in method_arr])
-    display(p)
+    #display(p)
 
     savefig(p, "./$(sam)_oe.svg")
     nothing
