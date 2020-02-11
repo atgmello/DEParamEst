@@ -9,12 +9,12 @@ export DEProblem, get_ode_problem, get_problem_key
 #desired_precision = Float64
 desired_precision = Float64
 
-struct DEProblem
+struct DEProblem{T<:AbstractFloat}
     fun::Function
-    phi::Array{<:AbstractFloat,1}
-    bounds::Array{<:AbstractFloat}
-    data::Array{<:AbstractFloat}
-    t::AbstractArray{<:AbstractFloat}
+    phi::Array{T}
+    bounds::Array{T}
+    data::Array{T}
+    t::AbstractArray{T}
 end
 
 Base.copy(p::DEProblem) = DEProblem(p.fun, p.phi, p.bounds, p.data, p.t)
