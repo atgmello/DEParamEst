@@ -1,3 +1,4 @@
+ENV["GKSwstype"]="nul"
 using Transducers
 using DiffEqParamEstim
 using DifferentialEquations
@@ -12,14 +13,13 @@ gr()
 
 import Distributions: Uniform
 
-import Optim
-const opt = Optim
+using Optim
 
 using Revise
 includet("./problem_set.jl")
 includet("./objective_function.jl")
 includet("./utils.jl")
-import .ProblemSet: get_problem, get_problem_key
+import .ProblemSet: get_problem, get_problem_key, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, soft_l1, huber
 import .Utils: Trace, rand_guess, make_trace, get_range_traces, add_noise,
 				filter_outlier, fill_trace, scale_eval,
@@ -37,12 +37,12 @@ const cur_colors = get_color_palette(:auto, plot_color(:white), 17)
 
 method_arr = ["DS","SS","DSS"]
 
-method_color = Dict()
+const method_color = Dict()
 for (m,c) in zip(method_arr,cur_colors)
 	method_color[m] = c
 end
 
-method_label = Dict()
+const method_label = Dict()
 m_labels = ["Data Shooting", "Single Shooting", "Data to Single Shooting"]
 for (m,l) in zip(method_arr,m_labels)
 	method_label[m] = l
@@ -55,23 +55,40 @@ const loss = linear
 
 #SAMIN_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
 #Grad_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
-const t_limit = 240
-x_tol = 10^-12
-f_tol = 10^-24
-iter = 10^8
-const SAMIN_options = opt.Options(x_tol=x_tol, f_tol=f_tol,
+const t_limit = 180
+f_tol = 10^-12
+x_tol = 10^-6
+iter = 10^6
+
+const SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 							iterations=iter, time_limit=t_limit)
-const Grad_options = opt.Options(x_tol=x_tol, f_tol=f_tol,
-							iterations=iter, time_limit=t_limit)
-const inner_optimizer = opt.LBFGS()
+g_time_limit = 30
+f_tol = 10^-12
+x_tol = 10^-6
+iter = 10^5
+
+const Grad_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
+							iterations=iter, time_limit=g_time_limit)
+
+const inner_optimizer = Optim.LBFGS()
 
 function optim_res(obj_fun::Function,
 					problem::ProblemSet.DEProblem,
-					p0::Array)::Array{Array{<:AbstractFloat}}
+					p0::Array{T})::Array{Array{T}} where T
+	lb = problem.bounds[:,1]
+	ub = problem.bounds[:,2]
+	timed = zero(1)
 
-    lb::Array{<:AbstractFloat} = problem.bounds[:,1]
-    ub::Array{<:AbstractFloat} = problem.bounds[:,2]
-	timed = @elapsed res_obj = opt.optimize(obj_fun, p0, opt.LBFGS(), autodiff=:forward, Grad_options)
+	#timed += @elapsed res_obj = Optim.optimize(obj_fun,
+	#							lb,ub,
+	#							p0,
+	#							Optim.SAMIN(verbosity=0, rt=0.5), SAMIN_options)
+
+	timed += @elapsed res_obj = Optim.optimize(obj_fun,
+								#res_obj.minimizer[1:length(problem.phi)],
+								p0,
+								Optim.NelderMead(), Grad_options)
+
     dist = max_diff_states(problem, res_obj.minimizer[1:length(problem.phi)], 1.5)
 	#trace = make_trace(opt.trace(res_obj))
 
@@ -88,14 +105,17 @@ function get_results(method_label::String,
 	# ----- Data Shooting -----
 	if method_label == "DS" || method_label =="DSS"
 	    ds_fun(x) = sum(abs2.(loss.(data_shooting(x, problem.data, problem.t, problem.fun))))
-
+		try
 			results = optim_res(ds_fun, problem, p0)
 
 			if method_label == "DS"
 				return results
 			end
 			p0_ds = results[end]
-
+		catch e
+			println("DS Error:")
+            @show e
+        end
         # ----- Data to Single Shooting -----
 		if method_label == "DSS"
 	    	dds_fun(x) = sum(abs2.(loss.(single_shooting(x, problem.data, problem.t, problem.fun))))
@@ -125,13 +145,14 @@ end
 function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 					vars::AbstractArray{<:AbstractFloat},
 					method_arr::Array{<:String},
+					dir::String,
 					parallel::Bool)::Dict
 	results::Dict = Dict()
 	prob_key::String = get_problem_key(p_num)
 	problem::ProblemSet.DEProblem = get_problem(prob_key)
 	results[prob_key] = Dict()
 
-	cd("/home/andrew/git/ChemParamEst/plots/experiments/")
+	cd(dir)
 	mkdir(prob_key)
 	cd(prob_key)
 
@@ -156,7 +177,7 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
-			reps = 100
+			reps = 2
 			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
 								problem.bounds, add_noise(data,v), _t)
 				 			for _ in 1:reps]
@@ -192,19 +213,27 @@ end
 function problem_exp_loop(probs::AbstractArray{<:Int},
 							sams::AbstractArray{<:Int},
 							vars::AbstractArray{<:AbstractFloat},
+							dir::String,
 							parallel::Bool)
 	for p in probs
-		experiment(p,sams,vars,method_arr,parallel)
+		experiment(p,sams,vars,method_arr,dir,parallel)
 	end
 end
 
-probs = 1:10
-probs = 1:2
-sams = [5,10,50,100]
-sams = [5,100]
-vars = range(0.0, 0.3, length=4)
-vars = range(0.0, 0.1, length=2)
+function main(args::Array{<:String})::Nothing
 
-@time problem_exp_loop(probs,sams,vars,true)
+	dir = string(args[1])
+	par = string(args[2]) == "true"
 
-#@code_warntype experiment(vars)
+	probs = 1:2
+	sams = [5,50,100]
+	sams = [100]
+	vars = range(0.0, 0.3, length=4)
+	vars = range(0.0, 0.1, length=2)
+
+	time_main = @time problem_exp_loop(probs,sams,vars,dir,par)
+	println(time_main)
+	nothing
+end
+
+main(ARGS)
