@@ -2,7 +2,6 @@ ENV["GKSwstype"]="nul"
 using Transducers
 using DiffEqParamEstim
 using DifferentialEquations
-using LSODA
 using Statistics
 using Random
 using Distances
@@ -62,7 +61,7 @@ iter = 10^6
 
 const SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 							iterations=iter, time_limit=t_limit)
-g_time_limit = 30
+g_time_limit = 20
 f_tol = 10^-12
 x_tol = 10^-6
 iter = 10^5
@@ -79,14 +78,13 @@ function optim_res(obj_fun::Function,
 	ub = problem.bounds[:,2]
 	timed = zero(1)
 
-	#timed += @elapsed res_obj = Optim.optimize(obj_fun,
-	#							lb,ub,
-	#							p0,
-	#							Optim.SAMIN(verbosity=0, rt=0.5), SAMIN_options)
+	timed += @elapsed res_obj = Optim.optimize(obj_fun,
+								lb,ub,
+								p0,
+								Optim.SAMIN(verbosity=0, rt=0.6), SAMIN_options)
 
 	timed += @elapsed res_obj = Optim.optimize(obj_fun,
-								#res_obj.minimizer[1:length(problem.phi)],
-								p0,
+								res_obj.minimizer[1:length(problem.phi)],
 								Optim.NelderMead(), Grad_options)
 
     dist = max_diff_states(problem, res_obj.minimizer[1:length(problem.phi)], 1.5)
@@ -172,12 +170,12 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
             _t = range(t[1], stop=t[end], length=sam)
 	        tspan = (t[1], t[end])
 	        ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-	        ode_sol  = solve(ode_prob, lsoda(), saveat=reduce(vcat, _t))
+	        ode_sol  = solve(ode_prob, AutoTsit5(Rosenbrock23()), saveat=reduce(vcat, _t))
 	        data = reduce(hcat, ode_sol.u)
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
-			reps = 2
+			reps = 100
 			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
 								problem.bounds, add_noise(data,v), _t)
 				 			for _ in 1:reps]
@@ -225,11 +223,9 @@ function main(args::Array{<:String})::Nothing
 	dir = string(args[1])
 	par = string(args[2]) == "true"
 
-	probs = 1:2
+	probs = 1:10
 	sams = [5,50,100]
-	sams = [100]
 	vars = range(0.0, 0.3, length=4)
-	vars = range(0.0, 0.1, length=2)
 
 	time_main = @time problem_exp_loop(probs,sams,vars,dir,par)
 	println(time_main)

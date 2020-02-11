@@ -1,6 +1,5 @@
 module ObjectiveFunction
 
-using LSODA
 using DifferentialEquations
 using Plots
 

@@ -2,8 +2,6 @@ module ProblemSet
 
 using DifferentialEquations
 using ParameterizedFunctions
-using LSODA
-
 export DEProblem, get_ode_problem, get_problem_key
 
 #desired_precision = Float64
@@ -1059,7 +1057,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
-        de_sol = solve(de_prob, LSODA.lsoda(), saveat=t)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
         ode_data = reduce(hcat, de_sol.u)
         return DEProblem(f_cho, p, bounds, ode_data, t)
 

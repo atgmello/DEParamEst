@@ -226,7 +226,7 @@ function max_diff_states(problem::DEProblem,
 
     u0 = problem.data[:,1]
 
-    reps = 2
+    reps = 10
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
     u0_arr = [abs.(add_noise(u0,variance)) for _ in 1:reps]
 
