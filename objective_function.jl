@@ -8,9 +8,13 @@ export data_shooting, single_shooting
 """
 Sum of Squared Errors
 """
-function sse(a::Vector,b::Vector)
-	T = promote_type(eltype(a[1]),eltype(b[1]))
+function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloat
 	sum = zero(T)
+
+	if length(a) != length(b) || length(a[1]) != length(b[1])
+		return Inf64
+	end
+
 	@simd for i in 1:length(a)
 		for j in 1:length(a[1])
 			@inbounds sum += abs2(a[i][j]-b[i][j])
@@ -18,6 +22,7 @@ function sse(a::Vector,b::Vector)
 	end
 	return sum
 end
+
 
 function data_shooting(phi::Vector{T},
                         data::Vector,
