@@ -141,7 +141,7 @@ function get_results(method_label::String,
     	ss_fun(x) = single_shooting(x, problem.data, problem.t, problem.fun)
 		try
     		results = optim_res(ss_fun, problem, p0)
-	    catch e
+		catch e
 			println("SS Error:")
             @show e
         end
@@ -231,14 +231,12 @@ function problem_exp_loop(probs::AbstractArray{<:Int},
 end
 
 function main(args::Array{<:String})::Nothing
-
 	dir = string(args[1])
-	par = string(args[2]) == "true"
-
-	probs = 1:10
-	sams = [5,50,100]
-	vars = range(0.0, 0.3, length=4)
-
+	probs = eval(Meta.parse(args[2]))
+	sams = eval(Meta.parse(args[3]))
+	vars = eval(Meta.parse(args[4]))
+	par = string(args[5]) == "true"
+	#vars = range(0.0, 0.3, length=4)
 	time_main = @time problem_exp_loop(probs,sams,vars,dir,par)
 	println(time_main)
 	nothing
