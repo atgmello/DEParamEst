@@ -123,9 +123,9 @@ function get_results(method_label::String,
 				"""
 				@inbounds for i in 1:length(p0_ds)
 					if p0_ds[i] < problem.bounds[1][i]
-						p0_ds[i] = problem.bounds[1][i] + 0.01
+						p0_ds[i] = problem.bounds[1][i] + problem.bounds[1][i]*0.1
 					elseif p0_ds[i] > problem.bounds[2][i]
-						p0_ds[i] = problem.bounds[1][i] - 0.01
+						p0_ds[i] = problem.bounds[2][i] - problem.bounds[2][i]*0.1
 					end
 				end
 				partial_res = optim_res(dds_fun, problem, p0_ds)
