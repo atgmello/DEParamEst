@@ -61,7 +61,7 @@ iter = 10^6
 
 const SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 							iterations=iter, time_limit=t_limit)
-g_time_limit = 20
+g_time_limit = 10
 f_tol = 10^-12
 x_tol = 10^-6
 iter = 10^5
@@ -74,14 +74,14 @@ const inner_optimizer = Optim.LBFGS()
 function optim_res(obj_fun::Function,
 					problem::ProblemSet.DEProblem,
 					p0::Array{T})::Array{Array{T}} where T
-	lb = problem.bounds[:,1]
-	ub = problem.bounds[:,2]
+	lb = problem.bounds[1]
+	ub = problem.bounds[2]
 	timed = zero(1)
 
 	timed += @elapsed res_obj = Optim.optimize(obj_fun,
 								lb,ub,
 								p0,
-								Optim.SAMIN(verbosity=0, rt=0.6), SAMIN_options)
+								Optim.SAMIN(verbosity=0, rt=0.65), SAMIN_options)
 
 	timed += @elapsed res_obj = Optim.optimize(obj_fun,
 								res_obj.minimizer[1:length(problem.phi)],
@@ -102,7 +102,7 @@ function get_results(method_label::String,
 	p0_ds = p0
 	# ----- Data Shooting -----
 	if method_label == "DS" || method_label =="DSS"
-	    ds_fun(x) = sum(abs2.(loss.(data_shooting(x, problem.data, problem.t, problem.fun))))
+	    ds_fun(x) = data_shooting(x, problem.data, problem.t, problem.fun)
 		try
 			results = optim_res(ds_fun, problem, p0)
 
@@ -110,14 +110,24 @@ function get_results(method_label::String,
 				return results
 			end
 			p0_ds = results[end]
-		catch e
+	    catch e
 			println("DS Error:")
             @show e
         end
         # ----- Data to Single Shooting -----
 		if method_label == "DSS"
-	    	dds_fun(x) = sum(abs2.(loss.(single_shooting(x, problem.data, problem.t, problem.fun))))
+	    	dds_fun(x) = single_shooting(x, problem.data, problem.t, problem.fun)
 			try
+				"""
+				If p0_ds is out of bounds, fix it
+				"""
+				@inbounds for i in 1:length(p0_ds)
+					if p0_ds[i] < problem.bounds[1][i]
+						p0_ds[i] = problem.bounds[1][i] + 0.01
+					elseif p0_ds[i] > problem.bounds[2][i]
+						p0_ds[i] = problem.bounds[1][i] - 0.01
+					end
+				end
 				partial_res = optim_res(dds_fun, problem, p0_ds)
 				partial_res[2] += results[2]
 				results = partial_res
@@ -128,7 +138,7 @@ function get_results(method_label::String,
 		end
 	# ----- Single Shooting -----
 	elseif method_label == "SS"
-    	ss_fun(x) = sum(abs2.(loss.(single_shooting(x, problem.data, problem.t, problem.fun))))
+    	ss_fun(x) = single_shooting(x, problem.data, problem.t, problem.fun)
 		try
     		results = optim_res(ss_fun, problem, p0)
 	    catch e
@@ -157,27 +167,29 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
     #print("\n----- Getting results for Flouda's Problem number $i -----\n")
     fun::Function = problem.fun
     phi::Array = problem.phi
-    bounds::Array{<:AbstractFloat} = problem.bounds
-    ini_cond::Array = problem.data[:,1]
+    bounds::Vector = problem.bounds
+    ini_cond::Array = problem.data[1]
     t::AbstractArray = problem.t
 
 	# Minimum number of data points
-	min_data::Int64 = round(length(phi)/length(ini_cond),RoundUp)
+	min_data = round(length(phi)/length(ini_cond),RoundUp)
+	data_sams = convert.(eltype(sams[1]),sams.*min_data)
+	epsilon = 10^-3
 
-	for sam in sams.*min_data
+	for sam in data_sams
 		for v in vars
 	        # Artificial Data
             _t = range(t[1], stop=t[end], length=sam)
 	        tspan = (t[1], t[end])
 	        ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-	        ode_sol  = solve(ode_prob, AutoTsit5(Rosenbrock23()), saveat=reduce(vcat, _t))
-	        data = reduce(hcat, ode_sol.u)
+	        ode_sol  = solve(ode_prob, AutoTsit5(Rosenbrock23()), saveat=_t)
+	        data = ode_sol.u
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
 			reps = 100
 			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
-								problem.bounds, add_noise(data,v), _t)
+								problem.bounds, add_noise(data,v,epsilon), _t)
 				 			for _ in 1:reps]
 			bounds_arr = [rand_guess(bounds) for _ in 1:reps]
 

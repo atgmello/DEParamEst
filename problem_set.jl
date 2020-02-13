@@ -4,15 +4,14 @@ using DifferentialEquations
 using ParameterizedFunctions
 export DEProblem, get_ode_problem, get_problem_key
 
-#desired_precision = Float64
 desired_precision = Float64
 
-struct DEProblem{T<:AbstractFloat}
+struct DEProblem
     fun::Function
-    phi::Array{T}
-    bounds::Array{T}
-    data::Array{T}
-    t::AbstractArray{T}
+    phi::Vector
+    bounds::Vector
+    data::Vector
+    t::AbstractArray
 end
 
 Base.copy(p::DEProblem) = DEProblem(p.fun, p.phi, p.bounds, p.data, p.t)
@@ -46,8 +45,8 @@ function get_problem(p)::DEProblem
 
         t = range(0.0, stop=10.0, length=10)
         de_prob = ODEProblem(f_exp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
 
         return DEProblem(f_exp, phi, bounds, ode_data, t)
 
@@ -66,16 +65,20 @@ function get_problem(p)::DEProblem
         k2 = 1.
         phi = [k1, k2]
         ini_cond = [1., 0.]
-        bounds = hcat([0. for i in 1:length(phi)],
-                [10. for i in 1:length(phi)])
+        bounds = [[0. for i in 1:length(phi)],
+                [10. for i in 1:length(phi)]]
+        #=>
         floudas_samples = [
                             1. 0.606 0.368 0.223 0.135 0.082 0.050 0.030 0.018 0.011 0.007;
                             0. 0.373 0.564 0.647 0.669 0.656 0.642 0.583 0.539 0.494 0.451
                             ]
-        floudas_samples_times = [
-                                0. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
-                                ]
-        return DEProblem(floudas_one, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+        t = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        de_prob = ODEProblem(floudas_one, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
+
+        return DEProblem(floudas_one, phi, bounds, ode_data, t)
 
     elseif p == "floudas_2"
         # ----- Problem 2 -----
@@ -97,17 +100,21 @@ function get_problem(p)::DEProblem
         k4 = 20.007
         phi = [k1, k2, k3, k4]
         ini_cond = [1., 0., 0.]
-        bounds = hcat([0., 0., 10., 10.],
-                [10., 10., 50., 50.])
+        bounds = [[0., 0., 10., 10.],
+                [10., 10., 50., 50.]]
+        #=>
         floudas_samples = [
                             1. 0.8241 0.6852 0.5747 0.4867 0.4166 0.3608 0.3164 0.2810 0.2529 0.2304 0.2126 0.1984 0.1870 0.1870 0.1709 0.1651 0.1606 0.1570 0.1541 0.1518;
                             0. 0.0937 0.1345 0.1654 0.1899 0.2094 0.2249 0.2373 0.2472 0.2550 0.2613 0.2662 0.2702 0.2733 0.2759 0.2779 0.2794 0.2807 0.2817 0.2825 0.2832;
                             0. 0.0821 0.1802 0.2598 0.3233 0.3738 0.4141 0.4461 0.4717 0.4920 0.5082 0.5210 0.5313 0.5395 0.5460 0.5511 0.5553 0.5585 0.5612 0.5632 0.5649
                            ]
-        floudas_samples_times = [
-                                0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0
-                                ]
-        return DEProblem(floudas_two, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+
+        t = [0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]
+        de_prob = ODEProblem(floudas_two, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
+        return DEProblem(floudas_two, phi, bounds, ode_data, t)
 
     elseif p == "floudas_3"
         # ----- Problem 3 -----
@@ -126,16 +133,20 @@ function get_problem(p)::DEProblem
         k3 = 2.2216
         phi = [k1, k2, k3]
         ini_cond = [1., 0.]
-        bounds = hcat([0. for i in 1:length(phi)],
-                [20. for i in 1:length(phi)])
+        bounds = [[0. for i in 1:length(phi)],
+                [20. for i in 1:length(phi)]]
+        #=>
         floudas_samples = [
                             1. 0.7307 0.5982 0.4678 0.4267 0.3436 0.3126 0.2808 0.2692 0.2210 0.2122 0.1903 0.1735 0.1615 0.1240 0.1190 0.1109 0.0890 0.0820 0.0745 0.0639;
                             0. 0.1954 0.2808 0.3175 0.3047 0.2991 0.2619 0.2391 0.2210 0.1898 0.1801 0.1503 0.1030 0.0964 0.0581 0.0471 0.0413 0.0367 0.0219 0.0124 0.0089
                             ]
-        floudas_samples_times = [
-                                0. .025 .05 .075 .1 .125 .150 .175 .2 .225 .25 .3 .35 .4 .45 .5 .55 .65 .75 .85 .95
-                                ]
-        return DEProblem(floudas_three, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+        t =[0.0,.025,.05,.075,.1,.125,.150,.175,.2,.225,.25,.3,.35,.4,.45,.5,.55,.65,.75,.85,.95]
+
+        de_prob = ODEProblem(floudas_three, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
+        return DEProblem(floudas_three, phi, bounds, ode_data, t)
 
     elseif p == "floudas_4"
         # ----- Problem 4 -----
@@ -148,15 +159,18 @@ function get_problem(p)::DEProblem
         k2 = 2.7845*10^(-4)
         phi = [k1, k2]
         ini_cond = [0.]
-        bounds = hcat([0. for i in 1:length(phi)],
-                [.1 for i in 1:length(phi)])
+        bounds = [[0. for i in 1:length(phi)],
+                [.1 for i in 1:length(phi)]]
+        #=>
         floudas_samples = [
                             0. 1.4 6.3 10.4 14.2 17.6 21.4 23.0 27.0 30.4 34.4 38.8 41.6 43.5 45.3
                             ]
-        floudas_samples_times = [
-                                0. 1.0 2.0 3.0 4.0 5.0 6.0 7.0 9.0 11.0 14.0 19.0 24.0 29.0 39.0
-                                ]
-        return DEProblem(floudas_four, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+        t = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,11.0,14.0,19.0,24.0,29.0,39.0]
+        de_prob = ODEProblem(floudas_four, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
+        return DEProblem(floudas_four, phi, bounds, ode_data, t)
 
     elseif p == "floudas_5"
         # ----- Problem 5 -----
@@ -174,17 +188,21 @@ function get_problem(p)::DEProblem
         k5 = 0.
         phi = [k1, k2, k3, k4, k5]
         ini_cond = [1., 0., 0.]
-        bounds = hcat([0. for i in 1:length(phi)],
-                [100. for i in 1:length(phi)])
+        bounds = [[0. for i in 1:length(phi)],
+                [100. for i in 1:length(phi)]]
+        #=>
         floudas_samples = [
                             1. 0.461 0.426 0.383 0.305 0.195 0.170 0.139 0.112  0.112 0.090 0.082 0.066 0.053 0.043 0.041 0.029;
                             0. 0.114 0.135 0.157 0.194 0.231 0.234 0.228 0.228  0.226 0.220 0.214 0.178 0.188 0.183 0.184 0.166;
                             0. 0.018 0.035 0.045 0.047 0.084 0.095 0.111 0.134 0.168 0.148 0.157 0.206 0.206 0.214 0.213 0.230
                             ]
-        floudas_samples_times = [
-                                0. 0.050 0.065 0.080 0.123 0.233 0.273 0.354 0.397 0.418 0.502 0.553 0.681 0.750 0.916 0.937 1.122
-                                ]
-        return DEProblem(floudas_five, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+        t = [0.,0.050,0.065,0.080,0.123,0.233,0.273,0.354,0.397,0.418,0.502,0.553,0.681,0.750,0.916,0.937,1.122]
+
+        de_prob = ODEProblem(floudas_five, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
+        return DEProblem(floudas_five, phi, bounds, ode_data, t)
 
     elseif p == "floudas_6"
         # ----- Problem 6 -----
@@ -198,16 +216,20 @@ function get_problem(p)::DEProblem
         k2 = 0.9209
         phi = [k1, k2]
         ini_cond = [1.2, 1.1]
-        bounds = hcat([0. for i in 1:length(phi)],
-                [10. for i in 1:length(phi)])
+        bounds = [[0. for i in 1:length(phi)],
+                [10. for i in 1:length(phi)]]
+        #=>
         floudas_samples = [
                             1.2 0.7990 0.8731 1.2487 1.0362 0.7483 1.0024 1.2816 0.8944 0.7852 1.1527;
                             1.1 1.0758 0.8711 0.9393 1.1468 1.0027 0.8577 1.0274 1.1369 0.9325 0.9074
                             ]
-        floudas_samples_times = [
-                                0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10.
-                                ]
-        return DEProblem(floudas_six, phi, bounds, floudas_samples, floudas_samples_times)
+        <=#
+        t = [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]
+
+        de_prob = ODEProblem(floudas_six, ini_cond, (t[1],t[end]), phi)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
+        ode_data = de_sol.u
+        return DEProblem(floudas_six, phi, bounds, ode_data, t)
 
     elseif p == "bbg"
         # ----- BBG -----
@@ -217,8 +239,8 @@ function get_problem(p)::DEProblem
 
         phi = [0.4, 5, 0.05, 0.5]
 
-        bounds = hcat(Float64[10^(-5) for i in 1:length(phi)],
-                Float64[10^(2) for i in 1:length(phi)])
+        bounds = [[10^(-5) for i in 1:length(phi)],
+                [10^(2) for i in 1:length(phi)]]
 
         ini_cond = [2.0, 30.0]
         t = range(0.0, stop=12.0, length=7)
@@ -231,8 +253,8 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
         return DEProblem(f_bbg, phi, bounds, ode_data, t)
 
     elseif p == "fhn"
@@ -243,8 +265,8 @@ function get_problem(p)::DEProblem
 
         phi = [0.2, 0.2, 3.0]
 
-        bounds = hcat(Float64[10^(-3) for i in 1:length(phi)],
-                Float64[10^(3) for i in 1:length(phi)])
+        bounds = [[10^(-3) for i in 1:length(phi)],
+                [10^(3) for i in 1:length(phi)]]
 
         ini_cond = [-1.0, 1.0]
         t = range(0.0, stop=20.0, length=7)
@@ -259,7 +281,7 @@ function get_problem(p)::DEProblem
 
         de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, Tsit5(), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        ode_data = de_sol.u
         return DEProblem(f_fhn, phi, bounds, ode_data, t)
 
     elseif p == "mpk"
@@ -269,8 +291,8 @@ function get_problem(p)::DEProblem
         """
         phi = [2.5, 0.25, 0.75, 0.75, 0.5, 0.5]
 
-        bounds = hcat(Float64[0.01 for i in 1:length(phi)],
-                Float64[50.0 for i in 1:length(phi)])
+        bounds = [[0.01 for i in 1:length(phi)],
+                [50.0 for i in 1:length(phi)]]
 
         ini_cond = [90.0, 10.0, 280.0, 10.0, 10.0, 280.0, 10.0, 10.0]
         #t = range(0.0, stop=20.0, length=7)
@@ -302,8 +324,8 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
         return DEProblem(f_mapk, phi, bounds, ode_data, t)
 
     elseif p == "goodwin_oscillator"
@@ -313,10 +335,10 @@ function get_problem(p)::DEProblem
         """
         phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
 
-        bounds = hcat(Float64[10^(-2) for i in 1:length(phi)],
-                Float64[10^(2) for i in 1:length(phi)])
-        bounds[1,end] = 1.0
-        bounds[2,end] = 12.0
+        bounds = [[10^(-2) for i in 1:length(phi)],
+                [10^(2) for i in 1:length(phi)]]
+        bounds[1][end] = 1.0
+        bounds[2][end] = 12.0
 
         ini_cond = [0.1, 0.2, 2.5]
         t = range(0.0, stop=240.0, length=10)
@@ -329,8 +351,8 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_gosc, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
 
         new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
 
@@ -341,8 +363,8 @@ function get_problem(p)::DEProblem
         """
         phi = [0.00015, 0.023, 0.01, 0.01, 0.01, 0.1, 0.000403, 0.0026, 0.0056, 0.002, 0.016, 5.7, 0.00657, 0.0017, 1.0, 0.0008, 0.0001, 0.0021, 0.001, 9000.0, 1800.0]
 
-        bounds = [Float64[10^(-3) for i in 1:length(phi)],
-                Float64[10^(3) for i in 1:length(phi)]]
+        bounds = [[10^(-3) for i in 1:length(phi)],
+                [10^(3) for i in 1:length(phi)]]
         bounds[:,end] = [1, 12]
 
         ini_cond = [0.1, 0.2, 2.5]
@@ -406,7 +428,7 @@ function get_problem(p)::DEProblem
 
         de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, Tsit5(), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        ode_data = de_sol.u
 
         new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
         push!(problem_set, new_prob)
@@ -428,11 +450,11 @@ function get_problem(p)::DEProblem
                 .1, 1.0, .1, .1, 1.0, .1, .1, 1.0, .1, 1.0,
                 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-        bounds = hcat(Float64[10^(-5) for i in 1:length(phi)],
-                Float64[10^(5) for i in 1:length(phi)])
+        bounds = [[10^(-5) for i in 1:length(phi)],
+                [10^(5) for i in 1:length(phi)]]
         for i in [2,4,8,10,14,16]
-            bounds[1,i] = 0.1
-            bounds[2,i] = 10
+            bounds[1][i] = 0.1
+            bounds[2][i] = 10
         end
 
         ini_cond = [.6667, .5725, .4176, .4, .3641, .2946, 1.419, .9346]
@@ -503,8 +525,8 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoVern9(Rodas5()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        ode_data = de_sol.u
         return DEProblem(f_tsp, phi, bounds, ode_data, t)
 
     elseif p == "cho"
@@ -667,8 +689,8 @@ function get_problem(p)::DEProblem
         p[117] = 0.2
 
         t = collect(1.0:20.0)
-        bounds = hcat(Float64[10^-5 for i in 1:length(p)],
-                Float64[10^5 for i in 1:length(p)])
+        bounds = [[10^-5 for i in 1:length(p)],
+                [10^5 for i in 1:length(p)]]
 
         function f_cho(dx_dt, x, par, t)
             p = zeros(347)
@@ -1058,7 +1080,7 @@ function get_problem(p)::DEProblem
 
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
         de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
-        ode_data = reduce(hcat, de_sol.u)
+        ode_data = de_sol.u
         return DEProblem(f_cho, p, bounds, ode_data, t)
 
     end

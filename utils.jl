@@ -14,21 +14,52 @@ using ..ProblemSet: DEProblem
 From bounds, generates a random startign point for
 the optimization procedure.
 """
-function rand_guess(bounds::Array{<:AbstractFloat})::Array{<:AbstractFloat,1}
-    vcat([rand(Uniform(bounds[i,1], bounds[i,2]))
-            for i in 1:size(bounds)[1]])
+function rand_guess(bounds::Vector)::Vector
+    [rand(Uniform(bounds[1][i], bounds[2][i]))
+            for i in 1:length(bounds[1])]
 end
 
-function add_noise(data::Array, variance::Float64)::Array
+"""
+Adds noise to a Vector of Vector
+"""
+function add_noise(data::Vector{Vector{T}},
+                    variance::T, epsilon::T)::Vector{Vector{T}} where T
     if variance == 0.0
         return data
     end
 
-    noise_data = copy(data)
-    m = length(noise_data)
-    @inbounds for i in 1:m
-        if noise_data[i] == 0.
-            noise_data[i] = mean(noise_data)+10^(-3)
+    noise_data = deepcopy(data)
+    @inbounds for i in 1:length(noise_data)
+        for j in 1:length(noise_data[1])
+            if noise_data[i][j] == 0.0
+                noise_data[i][j] += 10^-3
+            end
+            if -variance*noise_data[i][j] < variance*noise_data[i][j]
+                a = -variance*noise_data[i][j]
+                b = variance*noise_data[i][j]
+            else
+                b = -variance*noise_data[i][j]
+                a = variance*noise_data[i][j]
+            end
+            noise_data[i][j] += rand(Uniform(a, b)) + epsilon
+        end
+    end
+    return noise_data
+end
+
+"""
+Adds noise to a Vector of T
+"""
+function add_noise(data::Vector{T},
+                    variance::T, epsilon::T)::Vector{T} where T
+    if variance == 0.0
+        return data
+    end
+
+    noise_data = deepcopy(data)
+    @inbounds for i in 1:length(noise_data)
+        if noise_data[i] == 0.0
+            noise_data[i] += 10^-3
         end
         if -variance*noise_data[i] < variance*noise_data[i]
             a = -variance*noise_data[i]
@@ -37,7 +68,7 @@ function add_noise(data::Array, variance::Float64)::Array
             b = -variance*noise_data[i]
             a = variance*noise_data[i]
         end
-        noise_data[i] += rand(Uniform(a, b))
+        noise_data[i] += rand(Uniform(a, b)) + epsilon
     end
     return noise_data
 end
@@ -224,11 +255,12 @@ function max_diff_states(problem::DEProblem,
     _problem = DEProblem(problem.fun, problem.phi,
                         problem.bounds, problem.data, _t)
 
-    u0 = problem.data[:,1]
+    u0 = problem.data[1]
 
+    epsilon = 10^-3
     reps = 10
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
-    u0_arr = [abs.(add_noise(u0,variance)) for _ in 1:reps]
+    u0_arr = [abs.(add_noise(u0,variance,epsilon)) for _ in 1:reps]
 
     median_max_error = median([diff_calc(_problem,estimated,x) for x in u0_arr])
 
@@ -236,7 +268,7 @@ function max_diff_states(problem::DEProblem,
 end
 
 function log_scale_time(time::Array{T})::Array{T} where T<:AbstractFloat
-	_arr = copy(arr)
+	_arr = deepcopy(arr)
 	while any(_arr .< 1.0)
 		_arr .= _arr .* 10.0
     end

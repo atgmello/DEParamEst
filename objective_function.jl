@@ -5,10 +5,24 @@ using Plots
 
 export data_shooting, single_shooting
 
-function data_shooting(phi::Array,
-                        data::Array{<:AbstractFloat},
-                        time_array::StepRangeLen{<:AbstractFloat},
-                        f::Function)::Array
+"""
+Sum of Squared Errors
+"""
+function sse(a::Vector,b::Vector)
+	T = promote_type(eltype(a[1]),eltype(b[1]))
+	sum = zero(T)
+	@simd for i in 1:length(a)
+		for j in 1:length(a[1])
+			@inbounds sum += abs2(a[i][j]-b[i][j])
+		end
+	end
+	return sum
+end
+
+function data_shooting(phi::Vector{T},
+                        data::Vector,
+                        time_array::AbstractArray,
+                        f::Function)::T where T
     """
     phi: Parameters to be optimized. Can be comprized of rate constants.
     data: Observed data, used for calculating the residuals.
@@ -16,68 +30,43 @@ function data_shooting(phi::Array,
     f: DE that describes the phenomena.
     """
 
-    num_state_vars, num_samples = size(data)
+    num_samples = length(data)
+    num_state_vars = length(data[1])
 
-    estimated = zeros(
-                    promote_type(
-                        eltype(phi),eltype(data)
-                    ),
-                    num_state_vars,num_samples
-                )
+    estimated = zeros(T,num_state_vars)
+    sum_error = zero(T)
+    f_0 = zeros(T,num_state_vars)
+    f_1 = zeros(T,num_state_vars)
+    delta_t = zero(eltype(time_array))
 
-    # Initial conditions are stored at x_dot_num's first column
-    estimated[:,1] = data[:,1]
-
-    for i in 1:num_samples-1
+    @inbounds for i in 1:num_samples-1
         delta_t = time_array[i+1] - time_array[i]
 
-        x_0 = data[:, i]
-        x_1 = data[:, i+1]
+        x_0 = data[i]
+        x_1 = data[i+1]
 
-        f_0 = zeros(promote_type(eltype(phi),eltype(data)),num_state_vars)
         f(f_0, x_0, phi, 0)
-        f_1 = zeros(promote_type(eltype(phi),eltype(data)),num_state_vars)
         f(f_1, x_1, phi, 0)
 
-        x_est = x_0 + (1/2)*delta_t*(f_0+f_1)
-
-        estimated[:, i+1] = x_est
-    end
-
-    # TODO
-    # Fix weighting
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    #=>
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = 10^10
+        for j in 1:num_state_vars
+            estimated[j] = x_0[j] + 0.5*delta_t*(f_0[j]+f_1[j])
+            sum_error += abs2(estimated[j]-data[i+1][j])
         end
     end
-    <=#
-    return vec(residuals)
+    return sum_error
 end
 
-function single_shooting(phi::Array,
-                        data::Array,
+function single_shooting(phi::Vector{T},
+                        data::Vector,
                         t::AbstractArray,
-                        f::Function)::Array
-    num_state_vars, num_samples = size(data)
-    known_vars = 1:num_state_vars
-    ini_cond = convert.(eltype(phi),data[:,1])
+                        f::Function)::T where T
+    ini_cond = convert.(eltype(phi),data[1])
     tspan = (t[1], t[end])
 
     prob = ODEProblem(f, ini_cond, tspan, phi)
-    osol  = solve(prob, AutoTsit5(Rosenbrock23()), saveat=t)
-    estimated = reduce(hcat, osol.u)
+    osol  = solve(prob, Tsit5(), saveat=t)
 
-    # TODO
-    # Fix weighting
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-
-    return vec(residuals)
+    return sse(data,osol.u)
 end
 
 function data_shooting_exp(params::Array{<:AbstractFloat,1},
