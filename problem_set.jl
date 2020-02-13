@@ -45,7 +45,7 @@ function get_problem(p)::DEProblem
 
         t = range(0.0, stop=10.0, length=10)
         de_prob = ODEProblem(f_exp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
 
         return DEProblem(f_exp, phi, bounds, ode_data, t)
@@ -75,7 +75,7 @@ function get_problem(p)::DEProblem
         <=#
         t = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         de_prob = ODEProblem(floudas_one, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
 
         return DEProblem(floudas_one, phi, bounds, ode_data, t)
@@ -112,7 +112,7 @@ function get_problem(p)::DEProblem
 
         t = [0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]
         de_prob = ODEProblem(floudas_two, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(floudas_two, phi, bounds, ode_data, t)
 
@@ -144,7 +144,7 @@ function get_problem(p)::DEProblem
         t =[0.0,.025,.05,.075,.1,.125,.150,.175,.2,.225,.25,.3,.35,.4,.45,.5,.55,.65,.75,.85,.95]
 
         de_prob = ODEProblem(floudas_three, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(floudas_three, phi, bounds, ode_data, t)
 
@@ -168,7 +168,7 @@ function get_problem(p)::DEProblem
         <=#
         t = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,11.0,14.0,19.0,24.0,29.0,39.0]
         de_prob = ODEProblem(floudas_four, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(floudas_four, phi, bounds, ode_data, t)
 
@@ -200,7 +200,7 @@ function get_problem(p)::DEProblem
         t = [0.,0.050,0.065,0.080,0.123,0.233,0.273,0.354,0.397,0.418,0.502,0.553,0.681,0.750,0.916,0.937,1.122]
 
         de_prob = ODEProblem(floudas_five, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(floudas_five, phi, bounds, ode_data, t)
 
@@ -253,7 +253,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(f_bbg, phi, bounds, ode_data, t)
 
@@ -324,7 +324,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(f_mapk, phi, bounds, ode_data, t)
 
@@ -351,7 +351,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_gosc, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
 
         new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
@@ -525,7 +525,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(f_tsp, phi, bounds, ode_data, t)
 
@@ -1079,7 +1079,7 @@ function get_problem(p)::DEProblem
         end
 
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
-        de_sol = solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+        de_sol = solve(de_prob, Tsit5(), saveat=t)
         ode_data = de_sol.u
         return DEProblem(f_cho, p, bounds, ode_data, t)
 

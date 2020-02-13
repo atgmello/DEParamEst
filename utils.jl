@@ -214,11 +214,11 @@ function diff_calc(problem::DEProblem,
     known = problem.phi
 
     de_prob = ODEProblem(f,u0,(t[1],t[end]),known)
-    de_sol = DifferentialEquations.solve(de_prob, AutoTsit5(Rosenbrock23()), saveat=t)
+    de_sol = DifferentialEquations.solve(de_prob, Tsit5(), saveat=t)
     data = reduce(hcat, de_sol.u)
 
     de_prob_est = ODEProblem(f,u0,(t[1],t[end]),estimated)
-    de_sol_est = DifferentialEquations.solve(de_prob_est, AutoTsit5(Rosenbrock23()), saveat=t)
+    de_sol_est = DifferentialEquations.solve(de_prob_est, Tsit5(), saveat=t)
     data_est = reduce(hcat, de_sol_est.u)
 
     """
