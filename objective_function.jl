@@ -424,15 +424,16 @@ function adams_moulton_fourth_estimator(phi, data, time_array, f; plot_estimated
     return residuals
 end
 
-function soft_l1(z::Array{<:AbstractFloat})::Array{<:AbstractFloat}
+function soft_l1(z::T)::T where T<:Number
     sz = (2 * ((1 + z)^0.5 - 1))
 end
 
-function huber(z::Array{<:AbstractFloat})::Array{<:AbstractFloat}
-    if z < 0
-        return z
+function huber(z::T)::T where T<:Number
+	M = 1.35
+    if z < M
+        return abs2(z)
     else
-        return soft_l1(z)
+        return 2.0*M*abs(z) - M^2
     end
 end
 
