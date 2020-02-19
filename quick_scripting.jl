@@ -354,36 +354,79 @@ print(fit.param)
 # ----- Blackbox solver -----
 
 using BlackBoxOptim
+using Revise
+includet("./problem_set.jl")
+includet("./objective_function.jl")
+includet("./utils.jl")
+import .ProblemSet: get_problem, get_problem_key, DEProblem
+import .ObjectiveFunction: data_shooting, single_shooting, soft_l1, huber
+import .Utils: Trace, rand_guess, make_trace, get_range_traces, add_noise,
+				filter_outlier, fill_trace, scale_eval,
+				max_diff_states, diff_calc, step_success_rate, success_rate, box_data, box_scatter_plot,
+				get_plot_data, oe_plots, sr_plots, error_plots
+using DifferentialEquations
+using LinearAlgebra
 
-ode_fun = floudas_one
 
-data = Float64[1.0 0.57353 0.328937 0.188654 0.108198 0.0620545 0.0355906 0.0204132 0.011708 0.00671499;
-        0.0 0.401566 0.589647 0.659731 0.666112 0.639512 0.597179 0.54867 0.499168 0.451377]
-t = Float64[0.0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 0.888889, 1.0]
+prob =  get_problem("goodwin_oscillator")
+ds_fun(x) = data_shooting(x, prob.data, prob.t, prob.fun)
+ss_fun(x) = single_shooting(x, prob.data, prob.t, prob.fun)
 
+res = bboptimize(ss_fun;
+        SearchRange = [(b[1],b[2]) for b in [getindex.(prob.bounds, i) for i in 1:length(prob.phi)]],
+        NumDimensions = length(prob.phi),
+        MaxSteps=10^7)
+println(prob.phi)
 
-function lsq_ss_estimator(phi)
-    tspan = (t[1], t[end])
-    ini_cond = data[:,1]
-    oprob = ODEProblem(ode_fun, ini_cond, tspan, phi)
-    osol  = solve(oprob, Tsit5(), saveat=t)
-    estimated = reduce(hcat, osol.u)
-    p = plot(transpose(data))
-    plot!(p, transpose(estimated))
-    display(p)
-    return sum((estimated-data).^2)
+function rosenbrock2d(x)
+  return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 
-p0 = [5., 5.]
-res = bboptimize(lsq_ss_estimator; SearchRange = (0., 5.), NumDimensions = 2)
+res = bboptimize(rosenbrock2d; SearchRange = (-5.0, 5.0), NumDimensions = 2)
+best_candidate(res)
 
-print(lsq_ss_estimator([5.0035, 1]))
+function michaelis_menten_model(concentration, Vm, K)
+    (Vm * concentration) / (K + concentration)
+end
 
-print(phi_array[1])
+# MicMen data is taken from the README of the NLReg.jl package: https://github.com/dmbates/NLreg.jl
+# 1st column is concentration and 2nd column is the Rate
+MicMenData = [
+        0.02 76;
+        0.02 47;
+        0.06 97;
+        0.06 107;
+        0.11 123;
+        0.11 139;
+        0.22 159;
+        0.22 152;
+        0.56 191;
+        0.56 201;
+        1.1  207;
+        1.1  200]
 
-print("Testing commit from Juno.")
+MicMenConcentration = MicMenData[:, 1];
+MicMenRate = MicMenData[:, 2];
 
-# ----- Testando problema Floudas -----
+# Fitness function takes a vector of Vm and K and calculates the RSS
+function mic_men_fitness(params)
+    Vm, K = params
+    yhat = Float64[michaelis_menten_model(c, Vm, K) for c in MicMenConcentration]
+    sum(abs2.(MicMenRate .- yhat))
+end
+
+mic_men_fitness([1.1,2.2])
+
+result = bboptimize(mic_men_fitness;
+                SearchRange = (-1000.0, 1000.0),
+                NumDimensions = 2, MaxSteps = 1e4)
+Vm, K = best_candidate(result)
+RSS = best_fitness(result)
+
+println("NLReg.jl uses specific MicMen object and fit method to find:")
+println("Vm = 212.684, K = 0.0641212, RSS = 1195.45")
+println("\nUsing BlackBoxOptim.jl we find:")
+println("Vm = $(Vm), K = $(K), RSS = $(RSS)")# ----- Testando problema Floudas -----
 
 
 println("\n----- Solving problem $i with $sample_size samples -----\n")
@@ -1489,3 +1532,70 @@ gs = [g(arg...) for arg in g_args]
 [get_opt_results(f) for f in gs]
 
 minimum([a... for a in [(-1,2),(-10,11)]])
+
+# --- Ploting Problems ---
+
+using Revise
+includet("./problem_set.jl")
+includet("./utils.jl")
+import .ProblemSet: get_problem, get_problem_key,
+        problem_plot, DEProblem
+import .Utils: add_noise
+using DifferentialEquations
+using Plots
+
+function save_regular_plots(dir::String,name::String,p::DEProblem)::Nothing
+    # Continuous plot
+    len = round(Int64,1e4*(p.t[2]-p.t[1]))
+    t = range(p.t[1], stop=p.t[end], length=len)
+    prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
+    sol = solve(prob, Tsit5(), saveat=t)
+    data = sol.u
+    p = DEProblem(p.fun, p.phi,
+                p.bounds, data, t)
+    d_plot = problem_plot(p,"line")
+    display(d_plot)
+    savefig(d_plot,dir*"line_$name.svg")
+
+    # Sample plot
+    len = maximum([10,round(Int64, 2*(p.t[2]-p.t[1]))])
+    t = range(p.t[1], stop=p.t[end], length=len)
+    prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
+    sol = solve(prob, Tsit5(), saveat=t)
+    data = sol.u
+    p = DEProblem(p.fun, p.phi,
+                p.bounds, data, t)
+    d_plot = problem_plot(p,"scatter")
+    display(d_plot)
+    savefig(d_plot,dir*"scatter_$name.png")
+
+    nothing
+end
+
+function save_noisy_plots(dir::String,name::String,p::DEProblem,var::Float64)::Nothing
+    # Sample plot
+    len = maximum([10,round(Int64, 0.25*(p.t[2]-p.t[1]))])
+    t = range(p.t[1], stop=p.t[end], length=len)
+    prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
+    sol = solve(prob, Tsit5(), saveat=t)
+    data = add_noise(sol.u,var,10^-3)
+    p = DEProblem(p.fun, p.phi,
+                p.bounds, data, t)
+    d_plot = problem_plot(p,"scatter_line")
+    display(d_plot)
+    savefig(d_plot,dir*"noise_$(name)_$(round(var; digits=3)
+                                        |> x -> string(x)
+                                        |> y -> replace(y, "." => "")).png")
+
+    nothing
+end
+
+dir = "/home/andrew/git/ChemParamEst/plots/problems/scatter_line/png/"
+map(n -> save_regular_plots(dir,n,get_problem(n)),
+    [get_problem_key(p) for p in 1:10])
+
+dir = "/home/andrew/git/ChemParamEst/plots/problems/noise/png/"
+map(x -> save_noisy_plots(dir,x[1],get_problem(x[1]),x[2]),
+    Iterators.product([get_problem_key(p) for p in 1:10],[0.0, 0.1, 0.2, 0.3, 0.4])
+    |> q -> collect(q) |> r -> reduce(vcat,r)
+    )
