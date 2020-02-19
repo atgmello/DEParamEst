@@ -1555,7 +1555,7 @@ function save_regular_plots(dir::String,name::String,p::DEProblem)::Nothing
                 p.bounds, data, t)
     d_plot = problem_plot(p,"line")
     display(d_plot)
-    savefig(d_plot,dir*"line_$name.svg")
+    savefig(d_plot,dir*"line_$name.png")
 
     # Sample plot
     len = maximum([10,round(Int64, 2*(p.t[2]-p.t[1]))])
@@ -1578,7 +1578,7 @@ function save_noisy_plots(dir::String,name::String,p::DEProblem,var::Float64)::N
     t = range(p.t[1], stop=p.t[end], length=len)
     prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
     sol = solve(prob, Tsit5(), saveat=t)
-    data = add_noise(sol.u,var,10^-3)
+    data = add_noise(sol.u,var)
     p = DEProblem(p.fun, p.phi,
                 p.bounds, data, t)
     d_plot = problem_plot(p,"scatter_line")
@@ -1596,6 +1596,17 @@ map(n -> save_regular_plots(dir,n,get_problem(n)),
 
 dir = "/home/andrew/git/ChemParamEst/plots/problems/noise/png/"
 map(x -> save_noisy_plots(dir,x[1],get_problem(x[1]),x[2]),
-    Iterators.product([get_problem_key(p) for p in 1:10],[0.0, 0.1, 0.2, 0.3, 0.4])
+    Iterators.product([get_problem_key(p) for p in 1:11],[0.0, 0.05, 0.1, 0.2])
     |> q -> collect(q) |> r -> reduce(vcat,r)
     )
+
+# --- Reduce test ---
+
+using Statistics
+using Distributions
+
+a = [[1,2,3],[1,2,3]]
+mean(mean.(a))
+d = Normal(0,10)
+Base.rand(d)
+mean_arr = [mean(getindex.(a,i)) for i in 1:length(a[1])]
