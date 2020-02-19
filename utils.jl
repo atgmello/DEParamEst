@@ -251,14 +251,15 @@ function max_diff_states(problem::DEProblem,
                         estimated::Array{<:AbstractFloat,1},
                         variance::Float64)::Float64
 
-    _t = range(problem.t[1], stop=problem.t[end], length=1000)
+    len = round(Int64, 1e3*(problem.t[end]-problem.t[1]))
+    _t = range(problem.t[1], stop=problem.t[end], length=len)
     _problem = DEProblem(problem.fun, problem.phi,
                         problem.bounds, problem.data, _t)
 
     u0 = problem.data[1]
 
     epsilon = 10^-3
-    reps = 10
+    reps = 5
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
     u0_arr = [abs.(add_noise(u0,variance,epsilon)) for _ in 1:reps]
 
@@ -320,10 +321,10 @@ function error_plots(plot_data::Dict,
     xaxis: Noise Percentage
     yaxis: Mean Error
     """
-    p = plot(x=vars, xlabel="Noise Percentage", ylabel="Error")
+    p = plot(x=vars, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
     ylim_arr = []
     for m in method_arr
-        p2 = plot(x=vars, xlabel="Noise Percentage", ylabel="Error")
+        p2 = plot(x=vars, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
         error = plot_data[m]["error"]
         # Proceed only if there are no NaN
         if !any(isnan.(vcat(error...)))
@@ -375,11 +376,11 @@ function sr_plots(plot_data::Dict,
     yaxis: 1 / Success Rate
     """
 
-    p = scatter(xlabel="Time", ylabel="1 / Success Rate")
-    p2 = scatter(xlabel="Time", ylabel="1 / Success Rate")
+    p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
+    p2 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     ylim_arr = []
     for m in method_arr
-        p3 = scatter(xlabel="Time", ylabel="1 / Success Rate")
+        p3 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
         isr = sr.^(-1)

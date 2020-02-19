@@ -42,7 +42,7 @@ for (m,c) in zip(method_arr,cur_colors)
 end
 
 const method_label = Dict()
-m_labels = ["Data Shooting", "Single Shooting", "Data to Single Shooting"]
+m_labels = ["DS", "SS", "DSS"]
 for (m,l) in zip(method_arr,m_labels)
 	method_label[m] = l
 end
@@ -187,7 +187,7 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
-			reps = 100
+			reps = 50
 			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
 								problem.bounds, add_noise(data,v,epsilon), _t)
 				 			for _ in 1:reps]
