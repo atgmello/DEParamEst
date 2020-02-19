@@ -2,7 +2,9 @@ module ProblemSet
 
 using DifferentialEquations
 using ParameterizedFunctions
-export DEProblem, get_ode_problem, get_problem_key
+using Plots
+export DEProblem, get_ode_problem,
+        get_problem_key, problem_info, problem_plot
 
 desired_precision = Float64
 
@@ -15,6 +17,45 @@ struct DEProblem
 end
 
 Base.copy(p::DEProblem) = DEProblem(p.fun, p.phi, p.bounds, p.data, p.t)
+
+function problem_info(p::DEProblem)::String
+    num_states = length(p.data[1])
+    num_params = length(p.phi)
+    sep = "\n--- // ---\n"
+
+    rep = sep
+    res *= "Number of State Variables:\n\t $(num_states)"
+    res *= "\n\t Initial Condition: \n\t $(p.data[1])"
+    res *= "\n\t Number of Parameters: \n\t $(num_params) "
+    res *= "\n\t Parameter Values: \n\t $(p.phi)"
+    res *= "\n\t Bounds: \n\t $(p.bounds)"
+    res *= sep
+    return res
+end
+
+function problem_plot(p::DEProblem, type::String)
+    alphabet='A':'Z'
+    label=reshape(["$i" for i in alphabet[1:length(p.data[1])]],(1,length(p.data[1])))
+
+    if type == "scatter"
+        d_plot = scatter(p.t, reduce(hcat,p.data)',
+                        label=label, xlabel="Time", ylabel="State",
+                        legend=:outertopright)
+    elseif type == "line"
+        d_plot = plot(p.t, reduce(hcat,p.data)',
+                    label=label, xlabel="Time", ylabel="State",
+                    legend=:outertopright)
+
+    elseif type == "scatter_line"
+        d_plot = plot(p.t, reduce(hcat,p.data)',
+                    label=label, xlabel="Time", ylabel="State",
+                    legend=:outertopright, markershape=:circle)
+    else
+        d_plot = plot()
+    end
+
+    return d_plot
+end
 
 function get_problem_key(i::Int=0)::String
     keys = ["floudas_1","floudas_2",
@@ -235,6 +276,9 @@ function get_problem(p)::DEProblem
         # ----- BBG -----
         """
         Biomass Batch Growth
+        Robust and Efficient Parameter Estimation in Dynamic
+        Models of Biological Systems
+        [ROEF]
         """
 
         phi = [0.4, 5, 0.05, 0.5]
@@ -261,6 +305,9 @@ function get_problem(p)::DEProblem
         # ----- FHN -----
         """
         FitzHugh-Nagumo neural spike
+        Robust and Efficient Parameter Estimation in Dynamic
+        Models of Biological Systems
+        [ROEF]
         """
 
         phi = [0.2, 0.2, 3.0]
@@ -288,6 +335,7 @@ function get_problem(p)::DEProblem
         # ----- MPK -----
         """
         Kholodenko MAPK signalling pathway (MAPK)
+        Ronaldo
         """
         phi = [2.5, 0.25, 0.75, 0.75, 0.5, 0.5]
 
@@ -331,7 +379,10 @@ function get_problem(p)::DEProblem
     elseif p == "goodwin_oscillator"
         # ----- GOsc -----
         """
-         Goodwin Oscillator
+        Goodwin Oscillator
+        Robust and Efficient Parameter Estimation in Dynamic
+        Models of Biological Systems
+        [ROEF]
         """
         phi = [1.0, 0.1, 1.0, 0.1, 1.0, 0.1, 1.0, 10.0]
 
@@ -359,7 +410,10 @@ function get_problem(p)::DEProblem
         #=>
         # ----- TGFB -----
         """
-         TGF - β signalling pathway model
+        TGF - β signalling pathway model
+        Robust and Efficient Parameter Estimation in Dynamic
+        Models of Biological Systems
+        [ROEF]
         """
         phi = [0.00015, 0.023, 0.01, 0.01, 0.01, 0.1, 0.000403, 0.0026, 0.0056, 0.002, 0.016, 5.7, 0.00657, 0.0017, 1.0, 0.0008, 0.0001, 0.0021, 0.001, 9000.0, 1800.0]
 
@@ -437,10 +491,11 @@ function get_problem(p)::DEProblem
     elseif p == "tsp"
         # ----- TSP -----
         """
-        - Three Step Pathway from:
-         Parameter Estimation in Biochemical Pathways:
-         A Comparison of Global Optimization Methods
-         """
+        Three Step Pathway from:
+        Parameter Estimation in Biochemical Pathways:
+        A Comparison of Global Optimization Methods
+        [BioParamEst-GO]
+        """
 
         s = [.1, .46416, 2.1544, 10]
         p = [.05, .13572, .36840, .1]
@@ -531,6 +586,7 @@ function get_problem(p)::DEProblem
 
     elseif p == "cho"
         # ----- CHO -----
+	# [BioPreDyn]
 
         x0 = zeros(Float64, 35)
         x0[1] = 5
