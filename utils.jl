@@ -1,6 +1,6 @@
 module Utils
 
-import Distributions: Uniform
+import Distributions: Normal
 import Statistics: quantile
 using Random
 using Statistics
@@ -23,25 +23,19 @@ end
 Adds noise to a Vector of Vector
 """
 function add_noise(data::Vector{Vector{T}},
-                    variance::T, epsilon::T)::Vector{Vector{T}} where T
-    if variance == 0.0
+                    percent::T)::Vector{Vector{T}} where T
+    if percent == 0.0
         return data
     end
 
     noise_data = deepcopy(data)
+    epsilon_arr = [0.01*mean(getindex.(data,i)) for i in 1:length(data[1])]
+    sigma = zero(T)
     @inbounds for i in 1:length(noise_data)
         for j in 1:length(noise_data[1])
-            if noise_data[i][j] == 0.0
-                noise_data[i][j] += 10^-3
-            end
-            if -variance*noise_data[i][j] < variance*noise_data[i][j]
-                a = -variance*noise_data[i][j]
-                b = variance*noise_data[i][j]
-            else
-                b = -variance*noise_data[i][j]
-                a = variance*noise_data[i][j]
-            end
-            noise_data[i][j] += rand(Uniform(a, b)) + epsilon
+            sigma = abs(percent*noise_data[i][j] + epsilon_arr[j])
+            d = Normal(0,sigma)
+            noise_data[i][j] += rand(d)
         end
     end
     return noise_data
@@ -51,24 +45,18 @@ end
 Adds noise to a Vector of T
 """
 function add_noise(data::Vector{T},
-                    variance::T, epsilon::T)::Vector{T} where T
-    if variance == 0.0
+                    percent::T)::Vector{T} where T
+    if percent == 0.0
         return data
     end
 
     noise_data = deepcopy(data)
+    epsilon = 0.01 * mean(data)
+    sigma = zero(T)
     @inbounds for i in 1:length(noise_data)
-        if noise_data[i] == 0.0
-            noise_data[i] += 10^-3
-        end
-        if -variance*noise_data[i] < variance*noise_data[i]
-            a = -variance*noise_data[i]
-            b = variance*noise_data[i]
-        else
-            b = -variance*noise_data[i]
-            a = variance*noise_data[i]
-        end
-        noise_data[i] += rand(Uniform(a, b)) + epsilon
+        sigma = abs(percent*noise_data[i] + epsilon)
+        d = Normal(0,sigma)
+        noise_data[i] += rand(d)
     end
     return noise_data
 end
@@ -97,6 +85,16 @@ function mrae(actual::Array, forecast::Array)::Float32
     n = length(actual)
     e = abs.(actual-forecast)
     stat = (1/n)*sum(e./abs.(actual))
+end
+
+"""
+Normalized Mean Square Error
+"""
+function nmse(data::Vector{T}, data_est::Vector{T})::T where T
+    normalizer = abs2(maximum(data_est) - minimum(data_est))
+    res = sum(abs2(data-data_est))/normalizer
+    res /= length(data)
+    return res
 end
 
 function filter_outlier(arr::Array; p::Float64=2)::Array
@@ -206,9 +204,26 @@ function box_scatter_plot(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     return [qarr[3]-qarr[1],qarr[3],qarr[5]-qarr[3]]
 end
 
+"""
+Absolute Log Difference
+Since the data is required to be positive,
+find the minimum value from both actual and
+forecast data and lift up all values to avoid
+zeros and negative numbers.
+"""
+function abs_log_diff(data::Vector{T}, data_est::Vector{T})::T where T
+    min_val = minimum(vcat(data,data_est))
+    if min_val < 0.0
+        data .= data .- (min_val-0.1)
+        data_est .= data_est .- (min_val-0.1)
+    end
+    return abs.(log.(data)-log.(data_est))
+end
+
 function diff_calc(problem::DEProblem,
                     estimated::Array{<:AbstractFloat,1},
-                    u0::Array{<:AbstractFloat})::Float64
+                    u0::Array{<:AbstractFloat},
+                    f::Function)::Float64
     f = problem.fun
     t = problem.t
     known = problem.phi
@@ -221,20 +236,8 @@ function diff_calc(problem::DEProblem,
     de_sol_est = DifferentialEquations.solve(de_prob_est, Tsit5(), saveat=t)
     data_est = reduce(hcat, de_sol_est.u)
 
-    """
-    Absolute Log Difference
-    Since the data is required to be positive,
-    find the minimum value from both actual and
-    forecast data and lift up all values to avoid
-    zeros and negative numbers.
-    """
-    min_val = minimum(vcat(data,data_est))
-    if min_val < 0.0
-        data .= data .- (min_val-0.1)
-        data_est .= data_est .- (min_val-0.1)
-    end
 
-    ldiff = maximum(abs.(log.(data)-log.(data_est)))
+    fdiff = mean(f(data, data_est))
 
     #=>
     p = plot(title="$(round(ldiff,digits=3))")
@@ -244,7 +247,7 @@ function diff_calc(problem::DEProblem,
     sleep(2)
     <=#
 
-    return ldiff
+    return fdiff
 end
 
 function max_diff_states(problem::DEProblem,
@@ -257,13 +260,11 @@ function max_diff_states(problem::DEProblem,
                         problem.bounds, problem.data, _t)
 
     u0 = problem.data[1]
-
-    epsilon = 10^-3
     reps = 5
     #u0_arr = collect(Map(x -> abs.(add_noise(x,variance))),eduction(u0 for _ in 1:reps))
-    u0_arr = [abs.(add_noise(u0,variance,epsilon)) for _ in 1:reps]
+    u0_arr = [abs.(add_noise(u0,variance)) for _ in 1:reps]
 
-    median_max_error = median([diff_calc(_problem,estimated,x) for x in u0_arr])
+    median_max_error = mean([diff_calc(_problem,estimated,x) for x in u0_arr])
 
     return median_max_error
 end

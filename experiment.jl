@@ -187,9 +187,9 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
-			reps = 50
+			reps = 5
 			problem_arr = [ProblemSet.DEProblem(problem.fun, problem.phi,
-								problem.bounds, add_noise(data,v,epsilon), _t)
+								problem.bounds, add_noise(data,v), _t)
 				 			for _ in 1:reps]
 			bounds_arr = [rand_guess(bounds) for _ in 1:reps]
 
