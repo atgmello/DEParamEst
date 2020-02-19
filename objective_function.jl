@@ -6,6 +6,14 @@ using Plots
 export data_shooting, single_shooting
 
 """
+Tikhonov Regularization
+"""
+function tikhonov(alpha::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Vector{T})::T where T
+	return alpha*sum(abs2(phi-phi_ref).*w)
+end
+
+"""
 Sum of Squared Errors
 """
 function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloat
@@ -23,17 +31,16 @@ function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloa
 	return sum
 end
 
-
+"""
+phi: Parameters to be optimized. Can be comprized of rate constants.
+data: Observed data, used for calculating the residuals.
+time_array: Time intervals in which the data has been colected.
+f: DE that describes the phenomena.
+"""
 function data_shooting(phi::Vector{T},
                         data::Vector,
                         time_array::AbstractArray,
                         f::Function)::T where T
-    """
-    phi: Parameters to be optimized. Can be comprized of rate constants.
-    data: Observed data, used for calculating the residuals.
-    time_array: Time intervals in which the data has been colected.
-    f: DE that describes the phenomena.
-    """
 
     num_samples = length(data)
     num_state_vars = length(data[1])
@@ -74,6 +81,12 @@ function single_shooting(phi::Vector{T},
     return sse(data,osol.u)
 end
 
+"""
+params: Parameters to be optimized. Can be comprized of rate constants and initial values.
+data: Observed data, used for calculating the residuals.
+time_array: Time intervals in which the data has been colected.
+f: DE that describes the phenomena.
+"""
 function data_shooting_exp(params::Array{<:AbstractFloat,1},
                         data::Array{<:AbstractFloat},
                         time_array::StepRangeLen,
@@ -81,12 +94,6 @@ function data_shooting_exp(params::Array{<:AbstractFloat,1},
                         unknown_vars::Array{<:Float64,1}=[],
                         differential_vars::Array{<:Float64,1}=[],
                         plot_estimated::Bool=false)::Array{<:AbstractFloat,1}
-    """
-    params: Parameters to be optimized. Can be comprized of rate constants and initial values.
-    data: Observed data, used for calculating the residuals.
-    time_array: Time intervals in which the data has been colected.
-    f: DE that describes the phenomena.
-    """
 
     num_state_vars, num_samples = size(data)
 
