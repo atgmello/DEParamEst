@@ -1610,3 +1610,63 @@ mean(mean.(a))
 d = Normal(0,10)
 Base.rand(d)
 mean_arr = [mean(getindex.(a,i)) for i in 1:length(a[1])]
+
+# --- Slice and set op ---
+
+a = rand(5)
+
+a[filter(x -> x != 2, 1:length(a))]
+
+a = [1.1,2.2,NaN64]
+mean(a)
+mean(a[filter(x -> !isnan(a[x]),1:length(a))])
+
+# --- ASYNC ---
+
+function return_3()
+	x = 1
+	y = 1
+	x = 2
+	sleep(0.5)
+	return x+y
+end
+
+function test()
+	reps = 5
+	n = 2
+	res_partial = Vector{Int64}(undef, 5)
+	res = fill(res_partial,reps)
+	for i in 1:reps
+		res[i] = [return_3() for _ in 1:3]
+	end
+	sleep(1)
+	return res
+end
+
+function test_1()
+	reps = 5
+	n = 2
+	res_partial = Vector{Int64}(undef, 5)
+	res = fill(res_partial,reps)
+	@sync for i in 1:reps
+		@async res[i] = [return_3() for _ in 1:3]
+	end
+	sleep(1)
+	return res
+end
+
+function test_2()
+	res = 0
+	@sync begin
+		@async res = return_3()
+	end
+	return res
+end
+
+@time begin
+    @sync begin
+        @async sleep(1)
+        @async sleep(1)
+    end
+    sleep(0.5)
+end
