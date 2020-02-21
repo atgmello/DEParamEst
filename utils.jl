@@ -1,6 +1,6 @@
 module Utils
 
-import Distributions: Normal
+import Distributions: Normal, Uniform
 import Statistics: quantile
 using Random
 using Statistics
@@ -92,7 +92,7 @@ Normalized Mean Square Error
 """
 function nmse(data::Vector{T}, data_est::Vector{T})::T where T
     normalizer = abs2(maximum(data_est) - minimum(data_est))
-    res = sum(abs2(data-data_est))/normalizer
+    res = sum(abs2.(data-data_est))/normalizer
     res /= length(data)
     return res
 end
@@ -176,18 +176,18 @@ function get_range_traces(trace::Trace)::Trace
     return best, med, worst
 end
 
-function success_rate(x::T)::T where T<:AbstractFloat
-    return 2/(1+exp(x))
+function success_rate(x::T)::T where T
+    return 2/(1+exp100(x))
 end
 
-function step_success_rate(x::AbstractFloat)::Int64
-    y = 11/(10+exp10(x))
-    if y > 0.5
+function step_success_rate(x::T)::Int64 where T
+    if x < 0.15
        return 1
     else
         return 0
     end
 end
+
 
 function box_data(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     q = quantile(arr,[0.25,0.5,0.75])
@@ -291,7 +291,6 @@ function get_plot_data(results::Dict,prob_key::String,
         plot_data[m]["error"] = []
         plot_data[m]["time"] = []
     end
-
     for v in vars
         for m in method_arr
             error = [e[1][1] for e in results[prob_key][v][m]]
@@ -365,17 +364,17 @@ function error_plots(plot_data::Dict,
     nothing
 end
 
+"""
+Success Rate vs Time Plots
+xaxis: Mean Computation Time
+yaxis: 1 / Success Rate
+"""
 function sr_plots(plot_data::Dict,
                     vars::AbstractArray{<:AbstractFloat},
                     method_arr::Array{<:String,1},
                     method_label::Dict,
                     method_color::Dict,
                     sam::Int)::Nothing
-    """
-    Success Rate vs Time Plots
-    xaxis: Mean Computation Time
-    yaxis: 1 / Success Rate
-    """
 
     p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     p2 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
@@ -417,17 +416,27 @@ function sr_plots(plot_data::Dict,
     nothing
 end
 
+function plot_compare(data::Vector, data_est::Vector)
+    alphabet='A':'Z'
+    label=reshape(["$i" for i in alphabet[1:length(data[1])]],(1,length(data[1])))
+    err = sqrt(nmse(reduce(vcat,data), reduce(vcat,data_est)))
+    p = plot(title = "$(err)")
+    plot!(p, reduce(hcat,data)', label=label, markershape=:circle, linestyle=:solid)
+    plot!(p, reduce(hcat,data_est)', label=label, markershape=:cross, linestyle=:dash)
+    display(p)
+end
+
+"""
+Overall Efficiency (OE) Plots
+xaxis: Method
+yaxis: OE Score
+"""
 function oe_plots(plot_data::Dict,
                     vars::AbstractArray{<:AbstractFloat},
                     method_arr::Array{<:String,1},
                     method_label::Dict,
                     method_color::Dict,
                     sam::Int)::Nothing
-    """
-    Overall Efficiency (OE) Plots
-    xaxis: Method
-    yaxis: OE Score
-    """
 
     t_succ = zeros(length(method_arr))
     @inbounds for i in 1:length(method_arr)
