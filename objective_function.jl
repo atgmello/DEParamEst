@@ -1,16 +1,22 @@
 module ObjectiveFunction
 
 using DifferentialEquations
+using LinearAlgebra
 using Plots
 
-export data_shooting, single_shooting
+export data_shooting, single_shooting, tikhonov
 
 """
 Tikhonov Regularization
 """
-function tikhonov(alpha::T, phi::Vector{T}, phi_ref::Vector{T},
-					w::Vector{T})::T where T
-	return alpha*sum(abs2(phi-phi_ref).*w)
+function tikhonov(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Array{T,N} where N)::T where T
+	return lambda*(phi-phi_ref)'*w'*w*(phi-phi_ref)
+end
+
+function tikhonov(lambda::T, phi::Vector{D}, phi_ref::Vector{T},
+					w::Array{T,N} where N)::D where T where D
+	return lambda*(phi-phi_ref)'*w'*w*(phi-phi_ref)
 end
 
 """
@@ -24,6 +30,21 @@ function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloa
 	end
 
 	@simd for i in 1:length(a)
+		for j in 1:length(a[1])
+			@inbounds sum += abs2(a[i][j]-b[i][j])
+		end
+	end
+	return sum
+end
+
+function sse(a::Vector{Vector{T}},b::Vector{Vector{D}})::D where T<:AbstractFloat where D
+	sum = zero(T)
+
+	if length(a) != length(b) || length(a[1]) != length(b[1])
+		return Inf64
+	end
+
+	for i in 1:length(a)
 		for j in 1:length(a[1])
 			@inbounds sum += abs2(a[i][j]-b[i][j])
 		end
