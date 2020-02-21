@@ -61,8 +61,9 @@ function get_problem_key(i::Int=0)::String
     keys = ["floudas_1","floudas_2",
             "floudas_3","floudas_4",
             "floudas_5","floudas_6",
-            "bbg","fhn","mpk",
+            "bbg","fhn",
             "goodwin_oscillator",
+            "mpk",
             "tsp","cho","exponential"]
     if i > 0
         return keys[i]
