@@ -1627,7 +1627,7 @@ function return_3()
 	x = 1
 	y = 1
 	x = 2
-	sleep(0.5)
+	sleep(1)
 	return x+y
 end
 
@@ -1655,6 +1655,9 @@ function test_1()
 	return res
 end
 
+@time test_1()
+# Speed up!
+
 function test_2()
 	res = 0
 	@sync begin
@@ -1663,6 +1666,9 @@ function test_2()
 	return res
 end
 
+@time test_2()
+# Returns correct value!
+
 @time begin
     @sync begin
         @async sleep(1)
@@ -1670,3 +1676,80 @@ end
     end
     sleep(0.5)
 end
+# Speed up!
+
+@time begin
+    a = fill(nothing,3)
+	@sync for j in 1:3
+        @async for i in 1:3
+            a[i] = sleep(1)
+        end
+	end
+    sleep(1)
+end
+
+function test(x,y)
+	sleep(0.1(x*y))
+	return x*y
+end
+
+
+@time begin
+	res = [0.0]
+	for i in 1:3
+		for j in 1:4
+			Threads.@spawn res .= test(i,j)
+		end
+	end
+	println(res)
+	sleep(1)
+end
+# 1
+
+@time begin
+	res = [0.0]
+	@sync for i in 1:3
+		for j in 1:4
+			Threads.@spawn res .= test(i,j)
+		end
+	end
+	println(res)
+	sleep(1)
+end
+# 2.2 ok
+
+@time begin
+	res = [0.0]
+	@sync for i in 1:3
+		Threads.@threads for j in 1:4
+			res .= test(i,j)
+		end
+	end
+	sleep(1)
+	println(res)
+end
+# 5.2 ok
+
+@time begin
+	res = [0.0]
+	for i in 1:3
+		Threads.@threads for j in 1:4
+			res .= test(i,j)
+		end
+	end
+	sleep(1)
+	println(res)
+end
+# 5.2 ok
+
+@time begin
+	res = [0.0]
+	Threads.@threads for i in 1:3
+		Threads.@threads for j in 1:4
+			res .= test(i,j)
+		end
+	end
+	sleep(1)
+	println(res)
+end
+# 4 ok
