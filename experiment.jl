@@ -1,10 +1,12 @@
 ENV["GKSwstype"]="nul"
+using Distributed
 using Transducers
 using DiffEqParamEstim
 using DifferentialEquations
 using Statistics
 using StatsBase: sample
 using Random
+Random.seed!(1234)
 using Distances
 using LinearAlgebra
 using Plots
@@ -27,6 +29,8 @@ import .Utils: Trace, rand_guess, make_trace, get_range_traces, add_noise,
 				max_diff_states, diff_calc, step_success_rate, success_rate, box_data, box_scatter_plot,
 				get_plot_data, oe_plots, sr_plots, error_plots, nmse, plot_compare
 
+@assert Threads.nthreads() > 1
+
 #old_precision = precision(BigFloat)
 #new_precision = 1024
 #setprecision(new_precision)
@@ -36,17 +40,16 @@ const dp = Float64
 theme(:default)
 const cur_colors = get_color_palette(:auto, plot_color(:white), 17)
 
-const method_arr = ["DS","SS"]
+const all_method_arr = ["DS","SS","DDS"]
 
 const method_color = Dict()
-for (m,c) in zip(method_arr,cur_colors)
+for (m,c) in zip(all_method_arr,cur_colors)
 	method_color[m] = c
 end
 
 const method_label = Dict()
-m_labels = ["DS", "SS", "DSS"]
-for (m,l) in zip(method_arr,m_labels)
-	method_label[m] = l
+for m in all_method_arr
+	method_label[m] = m
 end
 
 #SAMIN_options = opt.Options(x_tol=10^-12, f_tol=10^-24, iterations=10^6)
@@ -73,14 +76,14 @@ function optim_res(obj_fun::Function,
 					p0::Vector{T})::Vector{Vector{T}} where T
 	lb = testing_set[1].bounds[1]
 	ub = testing_set[1].bounds[2]
-	timed = zero(1)
+	elapsed_time = zero(T)
 
-	timed += @elapsed res_obj = Optim.optimize(obj_fun,
+	elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 								lb,ub,
 								p0,
 								Optim.SAMIN(verbosity=0, rt=0.2), SAMIN_options)
 
-	timed += @elapsed res_obj = Optim.optimize(obj_fun,
+	elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 								lb,ub,
 								res_obj.minimizer[1:length(p0)],
 								Fminbox(inner_optimizer),
@@ -105,170 +108,157 @@ function optim_res(obj_fun::Function,
 	plot_compare(p.data, ode_sol.u)
 	"""
 
-	return [[nrmse], [timed], phi_est]
+	return [[nrmse], [elapsed_time], phi_est]
 end
 
-function get_results(method_label::String,
-					training_set::Vector{ProblemSet.DEProblem},
+function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 					testing_set::Vector{ProblemSet.DEProblem},
-	 				p0::Vector{T})::Array{Array{T}} where T
+					p0::Vector{T},
+					k::Int64,
+					f::Function,
+					phi_prior::Vector{T},
+					m::Int64,
+					w::Array)::Array{Array{T}} where T
 
 	results = [[10_000], [t_limit], p0]
-	p0_ds = p0
 	#lambda_arr = [1e-2,1e-1,0.0,1e0,1e1,1e2]
 	lambda_arr = [1e0,0.0,1e-2,1e-4]
+	num_lambdas = length(lambda_arr)
 	best_lambda = lambda_arr[1]
 
-	"""
-	# ----- Data Shooting -----
-	if method_label == "DS" || method_label =="DSS"
-	    ds_fun(x) = data_shooting(x, problem.data, problem.t, problem.fun)
-		try
-			results = optim_res(ds_fun, problem, p0)
-
-			if method_label == "DS"
-				return results
-			end
-			p0_ds = results[end]
-	    catch e
-			println("DS Error:")
-            @show e
-        end
-        # ----- Data to Single Shooting -----
-		if method_label == "DSS"
-	    	dds_fun(x) = single_shooting(x, problem.data, problem.t, problem.fun)
-			try
-				@inbounds for i in 1:length(p0_ds)
-					if p0_ds[i] < problem.bounds[1][i]
-						p0_ds[i] = problem.bounds[1][i] + problem.bounds[1][i]*0.1
-					elseif p0_ds[i] > problem.bounds[2][i]
-						p0_ds[i] = problem.bounds[2][i] - problem.bounds[2][i]*0.1
-					end
-				end
-				partial_res = optim_res(dds_fun, problem, p0_ds)
-				partial_res[2] += results[2]
-				results = partial_res
-		    catch e
-				println("DSS Error:")
-	            @show e
-	        end
-		end
-	end
-	"""
-	if method_label == "SS"
-		f = single_shooting
-		phi_prior = zeros(T,length(p0))
-		m = length(phi_prior)
-		w = Matrix{T}(I,m,m)
-	elseif method_label == "DS"
-		f = data_shooting
-		phi_prior = zeros(T,length(p0))
-		m = length(phi_prior)
-		w = Matrix{T}(I,m,m)
-	end
-
-
-	partial_res = [[10_000], [t_limit], p0]
 	bounds = training_set[1].bounds
-	oos_errors = fill(NaN64,length(lambda_arr))
-	elapsed = zero(T)
 
 	# Lamdba selection via
 	# Cross Validation
-	println("\n--- x ---")
-	println(method_label)
-	println("--- x ---\n")
-	println("Initial guess:\n$(p0)")
-	println("Starting Cross Validation!")
-	println("...")
+	#println("\n--- x ---")
+	#println(method_label)
+	#println("--- x ---\n")
+	#println("Initial guess:\n$(p0)")
+	#println("Starting Cross Validation!")
+	#println("Preprocessing starting")
+	#println("...")
 
 	# K-Fold Cross Validation
-	# Fixed K = 4
-	# TODO: make it variable
 
-	cv_folds = sample(1:8, (4,2), replace=false)
-	num_folds,num_elem_fold = size(cv_folds)
+	num_training_sets = length(training_set)
+	num_elem_folds = convert(Int64, (num_training_sets/k))
 
-	for i in 1:length(lambda_arr)
+	cv_folds = sample(1:num_training_sets, (k,num_elem_folds), replace=false)
 
-		lambda = lambda_arr[i]
-		println("\n--- x ---\n")
-		println("Lambda = $(lambda)")
-		oos_errors_partial = fill(NaN64,length(cv_folds))
+	num_elem_train_slice = convert(Int64, (length(training_set) - num_elem_folds))
 
-		for j in 1:num_folds
+	# Pre - Allocate and prepare necessary data
+	partial_res = [[10_000], [t_limit], p0]
+	partial_res_arr = [[[Vector{Float64}(undef, 1)
+							for _ in 1:3] for _ in 1:k]
+							for _ in 1:num_lambdas]
 
+	training_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
+	 						for _ in 1:k]
+	training_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
+	 						for _ in 1:k]
+							for _ in 1:num_lambdas]
+
+	hold_out_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
+							for _ in 1:k]
+	hold_out_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
+							for _ in 1:k]
+							for _ in 1:num_lambdas]
+
+	obj_fun_folds = Vector{Function}(undef,k)
+	obj_fun_arr = [Vector{Function}(undef,k) for _ in 1:num_lambdas]
+
+	for i in 1:num_lambdas
+		for j in 1:k
 			hold_out = cv_folds[j,:]
-			slice = filter(x -> x != hold_out, 1:length(training_set))
-			training_slice = training_set[slice]
-			oos_problem = training_set[hold_out]
+			slice = filter(x -> !(x in hold_out), 1:length(training_set))
+
+			training_sliced = training_set[slice]
+			training_set_folds[j] = training_sliced
+
+			hold_out_set = training_set[hold_out]
+			hold_out_set_folds[j] = hold_out_set
 
 			obj_fun = function (x)
-							total_error = zero(T)
-							for p in training_slice
-								total_error += f(x, p.data, p.t, p.fun)
-							end
-							total_error += tikhonov(lambda, x, phi_prior, w)
-							return total_error
-				    	end
-
-				try
-		    		partial_res = optim_res(obj_fun, oos_problem, p0)
-
-					p0 = partial_res[3]
-					"""
-					If p0 becomes out of bounds, fix it
-					"""
-					@inbounds for k in 1:length(p0)
-						if p0[k] < bounds[1][k]
-							p0[k] = bounds[1][k] + bounds[1][k]*0.1
-						elseif p0[k] > bounds[2][k]
-							p0[k] = bounds[2][k] - bounds[2][k]*0.1
+						total_error = zero(T)
+						for p in training_sliced
+							total_error += f(x, p.data, p.t, p.fun)
 						end
+						total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
+						return total_error
 					end
-
-					elapsed += partial_res[2][1]
-					oos_errors_partial[j] = partial_res[1][1]
-					println("Error $(j):\n$(oos_errors_partial[j])")
-				catch e
-					println("Error suring CV fold!")
-				    @show e
-					if e == InterruptException
-						break
-					end
-				end
+			obj_fun_folds[j] = obj_fun
 		end
-		oos_errors[i] = mean(oos_errors_partial[
-								filter(x -> !isnan(oos_errors_partial[x]),
-											1:length(oos_errors_partial))
-											])
-		println("Mean CV Error for lambda = $(lambda_arr[i]):\n$(oos_errors[i])\n\n")
+		obj_fun_arr[i] = obj_fun_folds
+		training_set_arr[i] = training_set_folds
+		hold_out_set_arr[i] = hold_out_set_folds
 	end
 
-	elapsed /= length(lambda_arr)*length(cv_folds)
-	best_lambda = lambda_arr[argmin(oos_errors)]
+	#println("Preprocessing done!")
+	#println("Async CV starting")
+	#println("...")
 
-	println("Done!")
-	println("Best lambda:\n$(best_lambda)")
-	println("Optimizing on whole dataset.")
-	println("...")
+	# Async CV
+	@sync for i in 1:num_lambdas
+		for j in 1:k
+			#try
+				Threads.@spawn partial_res_arr[i][j] = optim_res(obj_fun_arr[i][j],
+														hold_out_set_arr[i][j],
+														p0)
+			#catch e
+			#	println("Error suring CV fold!")
+		    #	@show e
+			#	if e == InterruptException
+			#		break
+			#	end
+			#end
+		end
+	end
 
-	final_obj_fun = function (x)
-					total_error = zero(T)
-					for p in training_set
-						total_error += f(x, p.data, p.t, p.fun)
+	# Post - Process results
+	#println("Async CV done for $(method_label)!")
+	#println("Evaluating results:")
+	elapsed_time = zero(T)
+	fold_error_mean = zero(T)
+	lambda_hold_errors = Vector{Float64}(undef,num_lambdas)
+	for i in 1:num_lambdas
+		fold_error_mean = 0.0
+		#println("\nResults for $(lambda_arr[i])")
+		for j in 1:k
+			pres = partial_res_arr[i][j]
+			fold_error_mean += pres[1][1]
+			elapsed_time += pres[2][1]
+			#println("Error $(j):\n$(pres[1][1])")
+		end
+		fold_error_mean /= k
+		#println("Mean error on $(lambda_arr[i]):\n$(fold_error_mean)\n")
+		lambda_hold_errors[i] = fold_error_mean
+	end
+
+	elapsed_time /= num_lambdas*k
+	best_lambda = lambda_arr[argmin(lambda_hold_errors)]
+
+	#println("\nDone!")
+	#println("Best lambda:\n$(best_lambda)")
+	#println("Optimizing on whole dataset.")
+	#println("...")
+
+	final_obj_fun(x) = begin
+						total_error = zero(T)
+						for p in training_set
+							total_error += f(x, p.data, p.t, p.fun)
+						end
+						total_error += tikhonov(best_lambda, x, phi_prior, w)
+						return total_error
 					end
-					total_error += tikhonov(best_lambda, x, phi_prior, w)
-					return total_error
-				end
 
 	try
 		partial_res = optim_res(final_obj_fun, testing_set, p0)
-		results = [partial_res[1], [elapsed], partial_res[3]]
+		results = [partial_res[1], [elapsed_time], partial_res[3]]
 
-		println("Done!")
-		println("Test Error:\n$(results[1])")
-		println("Estimated parameters:\n$(results[3])\n\n")
+		#println("Done!")
+		#println("Test Error:\n$(results[1])")
+		#println("Estimated parameters:\n$(results[3])\n\n")
 	catch e
 		println("Error!")
         @show e
@@ -286,6 +276,48 @@ function get_results(method_label::String,
 	plot_compare(p.data, data_est)
 	sleep(7)
 	"""
+	return results
+end
+
+function get_results(method_label::String,
+					training_set::Vector{ProblemSet.DEProblem},
+					testing_set::Vector{ProblemSet.DEProblem},
+	 				p0::Vector{T})::Array{Array{T}} where T
+
+	k = convert(Int64, length(training_set)/2)
+
+	# For DDS
+	add_time = zero(T)
+
+	if method_label == "SS"
+		f = single_shooting
+		phi_prior = zeros(T,length(p0))
+		m = length(phi_prior)
+		w = Matrix{T}(I,m,m)
+	elseif method_label == "DS"
+		f = data_shooting
+		phi_prior = zeros(T,length(p0))
+		m = length(phi_prior)
+		w = Matrix{T}(I,m,m)
+	elseif method_label == "DDS"
+		f = data_shooting
+		phi_prior = zeros(T,length(p0))
+		m = length(phi_prior)
+		w = Matrix{T}(I,m,m)
+		partial_res = cv_optimize(training_set, testing_set,
+										p0,k,f,phi_prior,m,w)
+		add_time = partial_res[2][1]
+
+		p0 = partial_res[3]
+		f = single_shooting
+		phi_prior = p0
+		m = length(phi_prior)
+		w = Matrix{T}(I,m,m)./p0
+	end
+
+	results = cv_optimize(training_set, testing_set,
+							p0,k,f,phi_prior,m,w)
+	results[2][1] += add_time
 
 	return results
 end
@@ -294,18 +326,14 @@ end
 function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 					vars::AbstractArray{<:AbstractFloat},
 					method_arr::Array{<:String},
-					dir::String,
-					parallel::Bool)::Dict
+					dir::String)::Dict
 	results::Dict = Dict()
 	prob_key::String = get_problem_key(p_num)
 	problem::ProblemSet.DEProblem = get_problem(prob_key)
-	results[prob_key] = Dict()
 
-	cd(dir)
-	mkdir(prob_key)
-	cd(prob_key)
+	full_path = dir*prob_key
+	mkdir(full_path)
 
-    #print("\n----- Getting results for Flouda's Problem number $i -----\n")
     fun::Function = problem.fun
     phi::Array = problem.phi
     bounds::Vector = problem.bounds
@@ -315,6 +343,11 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	# Minimum number of data points
 	min_data = round(length(phi)/length(ini_cond),RoundUp)
 	data_sams = convert.(eltype(sams[1]),sams.*min_data)
+
+	results_final = Dict()
+	for sam in data_sams
+		results_final[sam] = Dict()
+	end
 
 	for sam in data_sams
 		for v in vars
@@ -327,7 +360,7 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	        #data_plot = plot(t,data')
 			#display(data_plot)
 
-			num_reps = 4
+			num_reps = 10
 			guess_arr = [rand_guess(bounds) for _ in 1:num_reps]
 
 			n_training = 8
@@ -340,37 +373,45 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 								problem.bounds, add_noise(data,v), _t)
 				 			for _ in 1:n_testing] for _ in 1:num_reps]
 
-			res = Dict()
-			@sync for m in method_arr
-				@async res[m] = [get_results(m,
-									training_set_arr[i],
-									testing_set_arr[i],
-									guess_arr[i])
-							for i in 1:num_reps]
+			results_methods = Dict()
+			for m in method_arr
+				results_methods[m] = []
 			end
-
-			results[prob_key][v] = res
+			@sync for m in method_arr
+				for i in 1:num_reps
+					Threads.@spawn push!(results_methods[m], get_results(m,
+										training_set_arr[i],
+										testing_set_arr[i],
+										guess_arr[i]))
+				end
+			end
+			results_final[sam][v] = results_methods
 	    end
-
-		plot_data = get_plot_data(results, prob_key, vars, method_arr)
-
-		error_plots(plot_data,vars,method_arr,method_label,method_color,sam)
-
-		sr_plots(plot_data,vars,method_arr,method_label,method_color,sam)
-
-		oe_plots(plot_data,vars,method_arr,method_label,method_color,sam)
-
 	end #samples loop
-	return results
+
+	"""
+	Plotting
+	"""
+	for sam in data_sams
+		results = results_final[sam]
+		plot_data = get_plot_data(results, vars, method_arr)
+
+		error_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+
+		sr_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+
+		oe_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+	end
+	return results_final
 end
 
-function problem_exp_loop(probs::AbstractArray{<:Int},
-							sams::AbstractArray{<:Int},
-							vars::AbstractArray{<:AbstractFloat},
-							dir::String,
-							parallel::Bool)
+function problem_exp_loop(probs::Vector{<:Int},
+							sams::Vector{<:Int},
+							vars::Vector{<:AbstractFloat},
+							method_arr::Vector{String},
+							dir::String)
 	for p in probs
-		experiment(p,sams,vars,method_arr,dir,parallel)
+		experiment(p,sams,vars,method_arr,dir)
 	end
 end
 
@@ -379,23 +420,10 @@ function main(args::Array{<:String})::Nothing
 	probs = eval(Meta.parse(args[2]))
 	sams = eval(Meta.parse(args[3]))
 	vars = eval(Meta.parse(args[4]))
-	par = string(args[5]) == "true"
-	#vars = range(0.0, 0.3, length=4)
-	time_main = @time problem_exp_loop(probs,sams,vars,dir,par)
+	method_arr = ["DS","SS","DDS"]
+	time_main = @time problem_exp_loop(probs,sams,vars,method_arr,dir)
 	println(time_main)
 	nothing
 end
 
-dir="/home/andrew/git/ChemParamEst/plots/experiments/tmp/"
-p="1:10"
-sams="[2,4]"
-#vars="[0.05,0.1,0.15]"
-vars="[0.05,0.1,0.15]"
-par="true"
-args = [dir,p,sams,vars,par]
-
-main(args)
-
-#TODO FIX TIKHONOV REGULARIZATION
-
-#clearconsole()
+main(ARGS)

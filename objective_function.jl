@@ -37,7 +37,8 @@ function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloa
 	return sum
 end
 
-function sse(a::Vector{Vector{T}},b::Vector{Vector{D}})::D where T<:AbstractFloat where D
+function sse(a::Vector,b::Vector)
+	T = promote_type(eltype(a[1]),eltype(b[1]))
 	sum = zero(T)
 
 	if length(a) != length(b) || length(a[1]) != length(b[1])

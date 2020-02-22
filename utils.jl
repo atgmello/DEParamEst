@@ -3,6 +3,7 @@ module Utils
 import Distributions: Normal, Uniform
 import Statistics: quantile
 using Random
+Random.seed!(1234)
 using Statistics
 using Distances
 using DifferentialEquations
@@ -282,7 +283,7 @@ end
 Plotting functions
 """
 
-function get_plot_data(results::Dict,prob_key::String,
+function get_plot_data(results::Dict,
                         vars::AbstractArray{<:AbstractFloat},
                         method_arr::Array{<:String,1})::Dict
     plot_data = Dict()
@@ -293,13 +294,13 @@ function get_plot_data(results::Dict,prob_key::String,
     end
     for v in vars
         for m in method_arr
-            error = [e[1][1] for e in results[prob_key][v][m]]
+            error = [e[1][1] for e in results[v][m]]
             if length(error) > 0
                 push!(plot_data[m]["error"], error)
             else
                 push!(plot_data[m]["error"], [NaN])
             end
-            time = [e[2][1] for e in results[prob_key][v][m]]
+            time = [e[2][1] for e in results[v][m]]
             if length(time) > 0
                 push!(plot_data[m]["time"], time)
             else
@@ -315,7 +316,8 @@ function error_plots(plot_data::Dict,
                     method_arr::Array,
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int)::Nothing
+                    sam::Int,
+                    path::String)::Nothing
     """
     Error Plots
     xaxis: Noise Percentage
@@ -348,8 +350,8 @@ function error_plots(plot_data::Dict,
                         fillalpha=.5, label=method_label[m], color=method_color[m])
             #display(p2)
 
-            savefig(p,"./error_inter_$(m)_$(sam).svg")
-            savefig(p2,"./error_$(m)_$(sam).svg")
+            savefig(p,path*"/error_inter_$(m)_$(sam).svg")
+            savefig(p2,path*"/error_$(m)_$(sam).svg")
         end
     end
     #=>
@@ -360,7 +362,7 @@ function error_plots(plot_data::Dict,
     <=#
     #display(p)
 
-    savefig(p,"./error_all_$(sam).svg")
+    savefig(p,path*"/error_all_$(sam).svg")
     nothing
 end
 
@@ -374,7 +376,8 @@ function sr_plots(plot_data::Dict,
                     method_arr::Array{<:String,1},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int)::Nothing
+                    sam::Int,
+                    path::String)::Nothing
 
     p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     p2 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
@@ -405,14 +408,14 @@ function sr_plots(plot_data::Dict,
 
             #display(p3)
 
-            savefig(p3,"./sr_$(m)_$(sam).svg")
+            savefig(p3,path*"/sr_$(m)_$(sam).svg")
         end
     end
     #display(p)
     #display(p2)
 
-    savefig(p, "./sr_all_medians_$(sam).svg")
-    savefig(p2, "./sr_all_$(sam).svg")
+    savefig(p, path*"/sr_all_medians_$(sam).svg")
+    savefig(p2, path*"/sr_all_$(sam).svg")
     nothing
 end
 
@@ -436,7 +439,8 @@ function oe_plots(plot_data::Dict,
                     method_arr::Array{<:String,1},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int)::Nothing
+                    sam::Int,
+                    path::String)::Nothing
 
     t_succ = zeros(length(method_arr))
     @inbounds for i in 1:length(method_arr)
@@ -458,7 +462,7 @@ function oe_plots(plot_data::Dict,
             color=[method_color[m] for m in method_arr])
     #display(p)
 
-    savefig(p, "./$(sam)_oe.svg")
+    savefig(p, path*"/$(sam)_oe.svg")
     nothing
 end
 
