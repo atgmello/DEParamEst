@@ -10,13 +10,22 @@ export data_shooting, single_shooting, tikhonov
 Tikhonov Regularization
 """
 function tikhonov(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
-					w::Array{T,N} where N)::T where T
-	return lambda*(phi-phi_ref)'*w'*w*(phi-phi_ref)
+					w::Vector{T})::T where T
+    res = zero(T)
+    @simd for i in 1:length(phi)
+        @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
+    end
+    res *= lambda
+	return res
 end
-
 function tikhonov(lambda::T, phi::Vector{D}, phi_ref::Vector{T},
-					w::Array{T,N} where N)::D where T where D
-	return lambda*(phi-phi_ref)'*w'*w*(phi-phi_ref)
+					w::Vector{T})::D where T where D
+    res = zero(D)
+    @simd for i in 1:length(phi)
+        @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
+    end
+    res *= lambda
+	return res
 end
 
 """
@@ -36,7 +45,6 @@ function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloa
 	end
 	return sum
 end
-
 function sse(a::Vector,b::Vector)
 	T = promote_type(eltype(a[1]),eltype(b[1]))
 	sum = zero(T)
@@ -98,7 +106,7 @@ function single_shooting(phi::Vector{T},
     tspan = (t[1], t[end])
 
     prob = ODEProblem(f, ini_cond, tspan, phi)
-    osol  = solve(prob, Tsit5(), saveat=t)
+    osol  = solve(prob, OwrenZen3(), saveat=t)
 
     return sse(data,osol.u)
 end
