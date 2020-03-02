@@ -7,10 +7,12 @@ Random.seed!(1234)
 using Statistics
 using Distances
 using DifferentialEquations
-using Plots
+using StatsPlots
+using PlotThemes
 using Revise
 using ..ProblemSet: DEProblem
 
+gr()
 """
 From bounds, generates a random startign point for
 the optimization procedure.
@@ -182,7 +184,7 @@ function success_rate(x::T)::T where T
 end
 
 function step_success_rate(x::T)::Int64 where T
-    if x < 0.15
+    if x < 0.125
        return 1
     else
         return 0
@@ -291,6 +293,7 @@ function get_plot_data(results::Dict,
         plot_data[m] = Dict()
         plot_data[m]["error"] = []
         plot_data[m]["time"] = []
+        plot_data[m]["est"] = []
     end
     for v in vars
         for m in method_arr
@@ -305,6 +308,12 @@ function get_plot_data(results::Dict,
                 push!(plot_data[m]["time"], time)
             else
                 push!(plot_data[m]["time"], [NaN])
+            end
+            est = [e[3] for e in results[v][m]]
+            if length(time) > 0
+                push!(plot_data[m]["est"], est)
+            else
+                push!(plot_data[m]["est"], [NaN])
             end
         end
     end
@@ -350,8 +359,8 @@ function error_plots(plot_data::Dict,
                         fillalpha=.5, label=method_label[m], color=method_color[m])
             #display(p2)
 
-            savefig(p,path*"/error_inter_$(m)_$(sam).svg")
-            savefig(p2,path*"/error_$(m)_$(sam).svg")
+            savefig(p,path*"/error_inter_$(m)_$(sam).pdf")
+            savefig(p2,path*"/error_$(m)_$(sam).pdf")
         end
     end
     #=>
@@ -362,8 +371,70 @@ function error_plots(plot_data::Dict,
     <=#
     #display(p)
 
-    savefig(p,path*"/error_all_$(sam).svg")
+    savefig(p,path*"/error_all_$(sam).pdf")
     nothing
+end
+
+"""
+Box Error Plots
+xaxis: Method
+yaxis: Error Distribution
+"""
+function box_error_plots(plot_data::Dict,
+                    var::AbstractFloat,
+                    method_arr::Array,
+                    method_label::Dict,
+                    method_color::Dict,
+                    sam::Int,
+                    path::String)::Nothing
+    data = [[x for x in plot_data[m]["error"][1]]
+            for m in method_arr]
+    data_ = []
+    for d in data
+        push!(data_,collect(skipmissing([ifelse(isinf(x),missing,x) for x in d])))
+    end
+    method_arr_ = reduce(hcat,method_arr)
+    p = plot(legend=false, ylabel="Error", xlabel="Method")
+    try
+        boxplot!(p, method_arr_, data_,
+                    color=[method_color[m] for m in method_arr_])
+    catch e
+        @show e
+    end
+
+    savefig(p,joinpath(path,replace("box_$(sam)_$(var)","."=>"")*".pdf"))
+end
+
+"""
+Parameter Distribution Plots
+xaxis: Parameter
+yaxis: Value Distribution
+"""
+function parameter_plots(plot_data::Dict,
+                    var::AbstractFloat,
+                    method_arr::Array,
+                    method_label::Dict,
+                    method_color::Dict,
+                    sam::Int,
+                    path::String)::Nothing
+    num_pars = length(plot_data[method_arr[1]]["est"][1][1])
+    p_arr = []
+    for m in method_arr
+        p = plot(legend=:outertopright, ylabel="Value", xlabel="Parameter")
+    	for i in 1:num_pars
+            data = getindex.(plot_data[m]["est"][1],i)
+    		if i == 1
+    			boxplot!(p, [string(i)], log10.(data), color=method_color[m], label=m)
+    		else
+    			boxplot!(p, [string(i)], log10.(data), color=method_color[m], label="")
+    		end
+    	end
+        savefig(p,joinpath(path,replace("par_$(m)_$(sam)_$(var)","."=>"")*".pdf"))
+    	push!(p_arr,p)
+    end
+
+    p = plot(p_arr...,layout=(length(method_arr),1))
+    savefig(p,joinpath(path,replace("par_all_$(sam)_$(var)","."=>"")*".pdf"))
 end
 
 """
@@ -386,10 +457,10 @@ function sr_plots(plot_data::Dict,
         p3 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
-        isr = sr.^(-1)
-        time = plot_data[m]["time"]
-        if !any(isnan.(vcat(time...)))
-            qtime = hcat(box_scatter_plot.(time)...)
+        isr = 1.0./sr
+        timed = plot_data[m]["time"]
+        if !any(isnan.(vcat(timed...)))
+            qtime = hcat(box_scatter_plot.(timed)...)
             qqtime = box_scatter_plot(qtime[2,:])
             qisr = box_scatter_plot(isr)
             if qisr[2] < 20.0 || qqtime[2] < 20.0
@@ -408,16 +479,48 @@ function sr_plots(plot_data::Dict,
 
             #display(p3)
 
-            savefig(p3,path*"/sr_$(m)_$(sam).svg")
+            savefig(p3,path*"/sr_$(m)_$(sam).pdf")
         end
     end
     #display(p)
     #display(p2)
 
-    savefig(p, path*"/sr_all_medians_$(sam).svg")
-    savefig(p2, path*"/sr_all_$(sam).svg")
+    savefig(p, path*"/sr_all_medians_$(sam).pdf")
+    savefig(p2, path*"/sr_all_$(sam).pdf")
     nothing
 end
+function sr_plots(plot_data::Dict,
+                    var::AbstractFloat,
+                    method_arr::Array{<:String,1},
+                    method_label::Dict,
+                    method_color::Dict,
+                    sam::Int,
+                    path::String)::Nothing
+
+    p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
+    ylim_arr = []
+    for m in method_arr
+        sr = mean([step_success_rate(e) for e in plot_data[m]["error"][1]])
+        isr = [1.0./sr]
+        timed = plot_data[m]["time"][1]
+
+        if !any(isnan.(vcat(timed...)))
+            qtime = box_scatter_plot(timed)
+            qisr = box_scatter_plot(isr)
+            if qisr[2] < 20.0 && qtime[2] < 20.0
+                scatter!(p, (qtime[2],qisr[2]),
+                            xerror=[(qtime[1],qtime[3])],
+                            yerror=[(qisr[1],qisr[3])],
+                            label=method_label[m], color=method_color[m])
+            end
+        end
+    end
+
+    #display(p)
+    savefig(p,joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
+    nothing
+end
+
 
 function plot_compare(data::Vector, data_est::Vector)
     alphabet='A':'Z'
@@ -462,7 +565,7 @@ function oe_plots(plot_data::Dict,
             color=[method_color[m] for m in method_arr])
     #display(p)
 
-    savefig(p, path*"/$(sam)_oe.svg")
+    savefig(p, path*"/$(sam)_oe.pdf")
     nothing
 end
 
