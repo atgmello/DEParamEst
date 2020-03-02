@@ -1707,6 +1707,28 @@ end
 # 1
 
 @time begin
+	res = [Vector{Float64}(undef,4) for _ in 1:3]
+	@sync for i in 1:3
+		for j in 1:4
+			Threads.@spawn res[i][j] = test(i,j)
+		end
+	end
+	println(res)
+	sleep(1)
+end
+# 2.2 ok
+
+@time begin
+	res = [Vector{Float64}(undef,4) for _ in 1:3]
+	@sync for i in 1:3
+		Threads.@spawn res[i] = test.([i for _ in 1:4],[j for j in 1:4])
+	end
+	println(res)
+	sleep(1)
+end
+# 4.1 ok
+
+@time begin
 	res = [0.0]
 	@sync for i in 1:3
 		for j in 1:4
@@ -1716,7 +1738,6 @@ end
 	println(res)
 	sleep(1)
 end
-# 2.2 ok
 
 @time begin
 	res = [0.0]
@@ -1753,3 +1774,257 @@ end
 	println(res)
 end
 # 4 ok
+
+# --- Tikhonov ---
+using LinearAlgebra
+using BenchmarkTools
+
+function tikhonov(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Array{T,N} where N)::T where T
+	return lambda*(phi-phi_ref)'*w'*w*(phi-phi_ref)
+end
+
+function tikhonov2(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Array{T,N} where N)::T where T
+	return lambda*sum(abs2.((phi-phi_ref).*w))
+end
+
+function tikhonov3(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Vector{T})::T where T
+    res = zero(T)
+    @simd for i in 1:length(phi)
+        @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
+    end
+    res *= lambda
+	return res
+end
+
+function tikhonov4(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Vector{T})::T where T
+    res = zero(T)
+    @simd for i in 1:length(phi)
+        @inbounds res += ((phi[i]-phi_ref[i])*w[i])^2
+    end
+    res *= lambda
+	return res
+end
+
+phi_ref = randn(10)
+phi = randn(10)
+m = length(phi)
+w = Matrix{Float64}(I,m,m)./phi_ref
+w2 = ones(m)./phi_ref
+alpha = randn(1)[1]
+
+tikhonov4(alpha,phi,phi_ref,w2)
+tikhonov3(alpha,phi,phi_ref,w2)
+tikhonov2(alpha,phi,phi_ref,w2)
+tikhonov(alpha,phi,phi_ref,w)
+
+@btime tikhonov(1.0,phi,phi_ref,w)
+@btime tikhonov2(1.0,phi,phi_ref,w2)
+@btime tikhonov3(1.0,phi,phi_ref,w2)
+@btime tikhonov4(1.0,phi,phi_ref,w2)
+clearconsole()
+
+# --- Floudas 6 Plot Compare ---
+using DifferentialEquations
+using Optim
+using Plots
+using Revise
+includet("./problem_set.jl")
+includet("./objective_function.jl")
+includet("./utils.jl")
+import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
+import .ProblemSet: get_problem, get_problem_key, DEProblem
+import .Utils: Trace, rand_guess, make_trace, get_range_traces, add_noise,
+				filter_outlier, fill_trace, scale_eval,
+				max_diff_states, diff_calc, step_success_rate, success_rate, box_data, box_scatter_plot,
+				get_plot_data, oe_plots, sr_plots, error_plots, nmse, plot_compare
+
+
+p = get_problem("goodwin_oscillator")
+
+lb = p.bounds[1]
+ub = p.bounds[2]
+data = add_noise(p.data,0.01)
+
+obj_fun = function (x)
+			total_error = data_shooting(x,
+						data,
+						p.t,
+						p.fun)
+			total_error += tikhonov(0.0, x, zeros(length(p.phi)), ones(length(p.phi)))
+			return total_error
+		end
+
+elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
+									lb,ub,
+									rand_guess(p.bounds),
+                                    Optim.SAMIN(verbosity=0, rt=0.9))
+
+elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
+									lb,ub,
+									res_obj.minimizer,
+									Fminbox(Optim.LBFGS()),
+									autodiff = :forward)
+
+phi_est = res_obj.minimizer
+tspan = (p.t[1], p.t[end])
+ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
+ode_sol  = solve(ode_prob, Tsit5(), saveat=p.t)
+plot_compare(data, ode_sol.u)
+phi_est
+
+p02 = rand_guess(p.bounds)
+
+obj_fun = function (x)
+			total_error = single_shooting(x,
+						data,
+						p.t,
+						p.fun)
+			total_error += tikhonov(0.001, x, phi_est, ones(length(p.phi))./phi_est)
+			return total_error
+		end
+
+elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
+									lb,ub,
+									p02,
+                                    Optim.SAMIN(verbosity=0, rt=0.9))
+
+elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
+									lb,ub,
+									res_obj.minimizer,
+									Fminbox(Optim.LBFGS()),
+									autodiff = :forward)
+
+phi_est2 = res_obj.minimizer
+tspan = (p.t[1], p.t[end])
+ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est2)
+ode_sol  = solve(ode_prob, Tsit5(), saveat=p.t)
+plot_compare(data, ode_sol.u)
+phi_est2
+
+p.phi
+
+# --- Plotting formats ---
+using StatsPlots
+import Distributions: Uniform
+
+gr()
+theme(:vibrant)
+
+cur_colors = get_color_palette(:lighttest, plot_color(:white), 10)
+
+all_method_arr = ["DS","SS","DDS"]
+
+method_color = Dict()
+for (m,c) in zip(all_method_arr,cur_colors)
+	method_color[m] = c
+end
+
+method_label = Dict()
+for m in all_method_arr
+	method_label[m] = m
+end
+
+plot_data = Dict()
+for m in all_method_arr
+    plot_data[m] = Dict()
+    plot_data[m]["error"] = randn(10)
+    plot_data[m]["time"] = randn(10)
+    plot_data[m]["est"] = [rand(Uniform(0,10),5)
+							for _ in 1:10]
+end
+
+function parameter_plots(plot_data::Dict)::Nothing
+    num_pars = length(plot_data[all_method_arr[1]]["est"][1])
+    p_arr = []
+    for m in all_method_arr
+        p = plot(legend=:outertopright, ylabel="Value", xlabel="Parameter")
+    	for i in 1:num_pars
+    		if i == 1
+    			boxplot!(p, [string(i)], log10.(getindex.(plot_data[m]["est"],i)), color=method_color[m], label=m)
+    		else
+    			boxplot!(p, [string(i)], log10.(getindex.(plot_data[m]["est"],i)), color=method_color[m], label="")
+    		end
+    	end
+    	push!(p_arr,p)
+    end
+
+    p = plot(p_arr...,layout=(length(all_method_arr),1))
+	display(p)
+	nothing
+end
+
+parameter_plots(plot_data)
+
+
+p = scatter((rand(5),rand(5)),
+            xerror=(rand(5),rand(5)),
+            yerror=(rand(5),rand(5)))
+savefig(p,"/home/andrew/git/ChemParamEst/test2.pdf")
+
+all_method_arr = ["DS","SS","DSS"]
+cur_colors = get_color_palette(:lighttest, plot_color(:white), 10)
+method_color = Dict()
+for (m,c) in zip(all_method_arr,cur_colors)
+	method_color[m] = c
+end
+
+method_label = Dict()
+for m in all_method_arr
+	method_label[m] = m
+end
+
+method_arr = ["DS","DSS"]
+
+for sam in [2]
+	results = res[sam]
+	for (v,_) in results
+		plot_data = get_plot_data(results, [v], ["DS","DSS"])
+
+		#box_error_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+
+		#parameter_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+
+		sr_plots(plot_data,v,method_arr,method_label,method_color,sam,"")
+	end
+end
+
+plot_data = Dict()
+for m in ["DS","SS","DSS"]
+    plot_data[m] = Dict()
+    plot_data[m]["error"] = []
+    push!(plot_data[m]["error"], randn(10))
+    append!(plot_data[m]["error"][1], Inf64)
+    plot_data[m]["time"] = [randn(10)]
+    plot_data[m]["est"] = [[rand(Uniform(0,10),5)
+							for _ in 1:10]]
+end
+plot_data
+data = [[x for x in plot_data[m]["error"][1]]
+        for m in method_arr]
+data_ = []
+for d in data
+    push!(data_,collect(skipmissing([ifelse(isinf(x),missing,x) for x in d])))
+end
+data_
+
+method_arr = ["DS","SS","DSS"]
+method_arr_ = reduce(hcat,method_arr)
+p = plot(legend=false, ylabel="Error", xlabel="Method")
+boxplot!(p, method_arr_, data_,
+            color=[method_color[m] for m in method_arr_])
+
+
+y = rand(100,4) # Four series of 100 points each
+boxplot(["Series 1" "Series 2" "Series 3" "Series 4"],y,leg=false)
+
+import Statistics: quantile
+pyplot()
+gr()
+
+using Pkg
+ENV["GRDIR"]=""; Pkg.build("GR")
+plot([1,2,3,4])
