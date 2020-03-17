@@ -1543,19 +1543,23 @@ import .ProblemSet: get_problem, get_problem_key,
 import .Utils: add_noise
 using DifferentialEquations
 using Plots
+using PlotThemes
+
+gr()
+theme(:vibrant)
 
 function save_regular_plots(dir::String,name::String,p::DEProblem)::Nothing
     # Continuous plot
     len = round(Int64,1e4*(p.t[2]-p.t[1]))
     t = range(p.t[1], stop=p.t[end], length=len)
     prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
-    sol = solve(prob, Tsit5(), saveat=t)
+    sol = solve(prob, OwrenZen3(), saveat=t)
     data = sol.u
     p = DEProblem(p.fun, p.phi,
                 p.bounds, data, t)
     d_plot = problem_plot(p,"line")
-    display(d_plot)
-    savefig(d_plot,dir*"line_$name.png")
+    #display(d_plot)
+    savefig(d_plot,joinpath(dir,"line_$name.pdf"))
 
     # Sample plot
     len = maximum([10,round(Int64, 2*(p.t[2]-p.t[1]))])
@@ -1567,7 +1571,7 @@ function save_regular_plots(dir::String,name::String,p::DEProblem)::Nothing
                 p.bounds, data, t)
     d_plot = problem_plot(p,"scatter")
     display(d_plot)
-    savefig(d_plot,dir*"scatter_$name.png")
+    savefig(d_plot,joinpath(dir,"scatter_$name.pdf"))
 
     nothing
 end
@@ -1577,26 +1581,27 @@ function save_noisy_plots(dir::String,name::String,p::DEProblem,var::Float64)::N
     len = maximum([10,round(Int64, 0.25*(p.t[2]-p.t[1]))])
     t = range(p.t[1], stop=p.t[end], length=len)
     prob = ODEProblem(p.fun, p.data[1], (t[1],t[end]), p.phi)
-    sol = solve(prob, Tsit5(), saveat=t)
+    sol = solve(prob, OwrenZen3(), saveat=t)
     data = add_noise(sol.u,var)
     p = DEProblem(p.fun, p.phi,
                 p.bounds, data, t)
     d_plot = problem_plot(p,"scatter_line")
     display(d_plot)
-    savefig(d_plot,dir*"noise_$(name)_$(round(var; digits=3)
+    savefig(d_plot,joinpath(dir,"noise_$(name)_$(round(var; digits=3)
                                         |> x -> string(x)
-                                        |> y -> replace(y, "." => "")).png")
+                                        |> y -> replace(y, "." => "")).pdf"))
 
     nothing
 end
 
-dir = "/home/andrew/git/ChemParamEst/plots/problems/scatter_line/png/"
+
+dir = "/home/andrew/git/ChemParamEst/plots/problems/scatter_line/"
 map(n -> save_regular_plots(dir,n,get_problem(n)),
     [get_problem_key(p) for p in 1:10])
 
-dir = "/home/andrew/git/ChemParamEst/plots/problems/noise/png/"
+dir = "/home/andrew/git/ChemParamEst/plots/problems/noise/"
 map(x -> save_noisy_plots(dir,x[1],get_problem(x[1]),x[2]),
-    Iterators.product([get_problem_key(p) for p in 1:11],[0.0, 0.05, 0.1, 0.2])
+    Iterators.product([get_problem_key(p) for p in 1:10],[0.0, 0.05, 0.1, 0.15])
     |> q -> collect(q) |> r -> reduce(vcat,r)
     )
 
@@ -2028,3 +2033,88 @@ gr()
 using Pkg
 ENV["GRDIR"]=""; Pkg.build("GR")
 plot([1,2,3,4])
+
+# -- Contour Plot ---
+
+using Plots
+using PlotThemes
+theme(:default)
+gr()
+x = 0.5:0.01:1.50
+y = 0.5:0.01:1.50
+f(x,y) = abs2(x-y)
+p = plot(x,y,f,st=:wireframe)
+plot!(p,xrotation=45,yrotation=45)
+
+savefig(p,"./fig3.png")
+
+# --- Latex Tables ---
+using Revise
+includet("./problem_set.jl")
+import .ProblemSet: get_problem, get_problem_key, DEProblem
+
+clearconsole()
+
+begin_table = "\\begin{table}[]\n\\begin{tabular}{llllllllll}"
+end_table = "\\end{tabular}\n\\end{table}"
+
+function print_table(b,e)
+    short_name = "Short Name & "
+    description = "Description & "
+    reference = "Reference & "
+    params = "Estimated parameters & "
+    nominal = "Nominal values & "
+    states = "Observed states & "
+
+    for i in get_problem_key.(1:10)
+        p = get_problem(i)
+        if i != 10
+            short_name *= string(i)*" & "
+            description *= "desc & "
+            reference *= "ref & "
+            params *= string(length(p.phi))*" & "
+            nominal *= string(p.phi)*" & "
+            states *= string(length(p.data[1]))*" & "
+        else
+            short_name *= string(i)*" //"
+            description *= "desc // "
+            reference *= "ref // "
+            params *= string(len(p.phi))*" // "
+            nominal *= string(p.phi)*" // "
+            states *= string(length(p.data[1]))*" "
+        end
+    end
+
+    println(b)
+    println(short_name)
+    println(description)
+    println(reference)
+    println(params)
+    println(nominal)
+    println(states)
+    println(e)
+end
+
+print_table(begin_table,end_table)
+
+clearconsole()
+
+# --- Serialization ---
+using JLSO
+
+data = []
+str_a = "a"
+a = rand(100)
+push!(data, Pair(Symbol(str_a),a))
+b = rand(100)
+str_b = "b"
+push!(data, Pair(Symbol(str_b),b))
+sum(a)
+sum(b)
+data
+JLSO.save("test.jlso", data...)
+x = JLSO.load("test.jlso")
+sum(x[:a])
+sum(x[:b])
+x[:b] == b
+x[:a] == a
