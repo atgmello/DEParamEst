@@ -1,4 +1,9 @@
 ENV["GKSwstype"]="nul"
+
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+
 using Distributed
 using DiffEqParamEstim
 using DifferentialEquations
@@ -9,6 +14,7 @@ import Distributions: Uniform
 using Optim
 using PlotThemes
 using StatsPlots
+using JLSO
 
 using Revise
 includet("./problem_set.jl")
@@ -43,20 +49,17 @@ estimated parameters (third position)
 function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
 					p0::Vector{T})::Vector{Vector{T}} where T
-	t_limit = 5
+	g_t_lim = 10
 	f_tol = 10^-12
 	x_tol = 10^-6
-	iter = 10^6
+	iter = 10^8
 
 	SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
-								iterations=iter, time_limit=t_limit)
-	g_time_limit = 2
-	f_tol = 10^-12
-	x_tol = 10^-6
-	iter = 10^5
+								iterations=iter, time_limit=g_t_lim)
+	t_lim = 1
 
 	Grad_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
-								iterations=iter, time_limit=g_time_limit)
+								iterations=iter, time_limit=t_lim)
 
 	inner_optimizer = Optim.LBFGS()
 
@@ -70,14 +73,14 @@ function optim_res(obj_fun::Function,
 		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 									lb,ub,
 									p0,
-									Optim.SAMIN(verbosity=0, rt=0.2), SAMIN_options)
+									Optim.SAMIN(verbosity=0, rt=0.15), SAMIN_options)
 
-		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
-									lb,ub,
-									res_obj.minimizer[1:length(p0)],
-									Fminbox(inner_optimizer),
-									Grad_options,
-									autodiff = :forward)
+		#elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
+		#							lb,ub,
+		#							res_obj.minimizer[1:length(p0)],
+		#							Fminbox(inner_optimizer),
+		#							Grad_options,
+		#							autodiff = :forward)
 
 		phi_est = res_obj.minimizer[1:length(p0)]
 
@@ -359,7 +362,7 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	#data_sams = convert.(eltype(sams[1]),sams.*min_data)
 	data_sams = sams
 
-	num_reps = 20
+	num_reps = 30
 
 	results_final = Dict()
 	for sam in data_sams
@@ -455,6 +458,10 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 		for v in vars
 			plot_data = get_plot_data(results, [v], method_arr)
 
+			println()
+			println(plot_data)
+			println()
+
 			box_error_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
 
 			parameter_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
@@ -481,9 +488,24 @@ function problem_exp_loop(probs::Vector{<:Int},
 							vars::Vector{<:AbstractFloat},
 							method_arr::Vector{String},
 							dir::String)::Nothing
-	for p in probs
-		experiment(p,sams,vars,method_arr,dir)
+	mkdir(joinpath(dir,"tmp"))
+	results = Vector(undef,length(probs))
+	for i in 1:length(probs)
+		p = probs[i]
+		p_name = get_problem_key(p)
+		results[i] = Pair(Symbol(p_name),
+						experiment(p,sams,vars,method_arr,dir))
+		JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
 	end
+
+	try
+		JLSO.save(joinpath(dir,"experiment_results.jlso"), results...)
+		rm(joinpath(dir,"tmp"), recursive=true)
+	catch e
+		println("Error saving JLSO!")
+		@show e
+	end
+
 end
 
 function main(args::Array{<:String})::Nothing
