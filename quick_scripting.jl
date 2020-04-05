@@ -1848,11 +1848,19 @@ import .Utils: Trace, rand_guess, make_trace, get_range_traces, add_noise,
 				get_plot_data, oe_plots, sr_plots, error_plots, nmse, plot_compare
 
 
-p = get_problem("goodwin_oscillator")
+p = get_problem("floudas_1")
 
 lb = p.bounds[1]
 ub = p.bounds[2]
 data = add_noise(p.data,0.01)
+
+noisy_ini = add_noise(data[1], 5.0, true)
+noisy_ini = [0.6, 1.2]
+tspan = (p.t[1], p.t[end])
+ode_prob = ODEProblem(p.fun, noisy_ini, tspan, p.phi)
+ode_sol  = solve(ode_prob, Tsit5(), saveat=p.t)
+data = ode_sol.u
+data = add_noise(data,0.015)
 
 obj_fun = function (x)
 			total_error = data_shooting(x,
@@ -1866,7 +1874,7 @@ obj_fun = function (x)
 elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
 									lb,ub,
 									rand_guess(p.bounds),
-                                    Optim.SAMIN(verbosity=0, rt=0.9))
+                                    Optim.SAMIN(verbosity=0, rt=0.5))
 
 elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
 									lb,ub,
@@ -1876,9 +1884,10 @@ elapsed_time = @elapsed res_obj = Optim.optimize(obj_fun,
 
 phi_est = res_obj.minimizer
 tspan = (p.t[1], p.t[end])
-ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
+ode_prob = ODEProblem(p.fun, noisy_ini, tspan, phi_est)
 ode_sol  = solve(ode_prob, Tsit5(), saveat=p.t)
-plot_compare(data, ode_sol.u)
+p = plot_compare(data, ode_sol.u)
+savefig(p,"./error_out.pdf")
 phi_est
 
 p02 = rand_guess(p.bounds)
@@ -2052,13 +2061,17 @@ savefig(p,"./fig3.png")
 using Revise
 includet("./problem_set.jl")
 import .ProblemSet: get_problem, get_problem_key, DEProblem
+using Printf
 
 clearconsole()
 
-begin_table = "\\begin{table}[]\n\\begin{tabular}{llllllllll}"
-end_table = "\\end{tabular}\n\\end{table}"
-
-function print_table(b,e)
+function print_table(r)
+    begin_table = "\\begin{table}\n\\begin{tabularx}{\\linewidth}{ c"
+    for i in r
+        begin_table *= "|c"
+    end
+    begin_table *= " }\n\\centering"
+    end_table = "\\end{tabularx}\n\\end{table}"
     short_name = "Short Name & "
     description = "Description & "
     reference = "Reference & "
@@ -2066,36 +2079,56 @@ function print_table(b,e)
     nominal = "Nominal values & "
     states = "Observed states & "
 
-    for i in get_problem_key.(1:10)
-        p = get_problem(i)
-        if i != 10
-            short_name *= string(i)*" & "
+    for i in r
+        name = get_problem_key(i)
+        p = get_problem(name)
+        name = replace(length(name)>3 ? titlecase(name) : uppercase(name),("_"=>" "))
+        if i != r[end]
+            short_name *= string(name)*" & "
             description *= "desc & "
             reference *= "ref & "
             params *= string(length(p.phi))*" & "
-            nominal *= string(p.phi)*" & "
+            nominal *= "["
+            counter = 1
+            for k in p.phi
+                k = k < 1e-3 ? @sprintf("%.4E, ",k) : string(k)*", "
+                nominal *= k
+                counter > 2 ? begin counter = 0; nominal *= " \\newline " end : counter += 1
+            end
+            nominal = nominal[1:end-2]
+            nominal *= "] & "
             states *= string(length(p.data[1]))*" & "
         else
-            short_name *= string(i)*" //"
-            description *= "desc // "
-            reference *= "ref // "
-            params *= string(len(p.phi))*" // "
-            nominal *= string(p.phi)*" // "
-            states *= string(length(p.data[1]))*" "
+            short_name *= string(name)*" \\\\ \\hline"
+            description *= "desc \\\\ \\hline"
+            reference *= "ref \\\\ \\hline"
+            params *= string(length(p.phi))*" \\\\ \\hline"
+            nominal *= "["
+            counter = 0
+            for k in p.phi
+                k = k < 1e-3 ? @sprintf("%.4E, ",k) : string(k)*", "
+                nominal *= k
+                counter > 2 ? begin counter = 0; nominal *= "\\newline " end : counter += 1
+            end
+            nominal = nominal[1:end-2]
+            nominal *= "] \\\\"
+            states *= string(length(p.data[1]))*" \\\\ "
         end
     end
 
-    println(b)
+    println(begin_table)
     println(short_name)
     println(description)
     println(reference)
     println(params)
-    println(nominal)
+    #println(nominal)
     println(states)
-    println(e)
+    println(end_table)
 end
 
-print_table(begin_table,end_table)
+print_table(1:3)
+print_table(4:6)
+print_table(7:10)
 
 clearconsole()
 
