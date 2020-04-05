@@ -24,9 +24,12 @@ end
 
 """
 Adds noise to a Vector of Vector
+Used for adding simulated noise to
+the states of a system.
+Assumes that the values can be negative.
 """
 function add_noise(data::Vector{Vector{T}},
-                    percent::T)::Vector{Vector{T}} where T
+                    percent::T,positive::Bool=false)::Vector{Vector{T}} where T
     if percent == 0.0
         return data
     end
@@ -39,6 +42,7 @@ function add_noise(data::Vector{Vector{T}},
             sigma = abs(percent*noise_data[i][j] + epsilon_arr[j])
             d = Normal(0,sigma)
             noise_data[i][j] += rand(d)
+            noise_data[i][j] = positive ? abs(noise_data[i][j]) : noise_data[i][j]
         end
     end
     return noise_data
@@ -46,9 +50,12 @@ end
 
 """
 Adds noise to a Vector of T
+Used for generating new reasonable
+initial values to an IVP. Assumes
+that the values should be positive.
 """
 function add_noise(data::Vector{T},
-                    percent::T)::Vector{T} where T
+                    percent::T,positive::Bool=true)::Vector{T} where T
     if percent == 0.0
         return data
     end
@@ -60,6 +67,7 @@ function add_noise(data::Vector{T},
         sigma = abs(percent*noise_data[i] + epsilon)
         d = Normal(0,sigma)
         noise_data[i] += rand(d)
+        noise_data[i] = positive ? abs(noise_data[i]) : noise_data[i]
     end
     return noise_data
 end
