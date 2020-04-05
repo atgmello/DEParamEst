@@ -294,6 +294,12 @@ function get_results(method_label::String,
 		phi_prior = zeros(T,length(p0))
 		m = length(phi_prior)
 		w = ones(T,m)
+
+		partial_res = cv_optimize(training_set,testing_set,
+										p0,k,f,phi_prior,m,w)
+		add_time = partial_res[2][1]
+		phi_prior = partial_res[3]
+		p0 = phi_prior
 	elseif method_label == "DS"
 		f = data_shooting
 		phi_prior = zeros(T,length(p0))
@@ -453,31 +459,41 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	"""
 	Plotting
 	"""
-	for sam in data_sams
-		results = results_final[sam]
-		for v in vars
-			plot_data = get_plot_data(results, [v], method_arr)
+	try
+		for sam in data_sams
+			results = results_final[sam]
+			for v in vars
+				plot_data = get_plot_data(results, [v], method_arr)
 
-			println()
-			println(plot_data)
-			println()
+				println()
+				println(plot_data)
+				println()
 
-			box_error_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+				box_error_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
 
-			parameter_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+				parameter_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
 
-			sr_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+				sr_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
+			end
 		end
+	catch e
+		println("Optim error!")
+		@show e
 	end
 
-	for sam in data_sams
-		results = results_final[sam]
+	try
+		for sam in data_sams
+			results = results_final[sam]
 
-		plot_data = get_plot_data(results, vars, method_arr)
+			plot_data = get_plot_data(results, vars, method_arr)
 
-		error_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+			error_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
 
-		sr_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+			sr_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
+		end
+	catch e
+		println("Optim error!")
+		@show e
 	end
 
 	return results_final
@@ -496,7 +512,7 @@ function problem_exp_loop(probs::Vector{<:Int},
 		results[i] = Pair(Symbol(p_name),
 						experiment(p,sams,vars,method_arr,dir))
 		JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
-	end
+end
 
 	try
 		JLSO.save(joinpath(dir,"experiment_results.jlso"), results...)
