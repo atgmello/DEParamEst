@@ -3,3 +3,4 @@ quick_scripting.jl
 replicate_error*
 plots
 *.sh
+results/
