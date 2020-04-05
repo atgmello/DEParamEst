@@ -524,12 +524,14 @@ end
 
 function plot_compare(data::Vector, data_est::Vector)
     alphabet='A':'Z'
-    label=reshape(["$i" for i in alphabet[1:length(data[1])]],(1,length(data[1])))
+    label_n=reshape(["$i (Nominal)" for i in alphabet[1:length(data[1])]],(1,length(data[1])))
+    label_e=reshape(["$i (Estimated)" for i in alphabet[1:length(data[1])]],(1,length(data[1])))
     err = sqrt(nmse(reduce(vcat,data), reduce(vcat,data_est)))
-    p = plot(title = "$(err)")
-    plot!(p, reduce(hcat,data)', label=label, markershape=:circle, linestyle=:solid)
-    plot!(p, reduce(hcat,data_est)', label=label, markershape=:cross, linestyle=:dash)
+    p = plot(title = "RMSE = $(err)")
+    plot!(p, reduce(hcat,data)', label=label_n, markershape=:circle, linestyle=:solid)
+    plot!(p, reduce(hcat,data_est)', label=label_e, markershape=:cross, linestyle=:dash)
     display(p)
+    return p
 end
 
 """
