@@ -62,9 +62,9 @@ function get_problem_key(i::Int=0)::String
             "floudas_3","floudas_4",
             "floudas_5","floudas_6",
             "bbg","fhn",
-            "goodwin_oscillator",
-            "mpk",
-            "tsp","cho","exponential"]
+            "gosc",
+            "mapk",
+            "tsmp","cho","exponential"]
     if i > 0
         return keys[i]
     else
@@ -72,7 +72,7 @@ function get_problem_key(i::Int=0)::String
     end
 end
 
-function get_problem(p)::DEProblem
+function get_problem(p::String)::DEProblem
     if p == "exponential"
         # ----- Problem 0 -----
 
@@ -332,11 +332,11 @@ function get_problem(p)::DEProblem
         ode_data = de_sol.u
         return DEProblem(f_fhn, phi, bounds, ode_data, t)
 
-    elseif p == "mpk"
+    elseif p == "mapk"
         # ----- MPK -----
         """
         Kholodenko MAPK signalling pathway (MAPK)
-        Ronaldo
+        ROEF
         """
         phi = [2.5, 0.25, 0.75, 0.75, 0.5, 0.5]
 
@@ -345,11 +345,16 @@ function get_problem(p)::DEProblem
 
         ini_cond = [90.0, 10.0, 280.0, 10.0, 10.0, 280.0, 10.0, 10.0]
         #t = range(0.0, stop=20.0, length=7)
-        t = [50.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0, 600.0, 800.0, 1000.0]
+        t = [50.0, 100.0, 150.0, 200.0, 300.0,
+            400.0, 500.0, 600.0, 800.0, 1000.0]
 
         function f_mapk(dz_dt, z, phi, t)
             J0V1, J1V2, J4V5, J5V6, J8V9, J9V10 = phi
-            J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4, J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8, J8KK9, J9KK10 = convert(Array{eltype(phi)}, [9.0, 1.0, 10.0, 8.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0])
+            J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4,
+            J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8,
+            J8KK9, J9KK10 = convert(Array{eltype(phi)},
+                [9.0, 1.0, 10.0, 8.0, 0.025, 15.0, 0.025, 15.0, 15.0,
+                15.0, 0.025, 15.0, 0.025, 15.0, 15.0, 15.0])
 
             RJ0 = J0V1*(z[1]/(1+((z[8]/J0Ki)^J0n)*(J0k1+z[1])))
             RJ1 = J1V2*(z[2]/(J1KK2+z[2]))
@@ -377,7 +382,7 @@ function get_problem(p)::DEProblem
         ode_data = de_sol.u
         return DEProblem(f_mapk, phi, bounds, ode_data, t)
 
-    elseif p == "goodwin_oscillator"
+    elseif p == "gosc"
         # ----- GOsc -----
         """
         Goodwin Oscillator
@@ -490,13 +495,14 @@ function get_problem(p)::DEProblem
         push!(problem_set, new_prob)
         <=#
 
-    elseif p == "tsp"
+    elseif p == "tsmp"
         # ----- TSP -----
         """
-        Three Step Pathway from:
+        Three Step Metabolic Pathway from:
         Parameter Estimation in Biochemical Pathways:
         A Comparison of Global Optimization Methods
         [BioParamEst-GO]
+        [ROEF]
         """
 
         s = [.1, .46416, 2.1544, 10]
@@ -529,8 +535,8 @@ function get_problem(p)::DEProblem
             M1 = z[7]
             M2 = z[8]
 
-            S = s[2]
-            P = p[2]
+            S = s[3]
+            P = p[4]
 
             V1 = phi[1]
             Ki1 = phi[2]
@@ -587,7 +593,7 @@ function get_problem(p)::DEProblem
         return DEProblem(f_tsp, phi, bounds, ode_data, t)
 
     elseif p == "cho"
-        # ----- CHO -----
+    # ----- CHO -----
 	# [BioPreDyn]
 
         x0 = zeros(Float64, 35)
