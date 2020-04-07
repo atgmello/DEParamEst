@@ -336,26 +336,11 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 					methods::Array{<:String},
 					dir::String)::Dict
 
-	cur_colors = get_color_palette(:lighttest, plot_color(:white), 10)
-
-	all_method_arr = ["DS","SS","DSS"]
-
-	method_color = Dict()
-	for (m,c) in zip(all_method_arr,cur_colors)
-		method_color[m] = c
-	end
-
-	method_label = Dict()
-	for m in all_method_arr
-		method_label[m] = m
-	end
+	all_methods = ["DS","SS","DSS"]
 
 	results::Dict = Dict()
 	prob_key::String = get_problem_key(p_num)
 	problem::ProblemSet.DEProblem = get_problem(prob_key)
-
-	full_path = joinpath(dir,prob_key)
-	mkdir(full_path)
 
     fun::Function = problem.fun
     phi::Array = problem.phi
@@ -455,46 +440,6 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 				end
 			end
 		end
-	end
-
-	"""
-	Plotting
-	"""
-	try
-		for sam in data_sams
-			results = results_final[sam]
-			for v in vars
-				plot_data = get_plot_data(results, [v], method_arr)
-
-				println()
-				println(plot_data)
-				println()
-
-				box_error_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
-
-				parameter_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
-
-				sr_plots(plot_data,v,method_arr,method_label,method_color,sam,full_path)
-			end
-		end
-	catch e
-		println("Optim error!")
-		@show e
-	end
-
-	try
-		for sam in data_sams
-			results = results_final[sam]
-
-			plot_data = get_plot_data(results, vars, method_arr)
-
-			error_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
-
-			sr_plots(plot_data,vars,method_arr,method_label,method_color,sam,full_path)
-		end
-	catch e
-		println("Optim error!")
-		@show e
 	end
 
 	return results_final

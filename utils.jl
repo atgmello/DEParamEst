@@ -3,7 +3,6 @@ module Utils
 import Distributions: Normal, Uniform
 import Statistics: quantile
 using Random
-Random.seed!(1234)
 using Statistics
 using Distances
 using DifferentialEquations
@@ -13,6 +12,9 @@ using Revise
 using ..ProblemSet: DEProblem
 
 gr()
+theme(:vibrant)
+Random.seed!(1234)
+
 """
 From bounds, generates a random startign point for
 the optimization procedure.
@@ -294,17 +296,17 @@ Plotting functions
 """
 
 function get_plot_data(results::Dict,
-                        vars::AbstractArray{<:AbstractFloat},
-                        method_arr::Array{<:String,1})::Dict
+                        noise_level::AbstractArray{Symbol},
+                        methods::Vector{Symbol})::Dict
     plot_data = Dict()
-    for m in method_arr
+    for m in methods
         plot_data[m] = Dict()
         plot_data[m]["error"] = []
         plot_data[m]["time"] = []
         plot_data[m]["est"] = []
     end
-    for v in vars
-        for m in method_arr
+    for v in noise_level
+        for m in methods
             error = [e[1][1] for e in results[v][m]]
             if length(error) > 0
                 push!(plot_data[m]["error"], error)
@@ -329,8 +331,8 @@ function get_plot_data(results::Dict,
 end
 
 function error_plots(plot_data::Dict,
-                    vars::AbstractArray{<:AbstractFloat},
-                    method_arr::Array,
+                    noise_level::AbstractArray{<:AbstractFloat},
+                    methods::Array,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Int,
@@ -340,19 +342,19 @@ function error_plots(plot_data::Dict,
     xaxis: Noise Percentage
     yaxis: Mean Error
     """
-    p = plot(x=vars, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
+    p = plot(x=noise_level, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
     ylim_arr = []
-    for m in method_arr
-        p2 = plot(x=vars, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
+    for m in methods
+        p2 = plot(x=noise_level, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
         error = plot_data[m]["error"]
         # Proceed only if there are no NaN
         if !any(isnan.(vcat(error...)))
             qerror = hcat(box_scatter_plot.(error)...)
             # Don't append to plot p if data is too far
             # from the expected values (i.e. plot only if
-            # data < 20)
-            if !any(qerror[3,:] .> 20.0)
-                plot!(p, vars, qerror[2,:],
+            # data < 5)
+            if !any(qerror[3,:] .> 5.0)
+                plot!(p, noise_level, qerror[2,:],
                             grid=true,
                             ribbon=(qerror[1,:],
                                     qerror[3,:]),
@@ -360,7 +362,7 @@ function error_plots(plot_data::Dict,
                 push!(ylim_arr, ylims(p))
             end
 
-            plot!(p2, vars, qerror[2,:],
+            plot!(p2, noise_level, qerror[2,:],
                         grid=true,
                         ribbon=(qerror[1,:],
                                 qerror[3,:]),
@@ -389,27 +391,21 @@ xaxis: Method
 yaxis: Error Distribution
 """
 function box_error_plots(plot_data::Dict,
-                    var::AbstractFloat,
-                    method_arr::Array,
+                    var::Symbol,
+                    methods::Vector{Symbol},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int,
+                    sam::Symbol,
                     path::String)::Nothing
-    data = [[x for x in plot_data[m]["error"][1]]
-            for m in method_arr]
-    data_ = []
-    for d in data
-        push!(data_,collect(skipmissing([ifelse(isinf(x),missing,x) for x in d])))
-    end
-    method_arr_ = reduce(hcat,method_arr)
-    p = plot(legend=false, ylabel="Error", xlabel="Method")
-    try
-        boxplot!(p, method_arr_, data_,
-                    color=[method_color[m] for m in method_arr_])
-    catch e
-        @show e
-    end
 
+    p = plot(legend=false, ylabel="Error", xlabel="Method")
+    for m in methods
+        # Substitute infinite for missing
+        # so that boxplot can still work
+        # with the data
+        data = [ifelse(isinf(x),missing,x) for x in plot_data[m]["error"][1]]
+        boxplot!(p, [method_label[m]], data, color=method_color[m])
+    end
     savefig(p,joinpath(path,replace("box_$(sam)_$(var)","."=>"")*".pdf"))
 end
 
@@ -419,15 +415,15 @@ xaxis: Parameter
 yaxis: Value Distribution
 """
 function parameter_plots(plot_data::Dict,
-                    var::AbstractFloat,
-                    method_arr::Array,
+                    var::Symbol,
+                    methods::Array,
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int,
+                    sam::Symbol,
                     path::String)::Nothing
-    num_pars = length(plot_data[method_arr[1]]["est"][1][1])
+    num_pars = length(plot_data[methods[1]]["est"][1][1])
     p_arr = []
-    for m in method_arr
+    for m in methods
         p = plot(legend=:outertopright, ylabel="Value", xlabel="Parameter")
     	for i in 1:num_pars
             data = getindex.(plot_data[m]["est"][1],i)
@@ -441,7 +437,7 @@ function parameter_plots(plot_data::Dict,
     	push!(p_arr,p)
     end
 
-    p = plot(p_arr...,layout=(length(method_arr),1))
+    p = plot(p_arr...,layout=(length(methods),1))
     savefig(p,joinpath(path,replace("par_all_$(sam)_$(var)","."=>"")*".pdf"))
 end
 
@@ -451,17 +447,17 @@ xaxis: Mean Computation Time
 yaxis: 1 / Success Rate
 """
 function sr_plots(plot_data::Dict,
-                    vars::AbstractArray{<:AbstractFloat},
-                    method_arr::Array{<:String,1},
+                    noise_level::AbstractArray{Symbol},
+                    methods::Vector{Symbol},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int,
+                    sam::Symbol,
                     path::String)::Nothing
 
     p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     p2 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     ylim_arr = []
-    for m in method_arr
+    for m in methods
         p3 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
@@ -483,7 +479,7 @@ function sr_plots(plot_data::Dict,
 
             scatter!(p3, (qtime[2,:], isr),
                         label=method_label[m], color=method_color[m],
-                        series_annotations = text.(vars, :top, 11))
+                        series_annotations = text.(noise_level, :top, 11))
 
             #display(p3)
 
@@ -498,16 +494,16 @@ function sr_plots(plot_data::Dict,
     nothing
 end
 function sr_plots(plot_data::Dict,
-                    var::AbstractFloat,
-                    method_arr::Array{<:String,1},
+                    var::Symbol,
+                    methods::Vector{Symbol},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int,
+                    sam::Symbol,
                     path::String)::Nothing
 
     p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
     ylim_arr = []
-    for m in method_arr
+    for m in methods
         sr = mean([step_success_rate(e) for e in plot_data[m]["error"][1]])
         isr = [1.0./sr]
         timed = plot_data[m]["time"][1]
@@ -548,16 +544,16 @@ xaxis: Method
 yaxis: OE Score
 """
 function oe_plots(plot_data::Dict,
-                    vars::AbstractArray{<:AbstractFloat},
-                    method_arr::Array{<:String,1},
+                    noise_level::AbstractArray{<:AbstractFloat},
+                    methods::Array{<:String,1},
                     method_label::Dict,
                     method_color::Dict,
                     sam::Int,
                     path::String)::Nothing
 
-    t_succ = zeros(length(method_arr))
-    @inbounds for i in 1:length(method_arr)
-        m = method_arr[i]
+    t_succ = zeros(length(methods))
+    @inbounds for i in 1:length(methods)
+        m = methods[i]
         error = plot_data[m]["error"]
         sr = mean.([step_success_rate.(e) for e in error])
         time = plot_data[m]["time"]
@@ -571,12 +567,66 @@ function oe_plots(plot_data::Dict,
     p = bar(xlabel="Method",
             ylabel="Overall Efficiency",
             legend=false)
-    bar!(p, method_arr, oe,
-            color=[method_color[m] for m in method_arr])
+    bar!(p, methods, oe,
+            color=[method_color[m] for m in methods])
     #display(p)
 
     savefig(p, path*"/$(sam)_oe.pdf")
     nothing
+end
+
+"""
+Load serialized results and save the
+most relevant plots
+"""
+function plot_main_results(results::Dict,
+                            path::String)::Nothing
+
+    first_key = collect(keys(results))[1]
+    first_result = results[first_key]
+    samples = collect(keys(first_result))
+    noise_levels = Array{Symbol}(collect(keys(first_result[samples[1]])))
+    #methods = Array{Symbol}(collect(keys(first_result[samples[1]][noise_levels[1]])))
+    methods = [:SS,:DSS]
+
+    cur_colors = get_color_palette(:lighttest, plot_color(:white), 10)
+
+    method_label = Dict()
+    for m in methods
+    	method_label[m] = String(m)
+    end
+    method_label
+
+    method_color = Dict()
+    for (m,c) in zip([:DS,:SS,:DSS],cur_colors)
+    	method_color[m] = c
+    end
+
+    for (method,result) in results
+        dir_path = joinpath(path,string(method))
+    	mkdir(dir_path)
+
+        for sam in samples
+            res = result[sam]
+        	plot_data = get_plot_data(res,noise_levels,methods)
+        	sr_plots(plot_data,noise_levels,methods,
+                    method_label,method_color,sam,dir_path)
+
+        	for noise in noise_levels
+        		plot_data = get_plot_data(res,[noise],methods)
+
+        		box_error_plots(plot_data,noise,methods,
+                                method_label,method_color,sam,dir_path)
+
+        		parameter_plots(plot_data,noise,methods,
+                                method_label,method_color,sam,dir_path)
+
+        		sr_plots(plot_data,noise,methods,
+                        method_label,method_color,sam,dir_path)
+        	end
+        end
+    end
+
 end
 
 end
