@@ -331,9 +331,9 @@ function get_results(method_label::String,
 	return results
 end
 
-function experiment(p_num::Int64,sams::AbstractArray{<:Int},
-					vars::AbstractArray{<:AbstractFloat},
-					method_arr::Array{<:String},
+function experiment(p_num::Int64,samples::AbstractArray{<:Int},
+					noise_levels::AbstractArray{<:AbstractFloat},
+					methods::Array{<:String},
 					dir::String)::Dict
 
 	cur_colors = get_color_palette(:lighttest, plot_color(:white), 10)
@@ -366,18 +366,19 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	# Minimum number of data points
 	#min_data = round(length(phi)/length(ini_cond),RoundUp)
 	#data_sams = convert.(eltype(sams[1]),sams.*min_data)
-	data_sams = sams
+	data_sams = samples
 
-	num_reps = 30
+	num_reps = 10
 
 	results_final = Dict()
 	for sam in data_sams
-		results_final[sam] = Dict()
-		for v in vars
-			results_final[sam][v] = Dict()
-			for m in method_arr
-				results_final[sam][v][m] = [[[NaN64] for _ in 1:3]
-											for _ in 1:num_reps]
+		results_final[Symbol(sam)] = Dict()
+		for noise in noise_levels
+			results_final[Symbol(sam)][Symbol(noise)] = Dict()
+			for m in methods
+				results_final[Symbol(sam)][Symbol(noise)][Symbol(m)] =
+					[[[NaN64] for _ in 1:3]
+					for _ in 1:num_reps]
 			end
 		end
 	end
@@ -392,12 +393,12 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 		training_set_dict[sam] = Dict()
 		testing_set_dict[sam] = Dict()
 		guess_dict[sam] = Dict()
-		for v in vars
-			training_set_dict[sam][v] = [Vector{ProblemSet.DEProblem}(undef,num_trainings)
+		for noise in noise_levels
+			training_set_dict[sam][noise] = [Vector{ProblemSet.DEProblem}(undef,num_trainings)
 											for _ in 1:num_reps]
-			testing_set_dict[sam][v] = [Vector{ProblemSet.DEProblem}(undef,num_tests)
+			testing_set_dict[sam][noise] = [Vector{ProblemSet.DEProblem}(undef,num_tests)
 											for _ in 1:num_reps]
-			guess_dict[sam][v] = [Vector{Float64}(undef,length(phi))
+			guess_dict[sam][noise] = [Vector{Float64}(undef,length(phi))
 									for _ in 1:num_reps]
 		end
 	end
@@ -405,7 +406,7 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	var_ini_cond = 0.01
 
 	for sam in data_sams
-		for v in vars
+		for noise in noise_levels
 	        # Artificial Data
             _t = range(t[1], stop=t[end], length=sam)
 	        tspan = (t[1], t[end])
@@ -416,12 +417,12 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 			#display(data_plot)
 
 			guess_arr = [rand_guess(bounds) for _ in 1:num_reps]
-			guess_dict[sam][v] .= guess_arr
+			guess_dict[sam][noise] .= guess_arr
 
 			training_set_arr = [[ProblemSet.DEProblem(problem.fun, problem.phi,
-								problem.bounds, add_noise(data,v), _t)
+								problem.bounds, add_noise(data,noise), _t)
 				 			for _ in 1:num_trainings] for _ in 1:num_reps]
-			training_set_dict[sam][v] .= training_set_arr
+			training_set_dict[sam][noise] .= training_set_arr
 
 			testing_set_arr = []
 			for r in 1:num_reps
@@ -434,23 +435,23 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 			        data = ode_sol.u
 
 					push!(testing_set_arr_partial,ProblemSet.DEProblem(problem.fun, problem.phi,
-										problem.bounds, add_noise(data,v), _t))
+										problem.bounds, add_noise(data,noise), _t))
 				end
 				push!(testing_set_arr,testing_set_arr_partial)
 			end
-			testing_set_dict[sam][v] .= testing_set_arr
+			testing_set_dict[sam][noise] .= testing_set_arr
 	    end
 	end #samples loop
 
 	@sync for sam in data_sams
-		for v in vars
-			for m in method_arr
+		for noise in noise_levels
+			for m in methods
 				for i in 1:num_reps
-					Threads.@spawn results_final[sam][v][m][i] =
+					Threads.@spawn results_final[Symbol(sam)][Symbol(noise)][Symbol(m)][i] =
 											get_results(m,
-											training_set_dict[sam][v][i],
-											testing_set_dict[sam][v][i],
-											guess_dict[sam][v][i])
+											training_set_dict[sam][noise][i],
+											testing_set_dict[sam][noise][i],
+											guess_dict[sam][noise][i])
 				end
 			end
 		end
@@ -499,38 +500,48 @@ function experiment(p_num::Int64,sams::AbstractArray{<:Int},
 	return results_final
 end
 
-function problem_exp_loop(probs::Vector{<:Int},
-							sams::Vector{<:Int},
-							vars::Vector{<:AbstractFloat},
-							method_arr::Vector{String},
+function run_experiments(problems::Vector{<:Int},
+							samples::Vector{<:Int},
+							noise_levels::Vector{<:AbstractFloat},
+							methods::Vector{String},
 							dir::String)::Nothing
+
+	# Temporary directory for saving
+	# serialized intermediary results
 	mkdir(joinpath(dir,"tmp"))
-	results = Vector(undef,length(probs))
-	for i in 1:length(probs)
-		p = probs[i]
+
+	results = Vector(undef,length(problems))
+	for i in 1:length(problems)
+		p = problems[i]
 		p_name = get_problem_key(p)
-		results[i] = Pair(Symbol(p_name),
-						experiment(p,sams,vars,method_arr,dir))
-		JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
-end
+		result = experiment(p,samples,noise_levels,methods,dir)
+		results[i] = Pair(Symbol(p_name), result)
+		try
+			JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
+		catch e
+			println("Error saving serialized $(results[i])!")
+			@show e
+		end
+	end
 
 	try
 		JLSO.save(joinpath(dir,"experiment_results.jlso"), results...)
 		rm(joinpath(dir,"tmp"), recursive=true)
 	catch e
-		println("Error saving JLSO!")
+		println("Error saving serialized results!")
 		@show e
 	end
 
 end
 
 function main(args::Array{<:String})::Nothing
-	dir = string(args[1])
-	probs = eval(Meta.parse(args[2]))
-	sams = eval(Meta.parse(args[3]))
-	vars = eval(Meta.parse(args[4]))
-	method_arr = ["DS","SS","DSS"]
-	time_main = @elapsed problem_exp_loop(probs,sams,vars,method_arr,dir)
+	path = string(args[1])
+	problems = eval(Meta.parse(args[2]))
+	samples = eval(Meta.parse(args[3]))
+	noise_level = eval(Meta.parse(args[4]))
+	methods = ["DS","SS","DSS"]
+	time_main = @elapsed run_experiments(problems,samples,
+										noise_level,methods,path)
 	println(time_main)
 end
 
