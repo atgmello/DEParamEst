@@ -2151,3 +2151,27 @@ sum(x[:a])
 sum(x[:b])
 x[:b] == b
 x[:a] == a
+
+# ---- Plotting All Serialized Graphs ----
+using JLSO
+using Revise
+includet("./utils.jl")
+import .Utils: plot_main_results
+
+path = "/home/andrew/temp/results/experiment_results.jlso"
+results = JLSO.load(path)
+save_path = "/home/andrew/temp/results"
+
+plot_main_results(results, save_path)
+
+clearconsole()
+Revise.errors()
+
+# ---- Testing TSMP ----
+using Revise
+includet("./problem_set.jl")
+import .ProblemSet
+using Plots
+
+p = get_problem("tsmp")
+ProblemSet.problem_plot(p,"line")
