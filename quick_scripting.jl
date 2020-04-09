@@ -2158,14 +2158,44 @@ using Revise
 includet("./utils.jl")
 import .Utils: plot_main_results
 
-path = "/home/andrew/temp/results/experiment_results.jlso"
-results = JLSO.load(path)
-save_path = "/home/andrew/temp/results"
+base_dir = "/home/andrew/git/DEParamEst/"
+save_path = joinpath(base_dir,"results/remote/results_low/")
+jlso_file = joinpath(save_path,"experiment_results.jlso")
+results = JLSO.load(jlso_file)
 
 plot_main_results(results, save_path)
 
 clearconsole()
 Revise.errors()
+
+# ---- Quick Test ----
+using Plots
+plotlyjs()
+theme(:sand)
+
+x1 = [19.591, 19.809]
+y1 = [1.111, 1.0]
+scatter(x1, y1)
+x2 = [20.675, 20.280]
+y2 = [10.0, 0.001]
+scatter!(x2, y2)
+
+using Gadfly
+
+x1 = [19.591, 19.809]
+y1 = [1.111, 1.0]
+x2 = [20.675, 20.280]
+y2 = [10.0, 0.001]
+p = plot(x=[],y=[],Geom.line,
+    Theme(background_color=colorant"white",
+            panel_fill=colorant"white",
+            major_label_font="Hack",
+            minor_label_font="Hack"))
+append!(p.layers,layer(x=x1, y=y1, Theme(default_color=colorant"#e6612f"), #Vivid Vermilion
+        Geom.PointGeometry))
+append!(p.layers,layer(x=x2, y=y2, Theme(default_color=colorant"#42b3d5"), #Maximum Blue
+        Geom.PointGeometry))
+display(p)
 
 # ---- Testing TSMP ----
 using Revise
