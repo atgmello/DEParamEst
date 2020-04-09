@@ -467,7 +467,7 @@ function sr_plots(plot_data::Dict,
             qtime = hcat(box_scatter_plot.(timed)...)
             qqtime = box_scatter_plot(qtime[2,:])
             qisr = box_scatter_plot(isr)
-            if qisr[2] < 20.0 || qqtime[2] < 20.0
+            if qisr[2] < 10.0
                 scatter!(p, (qqtime[2],qisr[2]),
                             xerror=[(qqtime[1],qqtime[3])],
                             yerror=[(qisr[1],qisr[3])],
