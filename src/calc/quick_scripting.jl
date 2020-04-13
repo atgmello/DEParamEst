@@ -2182,21 +2182,48 @@ scatter!(x2, y2)
 
 using Gadfly
 
-x1 = [19.591, 19.809]
-y1 = [1.111, 1.0]
-x2 = [20.675, 20.280]
-y2 = [10.0, 0.001]
+x1 = 100.0.*randn(2)
+rand_error = 10.0.*randn(2)
+x1i = x1 .- rand_error
+x1a = x1 .+ rand_error
+
+y1 = 100.0.*randn(2)
+y1e = 10.0.*randn(4)
+x2 = 100.0.*randn(2)
+x2e = 10.0.*randn(4)
+y2 = 100.0.*randn(2)
+y2e = 10.0.*randn(4)
+
 p = plot(x=[],y=[],Geom.line,
     Theme(background_color=colorant"white",
             panel_fill=colorant"white",
             major_label_font="Hack",
-            minor_label_font="Hack"))
-append!(p.layers,layer(x=x1, y=y1, Theme(default_color=colorant"#e6612f"), #Vivid Vermilion
-        Geom.PointGeometry))
-append!(p.layers,layer(x=x2, y=y2, Theme(default_color=colorant"#42b3d5"), #Maximum Blue
+            minor_label_font="Hack"),
+            Guide.manual_color_key("Legend",
+                ["A","B"],
+                [colorant"#e6612f",colorant"#42b3d5"]))
+
+append!(p.layers,layer(x=x1, y=y1, xmins=x1i, xmax=x1a,
+        Theme(default_color=colorant"#e6612f"), #Vivid Vermilion
+        Geom.point, Geom.errorbar))
+append!(p.layers,layer(x=x2, y=y2,
+        Theme(default_color=colorant"#42b3d5"), #Maximum Blue
         Geom.PointGeometry))
 display(p)
 
+sds = [1, 1/2, 1/4, 1/8, 1/16, 1/32]
+n = 6
+ys = randn(n)
+ymins = ys .- (1.96 * sds / sqrt(n))
+ymaxs = ys .+ (1.96 * sds / sqrt(n))
+
+xmins = collect(1:6) .- (1.96 * sds / sqrt(n))
+xmaxs = collect(1:6) .+ (1.96 * sds / sqrt(n))
+
+p=plot(x=1:length(sds), y=ys, ymin=ymins, ymax=ymaxs, xmin=xmins, xmax=xmaxs,
+        Geom.point, Geom.errorbar)
+
+display(p)
 # ---- Testing TSMP ----
 using Revise
 includet("./problem_set.jl")
