@@ -1,0 +1,4 @@
+[deps]
+Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
+JLSO = "9da8a3cd-07a3-59c0-a743-3fdc52c30d11"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
