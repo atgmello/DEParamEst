@@ -1,6 +1,17 @@
 module PlottingUtils
 
-using Plots
+using Gadfly
+using Statistics: mean, quantile
+
+
+function step_success_rate(x::T)::Int64 where T
+    if x < 0.125
+       return 1
+    else
+        return 0
+    end
+end
+
 
 function box_data(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     q = quantile(arr,[0.25,0.5,0.75])
@@ -14,7 +25,7 @@ end
 
 function box_scatter_plot(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     qarr = box_data(arr)
-    return [qarr[3]-qarr[1],qarr[3],qarr[5]-qarr[3]]
+    return [qarr[1],qarr[3],qarr[5]]
 end
 
 function get_plot_data(results::Dict,
@@ -187,11 +198,34 @@ function sr_plots(plot_data::Dict,
                     sam::Symbol,
                     path::String)::Nothing
 
-    p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
-    p2 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
+    p = plot(x=[], y=[], Geom.point,
+                Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
+                Theme(background_color=colorant"white",
+                    panel_fill=colorant"white",
+                    major_label_font="Hack",
+                    minor_label_font="Hack"),
+                    Guide.manual_color_key("Method",
+                    [l[end] for l in method_label],
+                    [c[end] for c in method_color]))
+
+    p2 = plot(x=[], y=[], Geom.point,
+                Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
+                Theme(background_color=colorant"white",
+                    panel_fill=colorant"white",
+                    major_label_font="Hack",
+                    minor_label_font="Hack"),
+                    Guide.manual_color_key("Method",
+                    [l[end] for l in method_label],
+                    [c[end] for c in method_color]))
+
     ylim_arr = []
     for m in methods
-        p3 = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
+        p3 = plot(x=[], y=[],Geom.point,
+                Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
+                Theme(background_color=colorant"white",
+                    panel_fill=colorant"white",
+                    major_label_font="Hack",
+                    minor_label_font="Hack"))
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
         isr = 1.0./sr
@@ -200,30 +234,34 @@ function sr_plots(plot_data::Dict,
             qtime = hcat(box_scatter_plot.(timed)...)
             qqtime = box_scatter_plot(qtime[2,:])
             qisr = box_scatter_plot(isr)
-            if qisr[2] < 10.0
-                scatter!(p, (qqtime[2],qisr[2]),
-                            xerror=[(qqtime[1],qqtime[3])],
-                            yerror=[(qisr[1],qisr[3])],
-                            label=method_label[m], color=method_color[m])
+            if qisr[2] <= 5.0
+                append!(p.layers,
+                    layer(x=[qqtime[2]], y=[qisr[2]],
+                            xmin=[qqtime[1]],
+                            xmax=[qqtime[3]],
+                            ymin=[qisr[1]],
+                            ymax=[qisr[3]],
+                            color=[method_color[m]],
+                            Geom.point, Geom.errorbar))
             end
 
-            scatter!(p2, (qtime[2,:], isr),
-                        label=method_label[m], color=method_color[m])
+            append!(p2.layers, layer(x=qtime[2,:], y=isr,
+                        color=[method_color[m]], Geom.point))
 
-            scatter!(p3, (qtime[2,:], isr),
-                        label=method_label[m], color=method_color[m],
-                        series_annotations = text.(noise_level, :top, 11))
+            append!(p3.layers, layer(x=qtime[2,:], y=isr,
+                        color=[method_color[m]],
+                        label=String.(noise_level),
+                        Geom.point, Geom.label))
 
-            #display(p3)
-
-            savefig(p3,path*"/sr_$(m)_$(sam).pdf")
+            p3 |> SVG(joinpath(path,"sr_$(m)_$(sam).pdf"))
+            #savefig(p3,path*"/sr_$(m)_$(sam).pdf")
         end
     end
-    #display(p)
-    #display(p2)
+    # display(p2)
+    # display(p)
 
-    savefig(p, path*"/sr_all_medians_$(sam).pdf")
-    savefig(p2, path*"/sr_all_$(sam).pdf")
+    p2 |> SVG(joinpath(path,"/sr_all_$(sam).pdf"))
+    p |> SVG(joinpath(path,"sr_all_medians_$(sam).pdf"))
     nothing
 end
 function sr_plots(plot_data::Dict,
@@ -234,7 +272,16 @@ function sr_plots(plot_data::Dict,
                     sam::Symbol,
                     path::String)::Nothing
 
-    p = scatter(xlabel="Time", ylabel="1 / Success Rate", legend=:outertopright)
+    p = plot(x=[], y=[], Geom.point,
+                Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
+                Theme(background_color=colorant"white",
+                    panel_fill=colorant"white",
+                    major_label_font="Hack",
+                    minor_label_font="Hack"),
+                    Guide.manual_color_key("Method",
+                    [l[end] for l in method_label],
+                    [c[end] for c in method_color]))
+
     ylim_arr = []
     for m in methods
         sr = mean([step_success_rate(e) for e in plot_data[m]["error"][1]])
@@ -244,17 +291,22 @@ function sr_plots(plot_data::Dict,
         if !any(isnan.(vcat(timed...)))
             qtime = box_scatter_plot(timed)
             qisr = box_scatter_plot(isr)
-            if qisr[2] < 20.0 && qtime[2] < 20.0
-                scatter!(p, (qtime[2],qisr[2]),
-                            xerror=[(qtime[1],qtime[3])],
-                            yerror=[(qisr[1],qisr[3])],
-                            label=method_label[m], color=method_color[m])
+            if qisr[2] <= 5.0
+                append!(p.layers,
+                    layer(x=[qtime[2]], y=[qisr[2]],
+                            xmin=[qtime[1]],
+                            xmax=[qtime[3]],
+                            ymin=[qisr[1]],
+                            ymax=[qisr[3]],
+                            color=[method_color[m]],
+                            Geom.point, Geom.errorbar))
             end
         end
     end
 
-    #display(p)
-    savefig(p,joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
+    # display(p)
+    # savefig(p,joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
+    p |> SVG(joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
     nothing
 end
 
