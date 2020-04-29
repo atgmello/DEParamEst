@@ -2232,3 +2232,204 @@ using Plots
 
 p = get_problem("tsmp")
 ProblemSet.problem_plot(p,"line")
+
+
+# ---- Gadfly ----
+import Gadfly
+using DataFrames
+
+methods = [:DS, :DSS]
+oe = [1.0, 0.5]
+cur_colors = [colorant"#e6612f",colorant"#42b3d5",colorant"seagreen"]
+method_label = Dict()
+for m in methods
+	method_label[m] = String(m)
+end
+
+method_color = Dict()
+for (m,c) in zip([:SS,:DSS,:DS],cur_colors)
+	method_color[m] = c
+end
+
+df = DataFrame()
+for (i,m) in enumerate(methods)
+    # Substitute infinite for missing
+    # so that boxplot can still work
+    # with the data
+    data = oe[i]
+    aux_df = DataFrame(method=method_label[m],
+                data=data, color=method_color[m])
+    try
+        append!(df, aux_df)
+    catch e
+        @show e
+    end
+end
+
+p = plot(df, x="method", y="data", color="color", Geom.bar,
+            Guide.xlabel("Method"), Guide.ylabel("Overall Efficiency"),
+            Theme(background_color=colorant"white",
+                panel_fill=colorant"white",
+                major_label_font="Hack",
+                minor_label_font="Hack"))
+
+for (i,m) in enumerate(methods)
+    println(i,m,oe[i])
+    append!(p.layers,
+            layer(x=[m], y=oe[i],
+                color=[method_color[m]],
+                Geom.point))
+end
+
+display(p)
+
+
+# ---- Testing Different Plot Libs ----
+import AbstractPlotting
+import Makie
+import Plots
+import Gadfly
+import DataFrames
+Plots.plotly()
+Plots.theme(:vibrant)
+
+N = 51
+x = range(-2, stop = 2, length = N)
+y = x
+z = (-3.0.*x .* exp.(-x .^ 2 .- (y') .^ 2)) .* 4
+z = x.*(y'.-5.0)
+
+Plots.heatmap(x,y,z2)
+Plots.contour(x,y,z2)
+Plots.contourf(x,y,z2)
+
+Plots.pyplot()
+Plots.surface(x,y,z, alpha=0.4)
+Plots.wireframe!(x,y,z, linecolor=:steelblue)
+
+x=range(-2,stop=2,length=101)
+y=range(2,stop=4,length=101)
+f(x,y) = x*y
+z = x'.*y
+z = [f(i,j) for i in y for j in x]
+z2 = reshape(z, (length(y), length(x)))'
+Plots.surface(x,y,f,camera=(-30,30))
+Plots.surface(x,y,z,camera=(-30,30))
+
+Plots.plotly()
+Plots.surface(x,y,z2, alpha=0.5)
+
+Plots.pyplot()
+Plots.surface(x,y,z2, alpha=0.5)
+
+Plots.heatmap(x,y,f)
+Plots.heatmap(x,y,z2)
+Plots.wireframe(x,y,f)
+
+Gadfly.spy(reshape(z, (101,101)))
+a = false
+function gadfly_heatmap(x::Vector,
+                        y::Vector,
+                        z::Vector)::Gadfly.Plot
+    is = repeat(x, length(x))
+    js = vec(repeat(y', length(y)))
+    values = z
+    p = Gadfly.plot(x=is, y=js, color=values,
+        Gadfly.Coord.cartesian(yflip=false,
+                        fixed=false,
+                        xmin=minimum(x),
+                        xmax=maximum(x),
+                        ymin=minimum(y),
+                        ymax=maximum(y)),
+        Gadfly.Scale.color_continuous,
+        Gadfly.Geom.rectbin,
+        Gadfly.Scale.x_continuous,
+        Gadfly.Scale.y_continuous)
+    return p
+end
+
+gadfly_heatmap(collect(x), collect(y), z)
+
+scene = AbstractPlotting.surface(x, y, z)
+Makie.save("plot.jpg", scene)
+xm, ym, zm = minimum(scene_limits(scene))
+AbstractPlotting.contour!(scene, x, y, z, levels = 15, linewidth = 2, transformation = (:xy, zm))
+AbstractPlotting.wireframe!(scene, x, y, z, overdraw = true, transparency = true, color = (:black, 0.1))
+AbstractPlotting.center!(scene) # center the Scene on the display
+
+display(scene)
+
+import PyPlot
+import Plots
+Plots.pyplot()
+Plots.theme(:default)
+x = collect(-10:0.1:10)
+y = collect(-10:0.1:10)
+z = (x,y) -> (x-y)^2
+z2 = reshape([z(i,j) for i in y for j in x], (length(y), length(x)))
+Plots.surface(x,y,z)
+Plots.surface(x,y,z,
+            fillalpha=0.7,fillcolor=:roma)
+
+PyPlot.gcf()
+PyPlot.clf()
+three_dim = PyPlot.surf(z2, title="Test", alpha=0.5)
+PyPlot.axis
+PyPlot.show(three_dim)
+
+three_dim = PyPlot.surf(
+                    x, y, z, fillcolor=:vik, fillalpha=0.1,
+                    title="Test",
+                    #xrotation=45,yrotation=360-45,
+                    xlabel="k1", ylabel="k2",
+                    zlabel="Cost function",
+                    xrotation=45, yrotation=45)
+
+fig = PyPlot.figure()
+ax = fig.gca(projection="3d")
+surf = ax.plot_surface(x, y, z2, rstride=2,
+                    edgecolors="k", cstride=2,
+                    cmap=PyPlot.ColorMap("coolwarm"),
+                    alpha=0.7,
+                    linewidth=0.15)
+
+ax.view_init(45, 45)
+fig.colorbar(three_dim, shrink=0.5, aspect=5)
+PyPlot.xlabel("X")
+PyPlot.ylabel("Y")
+PyPlot.title("Surface Plot")
+PyPlot.gcf()
+
+import Plots
+themes = [:default,
+            :dark,
+            :ggplot2,
+            :juno,
+            :lime,
+            :orange,
+            :sand,
+            :solarized,
+            :solarized_light,
+            :wong,
+            :wong2,
+            :gruvbox_dark,
+            :gruvbox_light,
+            :bright,
+            :vibrant,
+            :mute]
+
+backends = [Plots.gr, #ok
+            Plots.pyplot, #3 last
+            Plots.plotly, #
+            Plots.plotlyjs]
+
+for b in backends[2:2]
+    b()
+    for t in themes[12:end]
+        Plots.theme(t)
+        p = Plots.contourf(x,y,z)
+        display(p)
+    end
+end
+
+Plots.savefig("bug.png")
