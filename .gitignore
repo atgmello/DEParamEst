@@ -1,6 +1,12 @@
-*checkpoint*
-quick_scripting.jl
-replicate_error*
-plots
+# Ignore temp files
+.ipynb_checkpoints*
+.ignore
+
+# Ignore helper bash scripts
 *.sh
-results/
+
+# Ignore data and plots
+data/
+
+# But not serialized results
+!*.jlso
