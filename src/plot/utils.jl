@@ -1,11 +1,14 @@
 module PlottingUtils
 
 using Gadfly
+import Cairo
+import Fontconfig
+using DataFrames
 using Statistics: mean, quantile
 
 
 function step_success_rate(x::T)::Int64 where T
-    if x < 0.125
+    if x < 0.1
        return 1
     else
         return 0
@@ -23,10 +26,12 @@ function box_data(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
             minimum([max_val,maximum(arr)])]
 end
 
+
 function box_scatter_plot(arr::Array{<:AbstractFloat})::Array{<:AbstractFloat}
     qarr = box_data(arr)
     return [qarr[1],qarr[3],qarr[5]]
 end
+
 
 function get_plot_data(results::Dict,
                         noise_level::AbstractArray{Symbol},
@@ -63,6 +68,12 @@ function get_plot_data(results::Dict,
     return plot_data
 end
 
+
+"""
+Error Plots
+xaxis: Noise Percentage
+yaxis: Mean Error
+"""
 function error_plots(plot_data::Dict,
                     noise_level::AbstractArray{<:AbstractFloat},
                     methods::Array,
@@ -70,11 +81,6 @@ function error_plots(plot_data::Dict,
                     method_color::Dict,
                     sam::Int,
                     path::String)::Nothing
-    """
-    Error Plots
-    xaxis: Noise Percentage
-    yaxis: Mean Error
-    """
 
     p = plot(x=noise_level, y=[],Geom.line,
             Theme(background_color=colorant"white",
@@ -129,6 +135,7 @@ function error_plots(plot_data::Dict,
     nothing
 end
 
+
 """
 Box Error Plots
 xaxis: Method
@@ -142,16 +149,35 @@ function box_error_plots(plot_data::Dict,
                     sam::Symbol,
                     path::String)::Nothing
 
-    p = plot(legend=false, ylabel="Error", xlabel="Method")
+    df = DataFrame()
     for m in methods
         # Substitute infinite for missing
         # so that boxplot can still work
         # with the data
         data = [ifelse(isinf(x),missing,x) for x in plot_data[m]["error"][1]]
-        boxplot!(p, [method_label[m]], data, color=method_color[m])
+        aux_df = DataFrame(method=method_label[m],
+                    data=data, color=method_color[m])
+        try
+            append!(df, aux_df)
+        catch e
+            @show e
+        end
     end
-    savefig(p,joinpath(path,replace("box_$(sam)_$(var)","."=>"")*".pdf"))
+    p = plot(df, x="method", y="data", color="color", Geom.boxplot,
+                Guide.xlabel("Method"), Guide.ylabel("Error"),
+                Theme(background_color=colorant"white",
+                    panel_fill=colorant"white",
+                    major_label_font="Hack",
+                    minor_label_font="Hack"))
+    try
+        p |> PDF(joinpath(path,replace("box_$(sam)_$(var)","."=>"")*".pdf"))
+    catch e
+        @show e
+        println(df)
+        println()
+    end
 end
+
 
 """
 Parameter Distribution Plots
@@ -184,6 +210,7 @@ function parameter_plots(plot_data::Dict,
     p = plot(p_arr...,layout=(length(methods),1))
     savefig(p,joinpath(path,replace("par_all_$(sam)_$(var)","."=>"")*".pdf"))
 end
+
 
 """
 Success Rate vs Time Plots
@@ -253,17 +280,31 @@ function sr_plots(plot_data::Dict,
                         label=String.(noise_level),
                         Geom.point, Geom.label))
 
-            p3 |> SVG(joinpath(path,"sr_$(m)_$(sam).pdf"))
-            #savefig(p3,path*"/sr_$(m)_$(sam).pdf")
+            try
+                p3 |> PDF(joinpath(path,"sr_$(m)_$(sam).pdf"))
+            catch e
+                @show e
+            end
         end
     end
     # display(p2)
     # display(p)
 
-    p2 |> SVG(joinpath(path,"/sr_all_$(sam).pdf"))
-    p |> SVG(joinpath(path,"sr_all_medians_$(sam).pdf"))
+    try
+        p2 |> PDF(joinpath(path,"sr_all_$(sam).pdf"))
+    catch e
+        @show e
+    end
+
+    try
+        p |> PDF(joinpath(path,"sr_all_medians_$(sam).pdf"))
+    catch e
+        @show e
+    end
     nothing
 end
+
+
 function sr_plots(plot_data::Dict,
                     var::Symbol,
                     methods::Vector{Symbol},
@@ -305,8 +346,11 @@ function sr_plots(plot_data::Dict,
     end
 
     # display(p)
-    # savefig(p,joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
-    p |> SVG(joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
+    try
+        p |> PDF(joinpath(path,replace("sr_all_medians_$(sam)_$(var)","."=>"")*".pdf"))
+    catch  e
+        @show e
+    end
     nothing
 end
 
@@ -323,41 +367,83 @@ function plot_compare(data::Vector, data_est::Vector)
     return p
 end
 
+
 """
 Overall Efficiency (OE) Plots
 xaxis: Method
 yaxis: OE Score
 """
 function oe_plots(plot_data::Dict,
-                    noise_level::AbstractArray{<:AbstractFloat},
-                    methods::Array{<:String,1},
+                    noise_level::AbstractArray{Symbol},
+                    methods::Vector{Symbol},
                     method_label::Dict,
                     method_color::Dict,
-                    sam::Int,
+                    sam::Symbol,
                     path::String)::Nothing
 
     t_succ = zeros(length(methods))
-    @inbounds for i in 1:length(methods)
-        m = methods[i]
+    for (i,m) in enumerate(methods)
         error = plot_data[m]["error"]
         sr = mean.([step_success_rate.(e) for e in error])
         time = plot_data[m]["time"]
         mean_time = mean.(time)
         t_succ_arr = mean_time./sr
-        t_succ[i] = median(t_succ_arr)
+        t_succ[i] = mean(t_succ_arr)
     end
 
     oe = minimum(t_succ)./t_succ
 
-    p = bar(xlabel="Method",
-            ylabel="Overall Efficiency",
-            legend=false)
-    bar!(p, methods, oe,
-            color=[method_color[m] for m in methods])
-    #display(p)
+    df = DataFrame()
+    for (i,m) in enumerate(methods)
+        aux_df = DataFrame(method=method_label[m],
+                    data=oe[i], color=method_color[m])
+        try
+            append!(df, aux_df)
+        catch e
+            @show e
+        end
+    end
 
-    savefig(p, path*"/$(sam)_oe.pdf")
+    p = plot(df, x="method", y="data", color="color", Geom.bar,
+            Guide.xlabel("Method"), Guide.ylabel("Overall Efficiency"),
+            Theme(background_color=colorant"white",
+                panel_fill=colorant"white",
+                major_label_font="Hack",
+                minor_label_font="Hack"))
+
+    try
+        if length(noise_level) > 1
+            p |> PDF(joinpath(path,"oe_$(sam)_all.pdf"))
+        else
+            var = noise_level[1]
+            p |> PDF(joinpath(path,replace("oe_$(sam)_$(var)","."=>"")*".pdf"))
+        end
+    catch e
+        @show e
+    end
     nothing
 end
+
+
+function gadfly_heatmap(x::Vector,
+                        y::Vector,
+                        z::Vector)::Gadfly.Plot
+    is = repeat(x, length(x))
+    js = vec(repeat(y', length(y)))
+    values = z
+    p = Gadfly.plot(x=is, y=js, color=values,
+        Gadfly.Coord.cartesian(yflip=false,
+                        fixed=false,
+                        xmin=minimum(x),
+                        xmax=maximum(x),
+                        ymin=minimum(y),
+                        ymax=maximum(y)),
+        Gadfly.Scale.color_continuous,
+        Gadfly.Geom.rectbin,
+        Gadfly.Scale.x_continuous,
+        Gadfly.Scale.y_continuous)
+    return p
+end
+
 
 end
