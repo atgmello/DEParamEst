@@ -1,50 +1,54 @@
 using DifferentialEquations
-using Plots
-gr()
-theme(:vibrant)
+import Plots
+Plots.pyplot()
+Plots.theme(:default)
 
 using Revise
-includet("./utils.jl")
-includet("./problem_set.jl")
-includet("./objective_function.jl")
+includet("../calc/utils.jl")
+includet("../calc/problem_set.jl")
+includet("../calc/objective_function.jl")
 import .ProblemSet: get_problem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
 import .Utils: add_noise
 
-const PATH = "/home/andrew/git/DEParamEst/results/local/plots/contours/unregularized/"
+const PATH = "./data/contours/"
 
-function contour_3d_plots(x, y, z, par; title="", save_name="")
+function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
     if length(par) > 1
-        cont = contourf(x, y, z, cbar=true, title=title,
-                    xlabel="k1", ylabel="k2")
+        cont = Plots.heatmap(x, y, z, cbar=true, title=title,
+                    xlabel="k1", ylabel="k2", fillcolor=:vik)
     else
-        cont = plot(x, vec(z), title=title, legend=false,
-                    xlabel="k1", ylabel="Cost Function")
+        cont = Plots.plot(x, vec(z), title=title, legend=false,
+                    xlabel="k1", ylabel="Cost Function", fillcolor=:vik)
     end
 
     if par[1] > x[1] && par[1] < x[end]
-        vline!(cont, [par[1]], label="True k1", color=:cyan)
+        Plots.vline!(cont, [par[1]], label="True k1", color=:cyan)
     end
 
     if length(par) > 1
         if par[2] > y[1] && par[2] < y[end]
-            hline!(cont, [par[2]], label="True k2", color=:magenta)
+            Plots.hline!(cont, [par[2]], label="True k2", color=:magenta)
         end
 
-        three_dim = plot(title=title,
+
+        three_dim = Plots.surface(
+                            x, y, z, fillcolor=:vik, alpha=0.7,
+                            title=title,
                             #xrotation=45,yrotation=360-45,
-                            xlabel="k1", ylabel="k2", zlabel="Cost function")
-        surface!(three_dim, x, y, z)
-        plot!(three_dim, xrotation=45, yrotation=45)
+                            xlabel="k1", ylabel="k2")
+                            # zlabel="Cost function")
 
+        display(three_dim)
 
-        #display(three_dim)
-        savefig(three_dim,"./3d_$(lowercase(replace(title," " => "_")))_$(save_name).pdf")
+        Plots.savefig(three_dim,
+                joinpath(save_path,
+                        "./3d_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
     end
 
-    savefig(cont,"./cont_$(lowercase(replace(title," " => "_")))_$(save_name).pdf")
-    #display(cont)
-
+    Plots.savefig(cont,
+            joinpath(save_path,
+                    "./cont_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
 end
 
 
@@ -81,10 +85,9 @@ function calc_z_plot(x, y, data, ode_fun, t, obj_fun;
 end
 
 function experiment_countour(exp, sample_range)
-    cd(PATH)
     dir = exp["problem_name"]
-    mkdir(dir)
-    cd(dir)
+    save_path = joinpath(PATH,dir)
+    mkdir(joinpath(PATH,dir))
 
     ode_problem = exp["ode_problem"]
     ode_fun = ode_problem.fun
@@ -123,7 +126,7 @@ function experiment_countour(exp, sample_range)
         #saveat_t = collect(t[1]:((t[end]-t[1])/(num_samples-1)):t[end])
         saveat_t = range(t[1], stop=t[end], length=num_samples)
         osol  = solve(oprob, OwrenZen3(), saveat=saveat_t)
-        plot(osol)
+        Plots.plot(osol)
         data = osol.u
         known_states = setdiff(1:length(states),unknown_states)
         #data = data[filter(x -> x in known_states, states),:]
@@ -135,10 +138,10 @@ function experiment_countour(exp, sample_range)
         label=reshape(["$i" for i in alphabet[1:length(known_states)]],(1,length(known_states)))
 
         data_plot = reduce(hcat, osol.u)
-        plot_data = scatter(saveat_t, transpose(data_plot),
+        plot_data = Plots.scatter(saveat_t, transpose(data_plot),
                             label=label, xlabel="Time", ylabel="State")
         display(plot_data)
-        savefig(plot_data,"./data_$(length(saveat_t)*length(known_states)).pdf")
+        Plots.savefig(plot_data,"./data_$(length(saveat_t)*length(known_states)).pdf")
 
         x = range(min_range, max_range, step=(max_range-min_range)/100)
         if length(states) == 1
@@ -153,7 +156,11 @@ function experiment_countour(exp, sample_range)
                                         unknown_states=unknown_states,
                                         fixed_pars=fixed_pars)
 
-            contour_3d_plots(x, y, z, true_par, title="Data Shooting", save_name="$(length(data))_big")
+            contour_3d_plots(x, y, z,
+                            true_par, save_path,
+                            title="Data Shooting",
+                            save_name="$(length(data))_big")
+
             f_min,f_min_idx  = findmin(z)
 
             x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
@@ -164,7 +171,10 @@ function experiment_countour(exp, sample_range)
                                             unknown_states=unknown_states,
                                             fixed_pars=fixed_pars)
 
-                contour_3d_plots(x_reduced, y_reduced, z, true_par, title="Data Shooting", save_name="$(length(data))_small")
+                contour_3d_plots(x_reduced, y_reduced, z,
+                                true_par, save_path,
+                                title="Data Shooting",
+                                save_name="$(length(data))_small")
             catch e
                 println("Error on small grid.\n$e")
             end
@@ -175,7 +185,11 @@ function experiment_countour(exp, sample_range)
                                         single_shooting,
                                         unknown_states=unknown_states,
                                         fixed_pars=fixed_pars)
-            contour_3d_plots(x, y, z, true_par, title="Single Shooting", save_name="$(length(data))_big")
+            contour_3d_plots(x, y, z,
+                            true_par, save_path,
+                            title="Single Shooting",
+                            save_name="$(length(data))_big")
+
             f_min,f_min_idx  = findmin(z)
             x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
             y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
@@ -184,7 +198,11 @@ function experiment_countour(exp, sample_range)
                                             single_shooting,
                                             unknown_states=unknown_states,
                                             fixed_pars=fixed_pars)
-                contour_3d_plots(x_reduced, y_reduced, z, true_par, title="Single Shooting", save_name="$(length(data))_small")
+
+                contour_3d_plots(x_reduced, y_reduced, z,
+                                true_par, save_path,
+                                title="Single Shooting",
+                                save_name="$(length(data))_small")
             catch e
                 println("Error on small grid.\n$e")
             end
@@ -229,6 +247,23 @@ experiment = Dict(
     "true_par" => [5.0035,1.0])
 
 experiment_countour(experiment, 10:20:50)
+
+# TEMP
+experiment = Dict(
+    "problem_name" => "floudas_1",
+    "ode_problem" => get_problem("floudas_1"),
+    "fixed_pars" => [-1.0,-1.0],
+    "min_range" => 0.0,
+    "max_range" => 10.0,
+    "reduced_raius" => 0.5,
+    "reduced_step" => 0.01,
+    "noise" => 0.0,
+    "states" => [1,2],
+    "unknown_states" => [],
+    "true_par" => [5.0035,1.0])
+
+experiment_countour(experiment, 10:40:50)
+
 
 # 1 - floudas_6
 experiment_1 = Dict(
