@@ -2,7 +2,6 @@ module ProblemSet
 
 using DifferentialEquations
 using ParameterizedFunctions
-using Plots
 export DEProblem, get_ode_problem,
         get_problem_key, problem_info, problem_plot
 
@@ -31,30 +30,6 @@ function problem_info(p::DEProblem)::String
     res *= "\n\t Bounds: \n\t $(p.bounds)"
     res *= sep
     return res
-end
-
-function problem_plot(p::DEProblem, type::String)
-    alphabet='A':'Z'
-    label=reshape(["$i" for i in alphabet[1:length(p.data[1])]],(1,length(p.data[1])))
-
-    if type == "scatter"
-        d_plot = scatter(p.t, reduce(hcat,p.data)',
-                        label=label, xlabel="Time", ylabel="State",
-                        legend=:outertopright)
-    elseif type == "line"
-        d_plot = plot(p.t, reduce(hcat,p.data)',
-                    label=label, xlabel="Time", ylabel="State",
-                    legend=:outertopright)
-
-    elseif type == "scatter_line"
-        d_plot = plot(p.t, reduce(hcat,p.data)',
-                    label=label, xlabel="Time", ylabel="State",
-                    legend=:outertopright, markershape=:circle)
-    else
-        d_plot = plot()
-    end
-
-    return d_plot
 end
 
 function get_problem_key(i::Int=0)::String

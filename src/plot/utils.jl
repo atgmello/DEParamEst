@@ -446,4 +446,73 @@ function gadfly_heatmap(x::Vector,
 end
 
 
+function problem_plot(data::Matrix,
+                        t::Vector,
+                        type::String)::Gadfly.Plot
+
+    m = size(data)[1]
+    alphabet = 'A':'Z'
+    label = ["$i" for i in alphabet[1:m]]
+
+    df = DataFrame()
+    for i in 1:m
+        aux_df = DataFrame(x=data[i,:], State=label[i], t=t)
+        append!(df, aux_df)
+    end
+
+    if type == "scatter"
+        p = plot(df, x=:t, y=:x, color=:State,
+                    Guide.xlabel("Time"), Guide.ylabel("State"),
+                    Geom.point,
+                    Gadfly.Coord.cartesian(yflip=false,
+                                            fixed=false,
+                                            xmin=minimum(df[:t]),
+                                            xmax=maximum(df[:t]),
+                                            ymin=minimum(df[:x]),
+                                            ymax=maximum(df[:x])),
+                    Gadfly.Theme(minor_label_font=PLOT_FONT,
+                                    major_label_font=PLOT_FONT,
+                                    key_title_font=PLOT_FONT,
+                                    key_label_font=PLOT_FONT)
+                    )
+
+    elseif type == "line"
+        p = plot(df, x=:t, y=:x, color=:State,
+                    Guide.xlabel("Time"), Guide.ylabel("State"),
+                    Geom.line,
+                    Gadfly.Coord.cartesian(yflip=false,
+                                            fixed=false,
+                                            xmin=minimum(df[:t]),
+                                            xmax=maximum(df[:t]),
+                                            ymin=minimum(df[:x]),
+                                            ymax=maximum(df[:x])),
+                    Gadfly.Theme(minor_label_font=PLOT_FONT,
+                                    major_label_font=PLOT_FONT,
+                                    key_title_font=PLOT_FONT,
+                                    key_label_font=PLOT_FONT)
+                    )
+
+    elseif type == "scatter_line"
+        p = plot(df, x=:t, y=:x, color=:State,
+                    Guide.xlabel("Time"), Guide.ylabel("State"),
+                    Geom.point, Geom.line,
+                    Gadfly.Coord.cartesian(yflip=false,
+                                            fixed=false,
+                                            xmin=minimum(df[:t]),
+                                            xmax=maximum(df[:t]),
+                                            ymin=minimum(df[:x]),
+                                            ymax=maximum(df[:x])),
+                    Gadfly.Theme(minor_label_font=PLOT_FONT,
+                                    major_label_font=PLOT_FONT,
+                                    key_title_font=PLOT_FONT,
+                                    key_label_font=PLOT_FONT)
+                    )
+    else
+        p = plot()
+    end
+
+    return p
+end
+
+
 end
