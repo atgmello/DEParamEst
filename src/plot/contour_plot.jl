@@ -1,5 +1,9 @@
-using DifferentialEquations
 import Plots
+import Fontconfig
+using Gadfly
+using DifferentialEquations
+using Cairo
+using ColorSchemes
 Plots.pyplot()
 Plots.theme(:default)
 
@@ -7,48 +11,74 @@ using Revise
 includet("../calc/utils.jl")
 includet("../calc/problem_set.jl")
 includet("../calc/objective_function.jl")
-import .ProblemSet: get_problem
+includet("../plot/utils.jl")
+import .ProblemSet: get_problem, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
 import .Utils: add_noise
+import .PlottingUtils: heatmap, problem_plot
 
 const PATH = "./data/contours/"
+const PLOT_FONT = "Arial"
+
 
 function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
     if length(par) > 1
-        cont = Plots.heatmap(x, y, z, cbar=true, title=title,
-                    xlabel="k1", ylabel="k2", fillcolor=:vik)
+        cont = PlottingUtils.heatmap(x, y, vec(z'),
+                                    xlabel="k1", ylabel="k2",
+                                    zlabel="Cost\nFunction",
+                                    title=title,
+                                    fillcolor=ColorSchemes.vik)
     else
-        cont = Plots.plot(x, vec(z), title=title, legend=false,
-                    xlabel="k1", ylabel="Cost Function", fillcolor=:vik)
+        cont = plot(x=x, y=vec(z), Geom.line, Guide.title(title),
+                    Gadfly.Coord.cartesian(yflip=false,
+                                            fixed=false,
+                                            xmin=minimum(x),
+                                            xmax=maximum(x),
+                                            ymin=minimum(vec(z)),
+                                            ymax=maximum(vec(z))),
+                    Gadfly.Theme(minor_label_font=PLOT_FONT,
+                                    major_label_font=PLOT_FONT,
+                                    key_title_font=PLOT_FONT,
+                                    key_label_font=PLOT_FONT),
+                    Guide.xlabel("k1"), Guide.ylabel("Cost Function"))
     end
 
     if par[1] > x[1] && par[1] < x[end]
-        Plots.vline!(cont, [par[1]], label="True k1", color=:cyan)
+        pushfirst!(cont.layers,
+                    layer(xintercept=[par[1]],
+                            Geom.vline(color="magenta"))[1])
     end
 
     if length(par) > 1
         if par[2] > y[1] && par[2] < y[end]
-            Plots.hline!(cont, [par[2]], label="True k2", color=:magenta)
+            pushfirst!(cont.layers,
+                        layer(yintercept=[par[2]],
+                                Geom.hline(color="cyan"))[1])
         end
 
 
         three_dim = Plots.surface(
-                            x, y, z, fillcolor=:vik, alpha=0.7,
-                            title=title,
-                            #xrotation=45,yrotation=360-45,
-                            xlabel="k1", ylabel="k2")
-                            # zlabel="Cost function")
-
-        display(three_dim)
+                        x, y, z, fillcolor=:vik, alpha=0.7,
+                        title=title,
+                        #xrotation=45,yrotation=360-45,
+                        xlabel="k1", ylabel="k2",
+                        zlabel="Cost Function",
+                        xtickfont=Plots.font("Arial", 10, "#6c606b"),
+                        ytickfont=Plots.font("Arial", 10, "#6c606b"),
+                        ztickfont=Plots.font("Arial", 10, "#6c606b"),
+                        titlefont=Plots.font("Arial", 12, "#564a55"),
+                        legendfont=Plots.font("Arial", 10, "#6c606b"),
+                        guidefont=Plots.font("Arial", 12, "#564a55"),
+                        colorbar=false, right_margin=30px)
 
         Plots.savefig(three_dim,
-                joinpath(save_path,
-                        "./3d_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
+            joinpath(save_path,
+            "./3d_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
     end
 
-    Plots.savefig(cont,
-            joinpath(save_path,
-                    "./cont_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
+    Gadfly.draw(PDF(joinpath(save_path,
+                            "./cont_$(lowercase(replace(title," " => "_")))_$(save_name).pdf")),
+                    cont)
 end
 
 
@@ -134,14 +164,12 @@ function experiment_countour(exp, sample_range)
             data = add_noise(data, noise)
         end
 
-        alphabet='A':'Z'
-        label=reshape(["$i" for i in alphabet[1:length(known_states)]],(1,length(known_states)))
+        plot_data = problem_plot(reduce(hcat, data), collect(saveat_t),
+                                "scatter_line")
 
-        data_plot = reduce(hcat, osol.u)
-        plot_data = Plots.scatter(saveat_t, transpose(data_plot),
-                            label=label, xlabel="Time", ylabel="State")
-        display(plot_data)
-        Plots.savefig(plot_data,"./data_$(length(saveat_t)*length(known_states)).pdf")
+        Gadfly.draw(PDF(joinpath(save_path,
+                        "./data_$(length(saveat_t)*length(known_states)).pdf")),
+                        plot_data)
 
         x = range(min_range, max_range, step=(max_range-min_range)/100)
         if length(states) == 1
@@ -247,23 +275,6 @@ experiment = Dict(
     "true_par" => [5.0035,1.0])
 
 experiment_countour(experiment, 10:20:50)
-
-# TEMP
-experiment = Dict(
-    "problem_name" => "floudas_1",
-    "ode_problem" => get_problem("floudas_1"),
-    "fixed_pars" => [-1.0,-1.0],
-    "min_range" => 0.0,
-    "max_range" => 10.0,
-    "reduced_raius" => 0.5,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [5.0035,1.0])
-
-experiment_countour(experiment, 10:40:50)
-
 
 # 1 - floudas_6
 experiment_1 = Dict(
