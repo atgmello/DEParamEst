@@ -1,10 +1,11 @@
 module PlottingUtils
 
 using Gadfly
-import Cairo
-import Fontconfig
+using ColorSchemes
 using DataFrames
 using Statistics: mean, quantile
+
+const PLOT_FONT = "Arial"
 
 
 function step_success_rate(x::T)::Int64 where T
@@ -85,8 +86,8 @@ function error_plots(plot_data::Dict,
     p = plot(x=noise_level, y=[],Geom.line,
             Theme(background_color=colorant"white",
                 panel_fill=colorant"white",
-                major_label_font="Hack",
-                minor_label_font="Hack"))
+                major_label_font=PLOT_FONT,
+                minor_label_font=PLOT_FONT))
 
     p = plot(x=noise_level, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
     ylim_arr = []
@@ -167,8 +168,8 @@ function box_error_plots(plot_data::Dict,
                 Guide.xlabel("Method"), Guide.ylabel("Error"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
-                    major_label_font="Hack",
-                    minor_label_font="Hack"))
+                    major_label_font=PLOT_FONT,
+                    minor_label_font=PLOT_FONT))
     try
         p |> PDF(joinpath(path,replace("box_$(sam)_$(var)","."=>"")*".pdf"))
     catch e
@@ -229,8 +230,8 @@ function sr_plots(plot_data::Dict,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
-                    major_label_font="Hack",
-                    minor_label_font="Hack"),
+                    major_label_font=PLOT_FONT,
+                    minor_label_font=PLOT_FONT),
                     Guide.manual_color_key("Method",
                     [l[end] for l in method_label],
                     [c[end] for c in method_color]))
@@ -239,8 +240,8 @@ function sr_plots(plot_data::Dict,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
-                    major_label_font="Hack",
-                    minor_label_font="Hack"),
+                    major_label_font=PLOT_FONT,
+                    minor_label_font=PLOT_FONT),
                     Guide.manual_color_key("Method",
                     [l[end] for l in method_label],
                     [c[end] for c in method_color]))
@@ -251,8 +252,8 @@ function sr_plots(plot_data::Dict,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
-                    major_label_font="Hack",
-                    minor_label_font="Hack"))
+                    major_label_font=PLOT_FONT,
+                    minor_label_font=PLOT_FONT))
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
         isr = 1.0./sr
@@ -317,8 +318,8 @@ function sr_plots(plot_data::Dict,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
-                    major_label_font="Hack",
-                    minor_label_font="Hack"),
+                    major_label_font=PLOT_FONT,
+                    minor_label_font=PLOT_FONT),
                     Guide.manual_color_key("Method",
                     [l[end] for l in method_label],
                     [c[end] for c in method_color]))
@@ -408,8 +409,8 @@ function oe_plots(plot_data::Dict,
             Guide.xlabel("Method"), Guide.ylabel("Overall Efficiency"),
             Theme(background_color=colorant"white",
                 panel_fill=colorant"white",
-                major_label_font="Hack",
-                minor_label_font="Hack"))
+                major_label_font=PLOT_FONT,
+                minor_label_font=PLOT_FONT))
 
     try
         if length(noise_level) > 1
@@ -425,20 +426,39 @@ function oe_plots(plot_data::Dict,
 end
 
 
-function gadfly_heatmap(x::Vector,
-                        y::Vector,
-                        z::Vector)::Gadfly.Plot
+function heatmap(x::AbstractArray,
+                y::AbstractArray,
+                z::AbstractArray;
+                xlabel::String="",
+                ylabel::String="",
+                zlabel::String="",
+                title::String="",
+                fillcolor::ColorScheme=ColorSchemes.vik)::Gadfly.Plot
     is = repeat(x, length(x))
     js = vec(repeat(y', length(y)))
     values = z
     p = Gadfly.plot(x=is, y=js, color=values,
+        Gadfly.Guide.xlabel(xlabel),
+        Gadfly.Guide.ylabel(ylabel),
+        Gadfly.Guide.colorkey(zlabel),
+        Gadfly.Guide.title(title),
+        Gadfly.Theme(minor_label_font=PLOT_FONT,
+                    major_label_font=PLOT_FONT,
+                    key_title_font=PLOT_FONT,
+                    key_label_font=PLOT_FONT),
+        # Gadfly.Guide.manual_color_key("Legend",
+        #                                 ["True k1",
+        #                                 "True k2"],
+        #                                 ["magenta",
+        #                                 "cyan"]),
         Gadfly.Coord.cartesian(yflip=false,
                         fixed=false,
                         xmin=minimum(x),
                         xmax=maximum(x),
                         ymin=minimum(y),
                         ymax=maximum(y)),
-        Gadfly.Scale.color_continuous,
+        Gadfly.Scale.ContinuousColorScale(p ->
+                ColorSchemes.get(fillcolor, p)),
         Gadfly.Geom.rectbin,
         Gadfly.Scale.x_continuous,
         Gadfly.Scale.y_continuous)
