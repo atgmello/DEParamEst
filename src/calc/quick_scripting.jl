@@ -2432,4 +2432,123 @@ for b in backends[2:2]
     end
 end
 
-Plots.savefig("bug.png")
+x = collect(-5:0.1:5)
+y = collect(-5:0.1:5)
+z = x*y'
+
+import ColorSchemes
+
+function gadfly_heatmap(x::Vector,
+                        y::Vector,
+                        z::Vector,
+                        xlabel::String,
+                        ylabel::String,
+                        title::String,
+                        fillcolor::ColorSchemes.ColorScheme)::Gadfly.Plot
+    is = repeat(x, length(x))
+    js = vec(repeat(y', length(y)))
+    values = z
+    p = Gadfly.plot(x=is, y=js, color=values,
+        Gadfly.Guide.xlabel(xlabel),
+        Gadfly.Guide.ylabel(ylabel),
+        Gadfly.Guide.title(title),
+        Gadfly.Coord.cartesian(yflip=false,
+                        fixed=false,
+                        xmin=minimum(x),
+                        xmax=maximum(x),
+                        ymin=minimum(y),
+                        ymax=maximum(y)),
+        Gadfly.Scale.ContinuousColorScale(p ->
+                ColorSchemes.get(fillcolor, p)),
+        Gadfly.Geom.rectbin,
+        Gadfly.Scale.x_continuous,
+        Gadfly.Scale.y_continuous)
+    return p
+end
+
+p = gadfly_heatmap(x, y, vec(z), "k1", "k2", "SS", ColorSchemes.vik)
+pushfirst!(p.layers,
+            Gadfly.layer(xintercept=[0.0],
+            Gadfly.Geom.vline(color="magenta"))[1])
+pushfirst!(p.layers,
+            Gadfly.layer(yintercept=[0.0],
+                    Gadfly.Geom.hline(color="cyan"))[1])
+display(p)
+
+a = [1,2]
+append!(a, [4])
+
+using DataFrames
+
+test = DataFrame(x=rand(10), y=rand(10), label="a")
+test = vcat(test, DataFrame(x=rand(10), y=rand(10), label="b"))
+Gadfly.plot(test, x="x", y="y", color="label")
+Gadfly.plot(test, x="x", y="y", color="label", Gadfly.Geom.line)
+
+prob = get_problem("floudas_1")
+x = prob.data[1]
+
+data = reduce(hcat, prob.data)
+typeof(data)
+data[1,:]
+m,n = size(data)
+
+alphabet='A':'Z'
+label=reshape(["$i" for i in alphabet[1:length(data)[1]]],(1,length(data)[1]))
+
+df = DataFrame()
+
+for i in 1:m
+    aux_df = DataFrame(x=data[i,:], label=label[i], t=prob.t)
+    append!(df, aux_df)
+end
+
+Gadfly.plot(df, x=:t, y=:x, color=:label,
+            Gadfly.Geom.line, Gadfly.Geom.point)
+
+x = collect(-5:0.1:5)
+y = collect(-5:0.1:5)
+z = x*y'
+Plots.theme(:default)
+Plots.pyplot()
+Plots.surface(
+    x, y, z, fillcolor=:vik, alpha=0.7,
+    title="Test",
+    #xrotation=45,yrotation=360-45,
+    xlabel="k1", ylabel="k2", lable="Color",
+    zlabel="Cost Function",
+    xtickfont=Plots.font("Arial", 10, "#6c606b"),
+    ytickfont=Plots.font("Arial", 10, "#6c606b"),
+    ztickfont=Plots.font("Arial", 10, "#6c606b"),
+    titlefont=Plots.font("Arial", 13, "#564a55"),
+    guidefont=Plots.font("Arial", 12, "#564a55"),
+    colorbar=false, right_margin=30px)
+
+# ---- Testing PlottingUtils ----
+using Revise
+includet("../plot/utils.jl")
+import .PlottingUtils: heatmap, problem_plot
+
+x = collect(2.0:1:3.0)
+y = collect(6.0:1:7.0)
+z = []
+for i in x
+    for j in y
+        push!(z, i*j)
+    end
+end
+
+z = reshape(z, (length(y), length(x)))
+
+p = PlottingUtils.heatmap(x,y,vec(z))
+
+
+pushfirst!(p.layers,
+            layer(xintercept=[2.5],
+                    Geom.vline(color="magenta"))[1])
+display(p)
+
+x = collect(1:1:10)
+z = x.^2
+cont = plot(x=x, y=z, title="This",
+            Guide.xlabel("k1"), Guide.ylabel("Cost Function"))
