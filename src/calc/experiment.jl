@@ -18,11 +18,7 @@ includet("./objective_function.jl")
 includet("./utils.jl")
 import .ProblemSet: get_problem, get_problem_key, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
-import .Utils: rand_guess, add_noise,
-				scale_eval,
-				diff_calc, step_success_rate, success_rate, box_data, box_scatter_plot,
-				get_plot_data, oe_plots, sr_plots, error_plots,
-				nmse, plot_compare, box_error_plots, parameter_plots
+import .Utils: rand_guess, add_noise, nmse
 
 @assert Threads.nthreads() > 1
 
