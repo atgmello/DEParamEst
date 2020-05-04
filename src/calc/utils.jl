@@ -4,7 +4,6 @@ import Distributions: Normal, Uniform
 import Statistics: quantile
 using Random
 using Statistics
-using Distances
 using DifferentialEquations
 using Revise
 using ..ProblemSet: DEProblem

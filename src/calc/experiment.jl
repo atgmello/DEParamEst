@@ -1,5 +1,3 @@
-ENV["GKSwstype"]="nul"
-
 using Pkg
 Pkg.activate(@__DIR__)
 Pkg.instantiate()
@@ -12,8 +10,6 @@ using Random
 import StatsBase: sample
 import Distributions: Uniform
 using Optim
-using PlotThemes
-using StatsPlots
 using JLSO
 
 using Revise
@@ -31,8 +27,6 @@ import .Utils: rand_guess, add_noise,
 @assert Threads.nthreads() > 1
 
 Random.seed!(1234)
-gr()
-theme(:vibrant)
 
 #old_precision = precision(BigFloat)
 #new_precision = 1024
@@ -94,11 +88,6 @@ function optim_res(obj_fun::Function,
 	    nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
 				for tp in testing_set]) |> x -> sqrt(x)
 
-		"""
-		Plotting
-		p = testing_set[1]
-		plot_compare(p.data, ode_sol.u)
-		"""
 	catch e
 		println("Optim error!")
 		@show e
@@ -264,18 +253,6 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
         @show e
     end
 
-
-	"""
-	Plotting
-	p = testing_set[1]
-    tspan = (p.t[1], p.t[end])
-	phi_est = results[3]
-    ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-    ode_sol  = solve(ode_prob, OwrenZen3(), saveat=p.t)
-	data_est = ode_sol.u
-	plot_compare(p.data, data_est)
-	sleep(7)
-	"""
 	return results
 end
 
