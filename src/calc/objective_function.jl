@@ -2,7 +2,6 @@ module ObjectiveFunction
 
 using DifferentialEquations
 using LinearAlgebra
-using Plots
 
 export data_shooting, single_shooting, tikhonov
 
@@ -122,8 +121,7 @@ function data_shooting_exp(params::Array{<:AbstractFloat,1},
                         time_array::StepRangeLen,
                         f::Function;
                         unknown_vars::Array{<:Float64,1}=[],
-                        differential_vars::Array{<:Float64,1}=[],
-                        plot_estimated::Bool=false)::Array{<:AbstractFloat,1}
+                        differential_vars::Array{<:Float64,1}=[])::Array{<:AbstractFloat,1}
 
     num_state_vars, num_samples = size(data)
 
@@ -221,13 +219,6 @@ function data_shooting_exp(params::Array{<:AbstractFloat,1},
         estimated[:, i+1] = x_est
     end
 
-    if plot_estimated
-        p_data = plot(transpose(estimated), linewidth=2)
-        plot!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$params\n")
-    end
-
     states_to_filter = []
     if unknown_vars != []
         states_to_filter = map(x -> if x in unknown_vars false else true end, state_vars)
@@ -262,7 +253,7 @@ function single_shooting_exp(params::Array{<:AbstractFloat},
                         t::StepRangeLen,
                         f::Function;
                         unknown_vars::Array{<:AbstractFloat} = [],
-                        plot_estimated::Bool=false, return_estimated::Bool=false)::Array{<:AbstractFloat}
+                        return_estimated::Bool=false)::Array{<:AbstractFloat}
 
     num_state_vars, num_samples = size(data)
     state_vars = collect(1:num_state_vars)
@@ -291,13 +282,6 @@ function single_shooting_exp(params::Array{<:AbstractFloat},
     osol  = solve(oprob, Rodas5(), saveat=t, save_idxs=known_vars)
     estimated = reduce(hcat, osol.u)
 
-    if plot_estimated
-        p_data = plot(transpose(estimated), linewidth=2)
-        plot!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$params\n")
-    end
-
     if return_estimated
         return estimated
     end
@@ -311,7 +295,7 @@ function single_shooting_exp(params::Array{<:AbstractFloat},
     return residuals
 end
 
-function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{AbstractFloat}, time_array::Array{AbstractFloat}, f::Function; plot_estimated=false, return_estimated=false)::Array{AbstractFloat}
+function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{AbstractFloat}, time_array::Array{AbstractFloat}, f::Function; return_estimated=false)::Array{AbstractFloat}
     num_state_vars, num_samples = size(data)
     data = convert(Array{eltype(phi)}, data)
     time_array = convert(Array{eltype(phi)}, time_array)
@@ -336,13 +320,6 @@ function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{Abstract
         estimated[:, i+1] = x_k_1_est
     end
 
-    if plot_estimated
-        p_data = scatter(transpose(estimated))
-        scatter!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$phi\n")
-    end
-
     weight = abs2(1/findmax(data)[1])
     residuals = weight .* (data-estimated)
     #=>
@@ -358,7 +335,7 @@ function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{Abstract
     return residuals
 end
 
-function sm_mean_shooting(phi, data, time_array, f; plot_estimated=false, return_estimated=false)
+function sm_mean_shooting(phi, data, time_array, f; return_estimated=false)
     partial_estimate = single_shooting_estimator(phi, data, time_array, f; return_estimated=true)
     partial_estimate = (partial_estimate+data)*(1/2)
     num_state_vars, num_samples = size(partial_estimate)
@@ -381,13 +358,6 @@ function sm_mean_shooting(phi, data, time_array, f; plot_estimated=false, return
         estimated[:, i+1] = x_k_1_est
     end
 
-    if plot_estimated
-        p_data = scatter(transpose(estimated))
-        scatter!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$phi\n")
-    end
-
     weight = abs2(1/findmax(data)[1])
     residuals = weight .* (data-estimated)
     #=>
@@ -403,7 +373,7 @@ function sm_mean_shooting(phi, data, time_array, f; plot_estimated=false, return
     return residuals
 end
 
-function adams_moulton_fourth_estimator(phi, data, time_array, f; plot_estimated=false, return_estimated=false)
+function adams_moulton_fourth_estimator(phi, data, time_array, f; return_estimated=false)
     num_state_vars, num_samples = size(data)
 
     estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_vars)
@@ -437,13 +407,6 @@ function adams_moulton_fourth_estimator(phi, data, time_array, f; plot_estimated
 
         x_k_est = x_k[3] + (delta_t[1]*(9/24)*f_eval_4+delta_t[1]*(19/24)*f_eval_3-delta_t[1]*(5/24)f_eval_2+delta_t[1]*(1/24)*f_eval_1)
         estimated[:, i+3] = x_k_est
-    end
-
-    if plot_estimated
-        p_data = scatter(transpose(estimated))
-        scatter!(p_data, transpose(data))
-        display(p_data)
-        println("Plot for\n$phi\n")
     end
 
     weight = abs2(1/findmax(data)[1])
