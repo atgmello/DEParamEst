@@ -1,7 +1,7 @@
 ENV["GKSwstype"]="nul"
 
 using Pkg
-Pkg.activate(".")
+Pkg.activate(@__DIR__)
 Pkg.instantiate()
 
 using Distributed
