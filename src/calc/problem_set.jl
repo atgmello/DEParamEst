@@ -13,6 +13,7 @@ struct DEProblem
     bounds::Vector
     data::Vector
     t::AbstractArray
+    integrator::Function
 end
 
 Base.copy(p::DEProblem) = DEProblem(p.fun, p.phi, p.bounds, p.data, p.t)
@@ -61,11 +62,12 @@ function get_problem(p::String)::DEProblem
         ini_cond = [1.]
 
         t = range(0.0, stop=10.0, length=10)
+        integrator = OwrenZen3
         de_prob = ODEProblem(f_exp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
 
-        return DEProblem(f_exp, phi, bounds, ode_data, t)
+        return DEProblem(f_exp, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_1"
         # ----- Problem 1 -----
@@ -91,11 +93,12 @@ function get_problem(p::String)::DEProblem
                             ]
         <=#
         t = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_one, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
 
-        return DEProblem(floudas_one, phi, bounds, ode_data, t)
+        return DEProblem(floudas_one, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_2"
         # ----- Problem 2 -----
@@ -128,10 +131,11 @@ function get_problem(p::String)::DEProblem
         <=#
 
         t = [0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_two, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_two, phi, bounds, ode_data, t)
+        return DEProblem(floudas_two, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_3"
         # ----- Problem 3 -----
@@ -159,11 +163,11 @@ function get_problem(p::String)::DEProblem
                             ]
         <=#
         t =[0.0,.025,.05,.075,.1,.125,.150,.175,.2,.225,.25,.3,.35,.4,.45,.5,.55,.65,.75,.85,.95]
-
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_three, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_three, phi, bounds, ode_data, t)
+        return DEProblem(floudas_three, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_4"
         # ----- Problem 4 -----
@@ -184,10 +188,11 @@ function get_problem(p::String)::DEProblem
                             ]
         <=#
         t = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,11.0,14.0,19.0,24.0,29.0,39.0]
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_four, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_four, phi, bounds, ode_data, t)
+        return DEProblem(floudas_four, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_5"
         # ----- Problem 5 -----
@@ -215,11 +220,11 @@ function get_problem(p::String)::DEProblem
                             ]
         <=#
         t = [0.,0.050,0.065,0.080,0.123,0.233,0.273,0.354,0.397,0.418,0.502,0.553,0.681,0.750,0.916,0.937,1.122]
-
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_five, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_five, phi, bounds, ode_data, t)
+        return DEProblem(floudas_five, phi, bounds, ode_data, t, integrator)
 
     elseif p == "floudas_6"
         # ----- Problem 6 -----
@@ -242,11 +247,11 @@ function get_problem(p::String)::DEProblem
                             ]
         <=#
         t = [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]
-
+        integrator = OwrenZen3
         de_prob = ODEProblem(floudas_six, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_six, phi, bounds, ode_data, t)
+        return DEProblem(floudas_six, phi, bounds, ode_data, t, integrator)
 
     elseif p == "bbg"
         # ----- BBG -----
@@ -272,10 +277,11 @@ function get_problem(p::String)::DEProblem
             dz_dt[2] = -(mi/yield)*(Cs*Cb/(Ks+Cs))
         end
 
+        integrator = Vern9
         de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_bbg, phi, bounds, ode_data, t)
+        return DEProblem(f_bbg, phi, bounds, ode_data, t, integrator)
 
     elseif p == "fhn"
         # ----- FHN -----
@@ -302,10 +308,11 @@ function get_problem(p::String)::DEProblem
             dz_dt[2] = -(1/c)*(V - a + b*R)
         end
 
+        integrator = Vern9
         de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_fhn, phi, bounds, ode_data, t)
+        return DEProblem(f_fhn, phi, bounds, ode_data, t, integrator)
 
     elseif p == "mapk"
         # ----- MPK -----
@@ -352,10 +359,11 @@ function get_problem(p::String)::DEProblem
             dz_dt[8] = RJ7 - RJ8
         end
 
+        integrator = Rodas5
         de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_mapk, phi, bounds, ode_data, t)
+        return DEProblem(f_mapk, phi, bounds, ode_data, t, integrator)
 
     elseif p == "gosc"
         # ----- GOsc -----
@@ -383,11 +391,11 @@ function get_problem(p::String)::DEProblem
             dz_dt[3] = k5*z[2] - k6*z[3]
         end
 
+        integrator = Vern9
         de_prob = ODEProblem(f_gosc, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-
-        new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
+        new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t, integrator)
 
         #=>
         # ----- TGFB -----
@@ -562,10 +570,11 @@ function get_problem(p::String)::DEProblem
             dz_dt[8] = ((kcat2*E2*(1/Km3)*(M1-M2)))/(1+(M1/Km3)+(M2/Km4)) - ((kcat3*E3*(1/Km5)*(M2-P)))/(1+(M2/Km5)+(P/Km6))
         end
 
+        integrator = Rodas5
         de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_tsp, phi, bounds, ode_data, t)
+        return DEProblem(f_tsp, phi, bounds, ode_data, t, integrator)
 
     elseif p == "cho"
     # ----- CHO -----
@@ -1117,10 +1126,11 @@ function get_problem(p::String)::DEProblem
             dx_dt[35] = y[70]
         end
 
+        integrator = Rodas5
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
-        de_sol = solve(de_prob, OwrenZen3(), saveat=t)
+        de_sol = solve(de_prob, integrator(), saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_cho, p, bounds, ode_data, t)
+        return DEProblem(f_cho, p, bounds, ode_data, t, integrator)
 
     end
 end
