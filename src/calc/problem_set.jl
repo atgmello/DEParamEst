@@ -38,8 +38,8 @@ function get_problem_key(i::Int=0)::String
             "floudas_3","floudas_4",
             "floudas_5","floudas_6",
             "bbg","fhn",
-            "gosc",
             "mapk",
+            "gosc",
             "tsmp","cho","exponential"]
     if i > 0
         return keys[i]
