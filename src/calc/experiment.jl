@@ -39,7 +39,7 @@ estimated parameters (third position)
 function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
 					p0::Vector{T},
-					numerical_integrator::Function)::Vector{Vector{T}} where T
+					ode_alg::OrdinaryDiffEqAlgorithm)::Vector{Vector{T}} where T
 	g_t_lim = 10
 	f_tol = 10^-12
 	x_tol = 10^-6
@@ -78,7 +78,7 @@ function optim_res(obj_fun::Function,
 		p = testing_set[1]
 	    tspan = (p.t[1], p.t[end])
 	    ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-	    ode_sol  = solve(ode_prob, numerical_integrator(), saveat=p.t)
+	    ode_sol  = solve(ode_prob, ode_alg, saveat=p.t)
 		data_est = reduce(vcat,ode_sol.u)
 
 		# Normalized Root Mean Squared Error
@@ -105,7 +105,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 					phi_prior::Vector{T},
 					m::Int64,
 					w::Array,
-					numerical_integrator::Function)::Array{Array{T}} where T
+					ode_alg::OrdinaryDiffEqAlgorithm)::Array{Array{T}} where T
 
 	results = [[Inf64], [NaN64], p0]
 	#lambda_arr = [1e-2,1e-1,0.0,1e0,1e1,1e2]
@@ -193,7 +193,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		for j in 1:k
 			Threads.@spawn partial_res_arr[i][j] = optim_res(obj_fun_arr[i][j],
 														hold_out_set_arr[i][j],
-														p0, numerical_integrator)
+														p0, ode_alg)
 		end
 	end
 
@@ -258,7 +258,7 @@ function get_results(method_label::String,
 					training_set::Vector{ProblemSet.DEProblem},
 					testing_set::Vector{ProblemSet.DEProblem},
 	 				p0::Vector{T},
-					numerical_integrator::Function)::Array{Array{T}} where T
+					ode_alg::OrdinaryDiffEqAlgorithm)::Array{Array{T}} where T
 
 	k = convert(Int64, length(training_set)/1)
 
@@ -272,7 +272,7 @@ function get_results(method_label::String,
 		w = ones(T,m)
 
 		partial_res = cv_optimize(training_set,testing_set,
-										p0,k,f,phi_prior,m,w,numerical_integrator)
+										p0,k,f,phi_prior,m,w,ode_alg)
 		add_time = partial_res[2][1]
 		phi_prior = partial_res[3]
 		p0 = phi_prior
@@ -287,7 +287,7 @@ function get_results(method_label::String,
 		m = length(phi_prior)
 		w = ones(T,m)
 		partial_res = cv_optimize(training_set,testing_set,
-										p0,k,f,phi_prior,m,w,numerical_integrator)
+										p0,k,f,phi_prior,m,w,ode_alg)
 		add_time = partial_res[2][1]
 
 		f = single_shooting
@@ -301,7 +301,7 @@ function get_results(method_label::String,
 	end
 
 	results = cv_optimize(training_set,testing_set,
-							p0,k,f,phi_prior,m,w,numerical_integrator)
+							p0,k,f,phi_prior,m,w,ode_alg)
 	results[2][1] += add_time
 
 	return results
@@ -323,7 +323,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
     bounds::Vector = problem.bounds
     ini_cond::Array = problem.data[1]
     t::AbstractArray = problem.t
-	numerical_integrator::Function = problem.integrator
+	ode_alg::OrdinaryDiffEqAlgorithm = problem.alg
 
 	# Minimum number of data points
 	#min_data = round(length(phi)/length(ini_cond),RoundUp)
@@ -373,7 +373,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
             _t = range(t[1], stop=t[end], length=sam)
 	        tspan = (t[1], t[end])
 	        ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-	        ode_sol  = solve(ode_prob, numerical_integrator(), saveat=_t)
+	        ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
 	        data = ode_sol.u
 	        #data_plot = plot(t,data')
 			#display(data_plot)
@@ -382,7 +382,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 			guess_dict[sam][noise] .= guess_arr
 
 			training_set_arr = [[ProblemSet.DEProblem(problem.fun, problem.phi,
-								problem.bounds, add_noise(data,noise), _t)
+								problem.bounds, add_noise(data,noise), _t, ode_alg)
 				 			for _ in 1:num_trainings] for _ in 1:num_reps]
 			training_set_dict[sam][noise] .= training_set_arr
 
@@ -393,11 +393,11 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 					_t = range(t[1], stop=t[end], length=sam)
 			        tspan = (t[1], t[end])
 			        ode_prob = ODEProblem(fun, add_noise(ini_cond,var_ini_cond), tspan, phi)
-			        ode_sol  = solve(ode_prob, numerical_integrator(), saveat=_t)
+			        ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
 			        data = ode_sol.u
 
 					push!(testing_set_arr_partial,ProblemSet.DEProblem(problem.fun, problem.phi,
-										problem.bounds, add_noise(data,noise), _t))
+										problem.bounds, add_noise(data,noise), _t, ode_alg))
 				end
 				push!(testing_set_arr,testing_set_arr_partial)
 			end
@@ -414,7 +414,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 											training_set_dict[sam][noise][i],
 											testing_set_dict[sam][noise][i],
 											guess_dict[sam][noise][i],
-											numerical_integrator)
+											ode_alg)
 				end
 			end
 		end
