@@ -360,7 +360,7 @@ function get_problem(p::String)::DEProblem
             dz_dt[8] = RJ7 - RJ8
         end
 
-        alg = Rodas5()
+        alg = Vern9()
         de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, alg, saveat=t)
         ode_data = de_sol.u
@@ -571,7 +571,7 @@ function get_problem(p::String)::DEProblem
             dz_dt[8] = ((kcat2*E2*(1/Km3)*(M1-M2)))/(1+(M1/Km3)+(M2/Km4)) - ((kcat3*E3*(1/Km5)*(M2-P)))/(1+(M2/Km5)+(P/Km6))
         end
 
-        alg = Rodas5()
+        alg = Vern9()
         de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, alg, saveat=t)
         ode_data = de_sol.u
@@ -1127,7 +1127,7 @@ function get_problem(p::String)::DEProblem
             dx_dt[35] = y[70]
         end
 
-        alg = Rodas5()
+        alg = Vern9()
         de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
         de_sol = solve(de_prob, alg, saveat=t)
         ode_data = de_sol.u
