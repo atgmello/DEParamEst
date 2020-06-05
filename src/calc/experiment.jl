@@ -76,13 +76,13 @@ function optim_res(obj_fun::Function,
 		phi_est = res_obj.minimizer[1:length(p0)]
 
 		p = testing_set[1]
-	    tspan = (p.t[1], p.t[end])
-	    ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-	    ode_sol  = solve(ode_prob, ode_alg, saveat=p.t)
+		tspan = (p.t[1], p.t[end])
+		ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
+		ode_sol  = solve(ode_prob, ode_alg, saveat=p.t)
 		data_est = reduce(vcat,ode_sol.u)
 
 		# Normalized Root Mean Squared Error
-	    nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
+		nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
 				for tp in testing_set]) |> x -> sqrt(x)
 
 	catch e
@@ -155,6 +155,9 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	obj_fun_folds = Vector{Function}(undef,k)
 	obj_fun_arr = [Vector{Function}(undef,k) for _ in 1:num_lambdas]
 
+	# Introspection on function f
+	f_info = first(methods(f))
+
 	for i in 1:num_lambdas
 		for j in 1:k
 			hold_out = cv_folds[j,:]
@@ -166,17 +169,33 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 			hold_out_set = training_set[hold_out]
 			hold_out_set_folds[j] = hold_out_set
 
-			obj_fun = function (x)
-						total_error = zero(T)
-						@inbounds for i in 1:length(training_sliced)
-							total_error += f(x,
-											training_sliced[i].data,
-											training_sliced[i].t,
-											training_sliced[i].fun)
-						end
-						total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
-						return total_error
+			# Check whether Single or Data Shooting
+			if f_info.name == :single_shooting
+				obj_fun = function (x)
+					total_error = zero(T)
+					@inbounds for i in 1:length(training_sliced)
+						total_error += f(x,
+										 training_sliced[i].data,
+										 training_sliced[i].t,
+										 training_sliced[i].fun,
+										 training_sliced[i].alg)
 					end
+					total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
+					return total_error
+				end
+			elseif f_info.name == :data_shooting
+				obj_fun = function (x)
+					total_error = zero(T)
+					@inbounds for i in 1:length(training_sliced)
+						total_error += f(x,
+										 training_sliced[i].data,
+										 training_sliced[i].t,
+										 training_sliced[i].fun)
+					end
+					total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
+					return total_error
+				end
+			end
 			obj_fun_folds[j] = obj_fun
 		end
 		obj_fun_arr[i] = obj_fun_folds
@@ -225,17 +244,34 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	#println("Optimizing on whole dataset.")
 	#println("...")
 
-	final_obj_fun(x) = begin
-						total_error = zero(T)
-						@inbounds for i in 1:length(training_set)
-							total_error += f(x,
-											training_set[i].data,
-											training_set[i].t,
-											training_set[i].fun)
-						end
-						total_error += tikhonov(best_lambda, x, phi_prior, w)
-						return total_error
-					end
+	# Check whether Single or Data Shooting
+
+	if f_info.name == :single_shooting
+		final_obj_fun(x) = begin
+			total_error = zero(T)
+			@inbounds for i in 1:length(training_set)
+				total_error += f(x,
+								 training_set[i].data,
+								 training_set[i].t,
+								 training_set[i].fun,
+								 training_set[i].alg)
+			end
+			total_error += tikhonov(best_lambda, x, phi_prior, w)
+			return total_error
+		end
+	elseif f_info.name == :data_shooting
+		final_obj_fun(x) = begin
+			total_error = zero(T)
+			@inbounds for i in 1:length(training_set)
+				total_error += f(x,
+								 training_set[i].data,
+								 training_set[i].t,
+								 training_set[i].fun)
+			end
+			total_error += tikhonov(best_lambda, x, phi_prior, w)
+			return total_error
+		end
+	end
 
 	try
 		partial_res = optim_res(final_obj_fun, testing_set, p0)
@@ -248,8 +284,8 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		#println("Estimated parameters:\n$(results[3])\n\n")
 	catch e
 		println("Error!")
-        @show e
-    end
+		@show e
+	end
 
 	return results
 end
