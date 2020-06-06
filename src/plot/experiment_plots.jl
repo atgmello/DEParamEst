@@ -1,3 +1,7 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
 using Gadfly
 using JLSO
 using Revise
@@ -25,53 +29,59 @@ function plot_main_results(results::Dict,
 
     method_label = Dict()
     for m in methods
-    	method_label[m] = String(m)
+        method_label[m] = String(m)
     end
 
     method_color = Dict()
     for (m,c) in zip([:SS,:DSS,:DS],cur_colors)
-    	method_color[m] = c
+        method_color[m] = c
     end
 
     for (method,result) in results
         dir_path = joinpath(path,string(method))
-    	mkdir(dir_path)
+        mkdir(dir_path)
 
         for sam in samples
             res = result[sam]
-        	plot_data = get_plot_data(res,noise_levels,methods)
-        	sr_plots(plot_data,noise_levels,methods,
+            plot_data = get_plot_data(res,noise_levels,methods)
+            sr_plots(plot_data,noise_levels,methods,
                     method_label,method_color,sam,dir_path)
 
             oe_plots(plot_data,noise_levels,methods,
                     method_label,method_color,sam,dir_path)
 
-        	for noise in noise_levels
-        		plot_data = get_plot_data(res,[noise],methods)
+            for noise in noise_levels
+                plot_data = get_plot_data(res,[noise],methods)
 
-        		box_error_plots(plot_data,noise,methods,
+                box_error_plots(plot_data,noise,methods,
                                   method_label,method_color,sam,dir_path)
 
-        		#parameter_plots(plot_data,noise,methods,
+                #parameter_plots(plot_data,noise,methods,
                 #                   method_label,method_color,sam,dir_path)
 
-        		sr_plots(plot_data,noise,methods,
+                sr_plots(plot_data,noise,methods,
                         method_label,method_color,sam,dir_path)
 
                 oe_plots(plot_data,[noise],methods,
                         method_label,method_color,sam,dir_path)
 
-        	end
+            end
         end
     end
 end
 
-base_dir = "/home/andrew/git/DEParamEst/"
-save_path = joinpath(base_dir,"results/remote/results_low/")
-jlso_file = joinpath(save_path,"experiment_results.jlso")
-results = JLSO.load(jlso_file)
 
-plot_main_results(results, save_path)
+function main(args::Array{<:String})::Nothing
+    jlso_file = string(args[1])
+    save_path = string(args[2])
 
-clearconsole()
-Revise.errors()
+    # base_dir = "/home/andrew/git/DEParamEst/"
+    # save_path = joinpath(base_dir,"results/remote/results_low/")
+    # jlso_file = joinpath(save_path,"experiment_results.jlso")
+    results = JLSO.load(jlso_file)
+
+    plot_main_results(results, save_path)
+end
+
+main(ARGS)
+

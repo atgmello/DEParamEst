@@ -4,6 +4,8 @@ using Gadfly
 using ColorSchemes
 using DataFrames
 using Statistics: mean, quantile
+import Cairo,
+      Fontconfig
 
 const PLOT_FONT = "Arial"
 
