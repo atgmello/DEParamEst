@@ -286,7 +286,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	end
 
 	try
-		partial_res = optim_res(final_obj_fun, testing_set, p0)
+		partial_res = optim_res(final_obj_fun, testing_set, p0, ode_alg)
 		results = [partial_res[1],
 					[(partial_res[2][1]+elapsed_time)/2.0],
 					partial_res[3]]
