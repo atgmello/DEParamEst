@@ -259,7 +259,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	# Check whether Single or Data Shooting
 
 	if f_info.name == :single_shooting
-		final_obj_fun(x) = begin
+		final_obj_fun = function (x)
 			total_error = zero(T)
 			@inbounds for i in 1:length(training_set)
 				total_error += f(x,
@@ -272,7 +272,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 			return total_error
 		end
 	elseif f_info.name == :data_shooting
-		final_obj_fun(x) = begin
+		final_obj_fun = function (x)
 			total_error = zero(T)
 			@inbounds for i in 1:length(training_set)
 				total_error += f(x,
