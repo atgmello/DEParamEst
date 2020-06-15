@@ -72,15 +72,24 @@ end
 
 
 function main(args::Array{<:String})::Nothing
-    jlso_file = string(args[1])
+    jlso_file_or_path = string(args[1])
     save_path = string(args[2])
+
+    println(jlso_file_or_path)
+
+    if isdir(jlso_file_or_path)
+        jlso_files = map(file -> joinpath(jlso_file_or_path, file),
+                         readdir(jlso_file_or_path))
+    else
+        jlso_files = [jlso_file_or_path]
+    end
 
     # base_dir = "/home/andrew/git/DEParamEst/"
     # save_path = joinpath(base_dir,"results/remote/results_low/")
     # jlso_file = joinpath(save_path,"experiment_results.jlso")
-    results = JLSO.load(jlso_file)
+    results = map(JLSO.load, jlso_files)
 
-    plot_main_results(results, save_path)
+    map(r -> plot_main_results(r, save_path, [:SS, :DSS]), results)
 end
 
 main(ARGS)
