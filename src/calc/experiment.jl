@@ -370,11 +370,11 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 	prob_key::String = get_problem_key(p_num)
 	problem::ProblemSet.DEProblem = get_problem(prob_key)
 
-    fun::Function = problem.fun
-    phi::Array = problem.phi
-    bounds::Vector = problem.bounds
-    ini_cond::Array = problem.data[1]
-    t::AbstractArray = problem.t
+	fun::Function = problem.fun
+	phi::Array = problem.phi
+	bounds::Vector = problem.bounds
+	ini_cond::Array = problem.data[1]
+	t::AbstractArray = problem.t
 	ode_alg::OrdinaryDiffEqAlgorithm = problem.alg
 
 	# Minimum number of data points
@@ -421,13 +421,13 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 
 	for sam in data_sams
 		for noise in noise_levels
-	        # Artificial Data
-            _t = range(t[1], stop=t[end], length=sam)
-	        tspan = (t[1], t[end])
-	        ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-	        ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
-	        data = ode_sol.u
-	        #data_plot = plot(t,data')
+			# Artificial Data
+			_t = range(t[1], stop=t[end], length=sam)
+			tspan = (t[1], t[end])
+			ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
+			ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
+			data = ode_sol.u
+			#data_plot = plot(t,data')
 			#display(data_plot)
 
 			guess_arr = [rand_guess(bounds) for _ in 1:num_reps]
@@ -443,10 +443,10 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 				testing_set_arr_partial = []
 				for j in 1:num_tests
 					_t = range(t[1], stop=t[end], length=sam)
-			        tspan = (t[1], t[end])
-			        ode_prob = ODEProblem(fun, add_noise(ini_cond,var_ini_cond), tspan, phi)
-			        ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
-			        data = ode_sol.u
+					tspan = (t[1], t[end])
+					ode_prob = ODEProblem(fun, add_noise(ini_cond,var_ini_cond), tspan, phi)
+					ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
+					data = ode_sol.u
 
 					push!(testing_set_arr_partial,ProblemSet.DEProblem(problem.fun, problem.phi,
 										problem.bounds, add_noise(data,noise), _t, ode_alg))
@@ -454,7 +454,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 				push!(testing_set_arr,testing_set_arr_partial)
 			end
 			testing_set_dict[sam][noise] .= testing_set_arr
-	    end
+		end
 	end #samples loop
 
 	@sync for sam in data_sams
