@@ -74,7 +74,16 @@ function optim_res(obj_fun::Function,
 		#							autodiff = :forward)
 
 		phi_est = res_obj.minimizer[1:length(p0)]
+	catch e
+		println("-------- Error --------")
+		println("There was an error during the optimization step.")
+		bt = backtrace()
+		msg = sprint(showerror, e, bt)
+		println(msg)
+		println("-------- Error --------")
+	end
 
+	try
 		p = testing_set[1]
 		tspan = (p.t[1], p.t[end])
 		ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
@@ -84,10 +93,13 @@ function optim_res(obj_fun::Function,
 		# Normalized Root Mean Squared Error
 		nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
 				for tp in testing_set]) |> x -> sqrt(x)
-
 	catch e
-		println("Optim error!")
-		@show e
+		println("-------- Error --------")
+		println("There was an error during the NRMSE calculation step.")
+		bt = backtrace()
+		msg = sprint(showerror, e, bt)
+		println(msg)
+		println("-------- Error --------")
 	end
 
 	if elapsed_time == zero(T)
@@ -283,8 +295,12 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		#println("Test Error:\n$(results[1])")
 		#println("Estimated parameters:\n$(results[3])\n\n")
 	catch e
-		println("Error!")
-		@show e
+		println("-------- Error --------")
+		println("There was an error during the call to optim_res.")
+		bt = backtrace()
+		msg = sprint(showerror, e, bt)
+		println(msg)
+		println("-------- Error --------")
 	end
 
 	return results
@@ -478,8 +494,12 @@ function run_experiments(problems::Vector{<:Int},
 		try
 			JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
 		catch e
-			println("Error saving serialized $(results[i])!")
-			@show e
+			println("-------- Error --------")
+			println("There was an error during the call to JLSO.save for $(results[i]).")
+			bt = backtrace()
+			msg = sprint(showerror, e, bt)
+			println(msg)
+			println("-------- Error --------")
 		end
 	end
 
@@ -487,8 +507,12 @@ function run_experiments(problems::Vector{<:Int},
 		JLSO.save(joinpath(dir,"experiment_results.jlso"), results...)
 		rm(joinpath(dir,"tmp"), recursive=true)
 	catch e
-		println("Error saving serialized results!")
-		@show e
+		println("-------- Error --------")
+		println("There was an error during the call to JLSO.save for joining all the results.")
+		bt = backtrace()
+		msg = sprint(showerror, e, bt)
+		println(msg)
+		println("-------- Error --------")
 	end
 
 end
