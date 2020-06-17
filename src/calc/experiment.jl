@@ -40,19 +40,19 @@ function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
 					p0::Vector{T},
 					ode_alg::OrdinaryDiffEqAlgorithm)::Vector{Vector{T}} where T
-	g_t_lim = 10
+	g_t_lim = 10^2
 	f_tol = 10^-12
 	x_tol = 10^-6
 	iter = 10^8
 
 	SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 								iterations=iter, time_limit=g_t_lim)
-	t_lim = 1
+	t_lim = 10^1
 
 	Grad_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 								iterations=iter, time_limit=t_lim)
 
-	inner_optimizer = Optim.LBFGS()
+	inner_optimizer = Optim.NewtonTrustRegion()
 
 	lb = testing_set[1].bounds[1]
 	ub = testing_set[1].bounds[2]
@@ -62,16 +62,17 @@ function optim_res(obj_fun::Function,
 
 	try
 		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
-									lb,ub,
-									p0,
-									Optim.SAMIN(verbosity=0, rt=0.15), SAMIN_options)
+														  lb,ub,
+														  p0,
+														  Optim.SAMIN(verbosity=0,
+																	  rt=0.15),
+														  SAMIN_options)
 
-		#elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
-		#							lb,ub,
-		#							res_obj.minimizer[1:length(p0)],
-		#							Fminbox(inner_optimizer),
-		#							Grad_options,
-		#							autodiff = :forward)
+		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
+									res_obj.minimizer[1:length(p0)],
+									inner_optimizer,
+									Grad_options,
+									autodiff = :forward)
 
 		phi_est = res_obj.minimizer[1:length(p0)]
 	catch e
