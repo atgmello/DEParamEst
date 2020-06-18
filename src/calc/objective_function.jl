@@ -8,9 +8,18 @@ export data_shooting, single_shooting, tikhonov
 """
 Tikhonov Regularization
 """
-function tikhonov(lambda, phi, phi_ref, w)
-    T = eltype(phi)
+function tikhonov(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
+					w::Vector{T})::T where T
     res = zero(T)
+    @simd for i in 1:length(phi)
+        @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
+    end
+    res *= lambda
+	return res
+end
+function tikhonov(lambda::T, phi::Vector{D}, phi_ref::Vector{T},
+					w::Vector{T})::D where T where D
+    res = zero(D)
     @simd for i in 1:length(phi)
         @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
     end
@@ -57,15 +66,14 @@ data: Observed data, used for calculating the residuals.
 time_array: Time intervals in which the data has been colected.
 f: DE that describes the phenomena.
 """
-function data_shooting(phi,
-                        data,
-                        time_array,
-                        f)
+function data_shooting(phi::Vector{T},
+                        data::Vector,
+                        time_array::AbstractArray,
+                        f::Function)::T where T
 
     num_samples = length(data)
     num_state_vars = length(data[1])
 
-    T = eltype(phi)
     estimated = zeros(T,num_state_vars)
     sum_error = zero(T)
     f_0 = zeros(T,num_state_vars)
@@ -89,11 +97,11 @@ function data_shooting(phi,
     return sum_error
 end
 
-function single_shooting(phi,
-                        data,
-                        t,
-                        f,
-                        alg)
+function single_shooting(phi::Vector{T},
+                        data::Vector,
+                        t::AbstractArray,
+                        f::Function,
+                        alg::OrdinaryDiffEqAlgorithm)::T where T
     ini_cond = convert.(eltype(phi),data[1])
     tspan = (t[1], t[end])
 
