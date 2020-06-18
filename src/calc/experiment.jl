@@ -40,17 +40,19 @@ function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
 					p0::Vector{T},
 					ode_alg::OrdinaryDiffEqAlgorithm)::Vector{Vector{T}} where T
-	g_t_lim = 10
+	g_t_lim = 10^4
 	f_tol = 10^-12
 	x_tol = 10^-6
 	iter = 10^8
 
 	SAMIN_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
 								iterations=iter, time_limit=g_t_lim)
-	t_lim = 1
 
-	Grad_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
-								iterations=iter, time_limit=t_lim)
+	# Local method disabled since it does not improve accuracy
+	# t_lim = 1
+
+	# Grad_options = Optim.Options(x_tol=x_tol, f_tol=f_tol,
+	# 							iterations=iter, time_limit=t_lim)
 
 	inner_optimizer = Optim.LBFGS()
 
@@ -66,6 +68,7 @@ function optim_res(obj_fun::Function,
 									p0,
 									Optim.SAMIN(verbosity=0, rt=0.15), SAMIN_options)
 
+		# Local method disabled since it does not improve accuracy
 		#elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 		#							lb,ub,
 		#							res_obj.minimizer[1:length(p0)],
