@@ -206,7 +206,12 @@ function experiment_countour(exp, sample_range)
                                 title="Data Shooting",
                                 save_name="$(length(data))_small")
             catch e
+                println("-------- Error --------")
                 println("Error on small grid.\n$e")
+                bt = backtrace()
+                msg = sprint(showerror, e, bt)
+                println(msg)
+                println("-------- Error --------")
             end
 
         println("\n----- Classic Estimator -----")
@@ -234,10 +239,20 @@ function experiment_countour(exp, sample_range)
                                 title="Single Shooting",
                                 save_name="$(length(data))_small")
             catch e
+                println("-------- Error --------")
                 println("Error on small grid.\n$e")
+                bt = backtrace()
+                msg = sprint(showerror, e, bt)
+                println(msg)
+                println("-------- Error --------")
             end
         catch e
-            println("Error on big grid.\n$e")
+            println("-------- Error --------")
+            println("Error on small grid.\n$e")
+            bt = backtrace()
+            msg = sprint(showerror, e, bt)
+            println(msg)
+            println("-------- Error --------")
         end
     end
 end
