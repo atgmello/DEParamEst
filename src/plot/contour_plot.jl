@@ -14,8 +14,7 @@ includet("../calc/objective_function.jl")
 includet("../plot/utils.jl")
 import .ProblemSet: get_problem, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
-import .Utils: add_noise
-import .PlottingUtils: heatmap, problem_plot
+import .PlottingUtils: heatmap, problem_plot, add_noise
 
 const PATH = "./data/contours/"
 const PLOT_FONT = "Arial"

@@ -10,6 +10,33 @@ import Cairo,
 const PLOT_FONT = "Arial"
 
 
+"""
+Adds noise to a Vector of Vector
+Used for adding simulated noise to
+the states of a system.
+Assumes that the values can be negative.
+"""
+function add_noise(data::Vector{Vector{T}}, percent::T,
+                   positive::Bool=false)::Vector{Vector{T}} where T
+    if percent == 0.0
+        return data
+    end
+
+    noise_data = deepcopy(data)
+    epsilon_arr = [0.01*mean(getindex.(data,i)) for i in 1:length(data[1])]
+    sigma = zero(T)
+    @inbounds for i in 1:length(noise_data)
+        for j in 1:length(noise_data[1])
+            sigma = abs(percent*noise_data[i][j] + epsilon_arr[j])
+            d = Normal(0,sigma)
+            noise_data[i][j] += rand(d)
+            noise_data[i][j] = positive ? abs(noise_data[i][j]) : noise_data[i][j]
+        end
+    end
+    return noise_data
+end
+
+
 function step_success_rate(x::T)::Int64 where T
     if x < 0.1
        return 1
