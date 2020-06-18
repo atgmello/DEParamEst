@@ -1,17 +1,20 @@
-import Plots
-import Fontconfig
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
 using Gadfly
 using DifferentialEquations
-using Cairo
 using ColorSchemes
+using LaTeXStrings
+import Plots
+import Cairo,
+      Fontconfig
 Plots.pyplot()
 Plots.theme(:default)
 
-using Revise
-includet("../calc/utils.jl")
-includet("../calc/problem_set.jl")
-includet("../calc/objective_function.jl")
-includet("../plot/utils.jl")
+include("../calc/problem_set.jl")
+include("../calc/objective_function.jl")
+include("./utils.jl")
 import .ProblemSet: get_problem, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
 import .PlottingUtils: heatmap, problem_plot, add_noise
