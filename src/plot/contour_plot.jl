@@ -262,7 +262,7 @@ end
 # No missing states
 
 # 0 - exponential
-experiment_1 = Dict(
+expo_1 = Dict(
     "problem_name" => "exponential",
     "ode_problem" => get_problem("exponential"),
     "fixed_pars" => [-1.0],
@@ -275,10 +275,9 @@ experiment_1 = Dict(
     "unknown_states" => [],
     "true_par" => [1.0])
 
-experiment_countour(experiment_1, 10:60:50)
 
 # 2 - floudas_1
-experiment = Dict(
+floudas_1 = Dict(
     "problem_name" => "floudas_1",
     "ode_problem" => get_problem("floudas_1"),
     "fixed_pars" => [-1.0,-1.0],
@@ -291,10 +290,9 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [5.0035,1.0])
 
-experiment_countour(experiment, 10:20:50)
 
 # 1 - floudas_6
-experiment_1 = Dict(
+floudas_6 = Dict(
     "problem_name" => "floudas_6",
     "ode_problem" => get_problem("floudas_6"),
     "fixed_pars" => [-1.0,-1.0],
@@ -307,10 +305,8 @@ experiment_1 = Dict(
     "unknown_states" => [],
     "true_par" => [3.2434,0.9209])
 
-experiment_countour(experiment_1, 10:20:50)
-
 # 2 - fhn
-experiment = Dict(
+fhn = Dict(
     "problem_name" => "fhn",
     "ode_problem" => get_problem("fhn"),
     "fixed_pars" => [-1.0,-1.0, 3.0],
@@ -323,10 +319,9 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [0.2,0.2])
 
-experiment_countour(experiment, 10:20:50)
 
 # 2 - floudas_4
-experiment = Dict(
+floudas_4 = Dict(
     "problem_name" => "floudas_4",
     "ode_problem" => get_problem("floudas_4"),
     "fixed_pars" => [-1.0,-1.0],
@@ -339,10 +334,9 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [4.5704*10^(-6),2.7845*10^(-4)])
 
-experiment_countour(experiment, 10:20:50)
 
 # 2 - floudas_5
-experiment = Dict(
+floudas_5 = Dict(
     "problem_name" => "floudas_5",
     "ode_problem" => get_problem("floudas_5"),
     "fixed_pars" => [-1.0,-1.0,1e-6,1e-6,1e-6],
@@ -356,7 +350,6 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [5.2407,1.2176])
 
-experiment_countour(experiment, 10:20:50)
 
 #TODO
 # Up to Here
@@ -375,7 +368,7 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [0.4,0.05])
 
-experiment_countour(experiment, 10:20:50)
+# experiment_countour(experiment, 10:20:50)
 
 experiment = Dict(
     "problem_name" => "bbg_2",
@@ -390,7 +383,7 @@ experiment = Dict(
     "unknown_states" => [],
     "true_par" => [5.0,0.5])
 
-experiment_countour(experiment, 10:20:50)
+# experiment_countour(experiment, 10:20:50)
 
 # 1 - floudas_6
 # Not so interesting
@@ -407,7 +400,7 @@ experiment = Dict(
     "unknown_states" => [2],
     "true_par" => [3.2434,1.1])
 
-experiment_countour(experiment, 10:20:50)
+# experiment_countour(experiment, 10:20:50)
 
 # 1 - floudas_6
 # Better
@@ -424,7 +417,7 @@ experiment_1 = Dict(
     "unknown_states" => [1],
     "true_par" => [3.2434,1.2])
 
-experiment_countour(experiment_1, 10:20:50)
+# experiment_countour(experiment_1, 10:20:50)
 
 # 2 - floudas_1
 experiment = Dict(
@@ -440,7 +433,7 @@ experiment = Dict(
     "unknown_states" => [1],
     "true_par" => [1.0,1.0])
 
-experiment_countour(experiment, 10:20:50)
+# experiment_countour(experiment, 10:20:50)
 
 # 2 - floudas_1
 # Not so interesting
@@ -457,4 +450,15 @@ experiment = Dict(
     "unknown_states" => [2],
     "true_par" => [5.0035,0.0])
 
-experiment_countour(experiment, 10:20:50)
+# experiment_countour(experiment, 10:20:50)
+
+function main()
+    # experiment_countour(floudas_5, 10:20:50)
+    # experiment_countour(floudas_4, 10:20:50)
+    experiment_countour(fhn, 10:20:50)
+    # experiment_countour(floudas_6, 10:20:50)
+    # experiment_countour(floudas_1, 10:20:50)
+    # experiment_countour(expo_1, 10:60:50)
+end
+
+main()
