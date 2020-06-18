@@ -26,7 +26,7 @@ const PLOT_FONT = "Arial"
 function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
     if length(par) > 1
         cont = PlottingUtils.heatmap(x, y, vec(z'),
-                                    xlabel="k1", ylabel="k2",
+                                    xlabel="θ₁", ylabel="θ₂",
                                     zlabel="Cost\nFunction",
                                     title=title,
                                     fillcolor=ColorSchemes.vik)
@@ -42,7 +42,7 @@ function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
                                     major_label_font=PLOT_FONT,
                                     key_title_font=PLOT_FONT,
                                     key_label_font=PLOT_FONT),
-                    Guide.xlabel("k1"), Guide.ylabel("Cost Function"))
+                    Guide.xlabel("θ₁"), Guide.ylabel("Cost Function"))
     end
 
     if par[1] > x[1] && par[1] < x[end]
@@ -63,7 +63,7 @@ function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
                         x, y, z, fillcolor=:vik, alpha=0.7,
                         title=title,
                         #xrotation=45,yrotation=360-45,
-                        xlabel="k1", ylabel="k2",
+                        xlabel=L"θ_1", ylabel=L"θ_2",
                         zlabel="Cost Function",
                         xtickfont=Plots.font("Arial", 10, "#6c606b"),
                         ytickfont=Plots.font("Arial", 10, "#6c606b"),
