@@ -1,12 +1,12 @@
 module Utils
+include("./problem_set.jl")
 
 import Distributions: Normal, Uniform
 import Statistics: quantile
 using Random
 using Statistics
 using DifferentialEquations
-using Revise
-using ..ProblemSet: DEProblem
+using .ProblemSet
 
 Random.seed!(1234)
 
