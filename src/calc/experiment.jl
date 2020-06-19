@@ -38,8 +38,7 @@ estimated parameters (third position)
 """
 function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
-					p0::Vector{T},
-					ode_alg::OrdinaryDiffEqAlgorithm)::Vector{Vector{T}} where T
+					p0::Vector{T})::Vector{Vector{T}} where T
 	g_t_lim = 10^4
 	f_tol = 10^-12
 	x_tol = 10^-6
@@ -90,7 +89,7 @@ function optim_res(obj_fun::Function,
 		p = testing_set[1]
 		tspan = (p.t[1], p.t[end])
 		ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-		ode_sol  = solve(ode_prob, ode_alg, saveat=p.t)
+		ode_sol  = solve(ode_prob, saveat=p.t)
 		data_est = reduce(vcat,ode_sol.u)
 
 		# Normalized Root Mean Squared Error
@@ -119,8 +118,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 					f::Function,
 					phi_prior::Vector{T},
 					m::Int64,
-					w::Array,
-					ode_alg::OrdinaryDiffEqAlgorithm)::Array{Array{T}} where T
+					w::Array)::Array{Array{T}} where T
 
 	results = [[Inf64], [NaN64], p0]
 	#lambda_arr = [1e-2,1e-1,0.0,1e0,1e1,1e2]
@@ -170,9 +168,6 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	obj_fun_folds = Vector{Function}(undef,k)
 	obj_fun_arr = [Vector{Function}(undef,k) for _ in 1:num_lambdas]
 
-	# Introspection on function f
-	f_info = first(methods(f))
-
 	for i in 1:num_lambdas
 		for j in 1:k
 			hold_out = cv_folds[j,:]
@@ -184,32 +179,16 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 			hold_out_set = training_set[hold_out]
 			hold_out_set_folds[j] = hold_out_set
 
-			# Check whether Single or Data Shooting
-			if f_info.name == :single_shooting
-				obj_fun = function (x)
-					total_error = zero(T)
-					@inbounds for i in 1:length(training_sliced)
-						total_error += f(x,
-										 training_sliced[i].data,
-										 training_sliced[i].t,
-										 training_sliced[i].fun,
-										 training_sliced[i].alg)
-					end
-					total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
-					return total_error
+			obj_fun = function (x)
+				total_error = zero(T)
+				@inbounds for i in 1:length(training_sliced)
+					total_error += f(x,
+									 training_sliced[i].data,
+									 training_sliced[i].t,
+									 training_sliced[i].fun)
 				end
-			elseif f_info.name == :data_shooting
-				obj_fun = function (x)
-					total_error = zero(T)
-					@inbounds for i in 1:length(training_sliced)
-						total_error += f(x,
-										 training_sliced[i].data,
-										 training_sliced[i].t,
-										 training_sliced[i].fun)
-					end
-					total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
-					return total_error
-				end
+				total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
+				return total_error
 			end
 			obj_fun_folds[j] = obj_fun
 		end
@@ -227,7 +206,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		for j in 1:k
 			Threads.@spawn partial_res_arr[i][j] = optim_res(obj_fun_arr[i][j],
 														hold_out_set_arr[i][j],
-														p0, ode_alg)
+														p0)
 		end
 	end
 
@@ -261,35 +240,20 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	# Check whether Single or Data Shooting
 
-	if f_info.name == :single_shooting
-		final_obj_fun = function (x)
-			total_error = zero(T)
-			@inbounds for i in 1:length(training_set)
-				total_error += f(x,
-								 training_set[i].data,
-								 training_set[i].t,
-								 training_set[i].fun,
-								 training_set[i].alg)
-			end
-			total_error += tikhonov(best_lambda, x, phi_prior, w)
-			return total_error
+	final_obj_fun = function (x)
+		total_error = zero(T)
+		@inbounds for i in 1:length(training_set)
+			total_error += f(x,
+							 training_set[i].data,
+							 training_set[i].t,
+							 training_set[i].fun)
 		end
-	elseif f_info.name == :data_shooting
-		final_obj_fun = function (x)
-			total_error = zero(T)
-			@inbounds for i in 1:length(training_set)
-				total_error += f(x,
-								 training_set[i].data,
-								 training_set[i].t,
-								 training_set[i].fun)
-			end
-			total_error += tikhonov(best_lambda, x, phi_prior, w)
-			return total_error
-		end
+		total_error += tikhonov(best_lambda, x, phi_prior, w)
+		return total_error
 	end
 
 	try
-		partial_res = optim_res(final_obj_fun, testing_set, p0, ode_alg)
+		partial_res = optim_res(final_obj_fun, testing_set, p0)
 		results = [partial_res[1],
 					[(partial_res[2][1]+elapsed_time)/2.0],
 					partial_res[3]]
@@ -312,8 +276,7 @@ end
 function get_results(method_label::String,
 					training_set::Vector{ProblemSet.DEProblem},
 					testing_set::Vector{ProblemSet.DEProblem},
-	 				p0::Vector{T},
-					ode_alg::OrdinaryDiffEqAlgorithm)::Array{Array{T}} where T
+	 				p0::Vector{T})::Array{Array{T}} where T
 
 	k = convert(Int64, length(training_set)/1)
 
@@ -327,7 +290,7 @@ function get_results(method_label::String,
 		w = ones(T,m)
 
 		partial_res = cv_optimize(training_set,testing_set,
-										p0,k,f,phi_prior,m,w,ode_alg)
+										p0,k,f,phi_prior,m,w)
 		add_time = partial_res[2][1]
 		phi_prior = partial_res[3]
 		p0 = phi_prior
@@ -342,7 +305,7 @@ function get_results(method_label::String,
 		m = length(phi_prior)
 		w = ones(T,m)
 		partial_res = cv_optimize(training_set,testing_set,
-										p0,k,f,phi_prior,m,w,ode_alg)
+										p0,k,f,phi_prior,m,w)
 		add_time = partial_res[2][1]
 
 		f = single_shooting
@@ -356,7 +319,7 @@ function get_results(method_label::String,
 	end
 
 	results = cv_optimize(training_set,testing_set,
-							p0,k,f,phi_prior,m,w,ode_alg)
+							p0,k,f,phi_prior,m,w)
 	results[2][1] += add_time
 
 	return results
@@ -378,7 +341,6 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 	bounds::Vector = problem.bounds
 	ini_cond::Array = problem.data[1]
 	t::AbstractArray = problem.t
-	ode_alg::OrdinaryDiffEqAlgorithm = problem.alg
 
 	# Minimum number of data points
 	#min_data = round(length(phi)/length(ini_cond),RoundUp)
@@ -428,7 +390,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 			_t = range(t[1], stop=t[end], length=sam)
 			tspan = (t[1], t[end])
 			ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-			ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
+			ode_sol  = solve(ode_prob, saveat=_t)
 			data = ode_sol.u
 			#data_plot = plot(t,data')
 			#display(data_plot)
@@ -437,7 +399,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 			guess_dict[sam][noise] .= guess_arr
 
 			training_set_arr = [[ProblemSet.DEProblem(problem.fun, problem.phi,
-								problem.bounds, add_noise(data,noise), _t, ode_alg)
+								problem.bounds, add_noise(data,noise), _t)
 				 			for _ in 1:num_trainings] for _ in 1:num_reps]
 			training_set_dict[sam][noise] .= training_set_arr
 
@@ -448,11 +410,11 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 					_t = range(t[1], stop=t[end], length=sam)
 					tspan = (t[1], t[end])
 					ode_prob = ODEProblem(fun, add_noise(ini_cond,var_ini_cond), tspan, phi)
-					ode_sol  = solve(ode_prob, ode_alg, saveat=_t)
+					ode_sol  = solve(ode_prob, saveat=_t)
 					data = ode_sol.u
 
 					push!(testing_set_arr_partial,ProblemSet.DEProblem(problem.fun, problem.phi,
-										problem.bounds, add_noise(data,noise), _t, ode_alg))
+										problem.bounds, add_noise(data,noise), _t))
 				end
 				push!(testing_set_arr,testing_set_arr_partial)
 			end
@@ -468,8 +430,8 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 											get_results(m,
 											training_set_dict[sam][noise][i],
 											testing_set_dict[sam][noise][i],
-											guess_dict[sam][noise][i],
-											ode_alg)
+											guess_dict[sam][noise][i])
+
 				end
 			end
 		end

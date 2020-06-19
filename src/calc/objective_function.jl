@@ -100,13 +100,12 @@ end
 function single_shooting(phi::Vector{T},
                         data::Vector,
                         t::AbstractArray,
-                        f::Function,
-                        alg::OrdinaryDiffEqAlgorithm)::T where T
+                        f::Function)::T where T
     ini_cond = convert.(eltype(phi),data[1])
     tspan = (t[1], t[end])
 
     prob = ODEProblem(f, ini_cond, tspan, phi)
-    osol  = solve(prob, alg, saveat=t)
+    osol  = solve(prob, saveat=t)
 
     return sse(data,osol.u)
 end
