@@ -15,17 +15,19 @@ Load serialized results and save the
 most relevant plots
 """
 function plot_main_results(results::Dict,
-                            path::String)::Nothing
+                           path::String,
+                           methods::Vector=[:SS,:DSS])::Nothing
 
     first_key = collect(keys(results))[1]
     first_result = results[first_key]
     samples = collect(keys(first_result))
     noise_levels = Array{Symbol}(collect(keys(first_result[samples[1]])))
     #methods = Array{Symbol}(collect(keys(first_result[samples[1]][noise_levels[1]])))
-    methods = [:SS,:DSS]
 
-    cur_colors = [colorant"#e6612f",colorant"#42b3d5",colorant"seagreen"]
-    # [Vivid Vermilion, Maximum Blue, Seagreen]
+    # cur_colors = [colorant"#e6612f",colorant"#42b3d5",colorant"seagreen"]
+    # [Flame, Maximum Blue, Seagreen]
+    cur_colors = [colorant"#ff595e",colorant"#ffca3a",colorant"#8ac926",colorant"#1982c4"]
+    # [Sizzling Red, Sunglow, Yellow Green, Green Blue Crayola]
 
     method_label = Dict()
     for m in methods
@@ -33,7 +35,7 @@ function plot_main_results(results::Dict,
     end
 
     method_color = Dict()
-    for (m,c) in zip([:SS,:DSS,:DS],cur_colors)
+    for (m,c) in zip([:SS,:SSR,:DS,:DSS],cur_colors)
         method_color[m] = c
     end
 
@@ -44,6 +46,7 @@ function plot_main_results(results::Dict,
         for sam in samples
             res = result[sam]
             plot_data = get_plot_data(res,noise_levels,methods)
+
             sr_plots(plot_data,noise_levels,methods,
                     method_label,method_color,sam,dir_path)
 
@@ -89,7 +92,9 @@ function main(args::Array{<:String})::Nothing
     # jlso_file = joinpath(save_path,"experiment_results.jlso")
     results = map(JLSO.load, jlso_files)
 
-    map(r -> plot_main_results(r, save_path, [:SS, :DSS]), results)
+    for r in results
+        plot_main_results(r, save_path, [:SS, :SSR, :DS, :DSS])
+    end
 end
 
 main(ARGS)
