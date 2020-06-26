@@ -65,7 +65,7 @@ function optim_res(obj_fun::Function,
 		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 									lb,ub,
 									p0,
-									Optim.SAMIN(verbosity=0, rt=0.15), SAMIN_options)
+									Optim.SAMIN(verbosity=0, rt=0.70), SAMIN_options)
 
 		# Local method disabled since it does not improve accuracy
 		#elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
@@ -131,7 +131,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	# Lamdba selection via
 	# Cross Validation
 	#println("\n--- x ---")
-	#println(method_label)
+	#println(method)
 	#println("--- x ---\n")
 	#println("Initial guess:\n$(p0)")
 	#println("Starting Cross Validation!")
@@ -211,7 +211,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	end
 
 	# Post - Process results
-	#println("Async CV done for $(method_label)!")
+	#println("Async CV done for $(method)!")
 	#println("Evaluating results:")
 	elapsed_time = zero(T)
 	fold_error_mean = zero(T)
@@ -273,7 +273,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	return results
 end
 
-function get_results(method_label::String,
+function get_results(method::String,
 					training_set::Vector{ProblemSet.DEProblem},
 					testing_set::Vector{ProblemSet.DEProblem},
 	 				p0::Vector{T})::Array{Array{T}} where T
@@ -283,7 +283,12 @@ function get_results(method_label::String,
 	# For DSS
 	add_time = zero(T)
 
-	if method_label == "SS"
+	if method == "SS"
+		f = single_shooting
+		phi_prior = zeros(T,length(p0))
+		m = length(phi_prior)
+		w = zeros(T,m)
+	elseif method == "SSR"
 		f = single_shooting
 		phi_prior = zeros(T,length(p0))
 		m = length(phi_prior)
@@ -294,12 +299,12 @@ function get_results(method_label::String,
 		add_time = partial_res[2][1]
 		phi_prior = partial_res[3]
 		p0 = phi_prior
-	elseif method_label == "DS"
+	elseif method == "DS"
 		f = data_shooting
 		phi_prior = zeros(T,length(p0))
 		m = length(phi_prior)
-		w = ones(T,m)
-	elseif method_label == "DSS"
+		w = zeros(T,m)
+	elseif method == "DSS"
 		f = data_shooting
 		phi_prior = zeros(T,length(p0))
 		m = length(phi_prior)
@@ -311,6 +316,11 @@ function get_results(method_label::String,
 		f = single_shooting
 		phi_prior = partial_res[3]
 		p0 = phi_prior
+
+		# Check the model error.
+		# If the model is good, then use the
+		# best case strategy.
+		# Otherwise, use medium case strategy.
 		if partial_res[1][1] < 0.3
 			w = ones(T,m)./phi_prior
 		else
@@ -330,7 +340,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 					methods::Array{<:String},
 					dir::String)::Dict
 
-	all_methods = ["DS","SS","DSS"]
+	all_methods = ["DS","SS","SSR","DSS"]
 
 	results::Dict = Dict()
 	prob_key::String = get_problem_key(p_num)
@@ -347,7 +357,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 	#data_sams = convert.(eltype(sams[1]),sams.*min_data)
 	data_sams = samples
 
-	num_reps = 10
+	num_reps = 30
 
 	results_final = Dict()
 	for sam in data_sams
@@ -487,7 +497,7 @@ function main(args::Array{<:String})::Nothing
 	problems = eval(Meta.parse(args[2]))
 	samples = eval(Meta.parse(args[3]))
 	noise_level = eval(Meta.parse(args[4]))
-	methods = ["DS","SS","DSS"]
+	methods = ["DS","SS","SSR","DSS"]
 	time_main = @elapsed run_experiments(problems,samples,
 										noise_level,methods,path)
 	println(time_main)
