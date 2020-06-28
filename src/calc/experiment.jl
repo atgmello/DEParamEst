@@ -122,11 +122,13 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	results = [[Inf64], [NaN64], p0]
 	#lambda_arr = [1e-2,1e-1,0.0,1e0,1e1,1e2]
-	lambda_arr = [1e0,0.0,1e-1,1e-2,1e-3]
+	lambda_arr = [1e0,1e-1,1e-2,1e-3,0.0]
 	num_lambdas = length(lambda_arr)
-	best_lambda = lambda_arr[1]
+	best_lambda = lambda_arr[end]
 
 	bounds = training_set[1].bounds
+
+	elapsed_time = zero(T)
 
 	# Lamdba selection via
 	# Cross Validation
@@ -138,107 +140,106 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	#println("Preprocessing starting")
 	#println("...")
 
-	# K-Fold Cross Validation
+	if sum(w) != 0.0
+		# K-Fold Cross Validation
 
-	num_training_sets = length(training_set)
-	num_elem_folds = convert(Int64, (num_training_sets/k))
+		num_training_sets = length(training_set)
+		num_elem_folds = convert(Int64, (num_training_sets/k))
 
-	cv_folds = sample(1:num_training_sets, (k,num_elem_folds), replace=false)
+		cv_folds = sample(1:num_training_sets, (k,num_elem_folds), replace=false)
 
-	num_elem_train_slice = convert(Int64, (num_training_sets - num_elem_folds))
+		num_elem_train_slice = convert(Int64, (num_training_sets - num_elem_folds))
 
-	# Pre - Allocate and prepare necessary data
-	partial_res = [[Inf64], [NaN64], p0]
-	partial_res_arr = [[[Vector{Float64}(undef, 1)
-							for _ in 1:3] for _ in 1:k]
+		# Pre - Allocate and prepare necessary data
+		partial_res = [[Inf64], [NaN64], p0]
+		partial_res_arr = [[[Vector{Float64}(undef, 1)
+							 for _ in 1:3] for _ in 1:k]
+						   for _ in 1:num_lambdas]
+
+		training_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
+	 						  for _ in 1:k]
+		training_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
+	 						 for _ in 1:k]
 							for _ in 1:num_lambdas]
 
-	training_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
-	 						for _ in 1:k]
-	training_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_train_slice)
-	 						for _ in 1:k]
+		hold_out_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
+							  for _ in 1:k]
+		hold_out_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
+							 for _ in 1:k]
 							for _ in 1:num_lambdas]
 
-	hold_out_set_folds = [Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
-							for _ in 1:k]
-	hold_out_set_arr = [[Vector{ProblemSet.DEProblem}(undef,num_elem_folds)
-							for _ in 1:k]
-							for _ in 1:num_lambdas]
+		obj_fun_folds = Vector{Function}(undef,k)
+		obj_fun_arr = [Vector{Function}(undef,k) for _ in 1:num_lambdas]
 
-	obj_fun_folds = Vector{Function}(undef,k)
-	obj_fun_arr = [Vector{Function}(undef,k) for _ in 1:num_lambdas]
+		for i in 1:num_lambdas
+			for j in 1:k
+				hold_out = cv_folds[j,:]
+				slice = filter(x -> !(x in hold_out), 1:num_training_sets)
 
-	for i in 1:num_lambdas
-		for j in 1:k
-			hold_out = cv_folds[j,:]
-			slice = filter(x -> !(x in hold_out), 1:num_training_sets)
+				training_sliced = training_set[slice]
+				training_set_folds[j] = training_sliced
 
-			training_sliced = training_set[slice]
-			training_set_folds[j] = training_sliced
+				hold_out_set = training_set[hold_out]
+				hold_out_set_folds[j] = hold_out_set
 
-			hold_out_set = training_set[hold_out]
-			hold_out_set_folds[j] = hold_out_set
-
-			obj_fun = function (x)
-				total_error = zero(T)
-				@inbounds for i in 1:length(training_sliced)
-					total_error += f(x,
-									 training_sliced[i].data,
-									 training_sliced[i].t,
-									 training_sliced[i].fun)
+				obj_fun = function (x)
+					total_error = zero(T)
+					@inbounds for i in 1:length(training_sliced)
+						total_error += f(x,
+										 training_sliced[i].data,
+										 training_sliced[i].t,
+										 training_sliced[i].fun)
+					end
+					total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
+					return total_error
 				end
-				total_error += tikhonov(lambda_arr[i], x, phi_prior, w)
-				return total_error
+				obj_fun_folds[j] = obj_fun
 			end
-			obj_fun_folds[j] = obj_fun
+			obj_fun_arr[i] = obj_fun_folds
+			training_set_arr[i] = training_set_folds
+			hold_out_set_arr[i] = hold_out_set_folds
 		end
-		obj_fun_arr[i] = obj_fun_folds
-		training_set_arr[i] = training_set_folds
-		hold_out_set_arr[i] = hold_out_set_folds
-	end
 
-	#println("Preprocessing done!")
-	#println("Async CV starting")
-	#println("...")
+		#println("Preprocessing done!")
+		#println("Async CV starting")
+		#println("...")
 
-	# Async CV
-	@sync for i in 1:num_lambdas
-		for j in 1:k
-			Threads.@spawn partial_res_arr[i][j] = optim_res(obj_fun_arr[i][j],
-														hold_out_set_arr[i][j],
-														p0)
+		# Async CV
+		@sync for i in 1:num_lambdas
+			for j in 1:k
+				Threads.@spawn partial_res_arr[i][j] = optim_res(obj_fun_arr[i][j],
+																 hold_out_set_arr[i][j],
+																 p0)
+			end
 		end
-	end
 
-	# Post - Process results
-	#println("Async CV done for $(method)!")
-	#println("Evaluating results:")
-	elapsed_time = zero(T)
-	fold_error_mean = zero(T)
-	lambda_hold_errors = Vector{Float64}(undef,num_lambdas)
-	for i in 1:num_lambdas
-		fold_error_mean = 0.0
-		#println("\nResults for $(lambda_arr[i])")
-		for j in 1:k
-			pres = partial_res_arr[i][j]
-			fold_error_mean += pres[1][1]
-			elapsed_time += pres[2][1]
-			#println("Error $(j):\n$(pres[1][1])")
+		# Post - Process results
+		#println("Async CV done for $(method)!")
+		#println("Evaluating results:")
+		fold_error_mean = zero(T)
+		lambda_hold_errors = Vector{Float64}(undef,num_lambdas)
+		for i in 1:num_lambdas
+			fold_error_mean = 0.0
+			#println("\nResults for $(lambda_arr[i])")
+			for j in 1:k
+				pres = partial_res_arr[i][j]
+				fold_error_mean += pres[1][1]
+				elapsed_time += pres[2][1]
+				#println("Error $(j):\n$(pres[1][1])")
+			end
+			fold_error_mean /= k
+			#println("Mean error on $(lambda_arr[i]):\n$(fold_error_mean)\n")
+			lambda_hold_errors[i] = fold_error_mean
 		end
-		fold_error_mean /= k
-		#println("Mean error on $(lambda_arr[i]):\n$(fold_error_mean)\n")
-		lambda_hold_errors[i] = fold_error_mean
+
+		elapsed_time /= num_lambdas*k
+		best_lambda = lambda_arr[argmin(lambda_hold_errors)]
+
+		#println("\nDone!")
+		#println("Best lambda:\n$(best_lambda)")
+		#println("Optimizing on whole dataset.")
+		#println("...")
 	end
-
-	elapsed_time /= num_lambdas*k
-	best_lambda = lambda_arr[argmin(lambda_hold_errors)]
-
-	#println("\nDone!")
-	#println("Best lambda:\n$(best_lambda)")
-	#println("Optimizing on whole dataset.")
-	#println("...")
-
-	# Check whether Single or Data Shooting
 
 	final_obj_fun = function (x)
 		total_error = zero(T)
@@ -270,6 +271,14 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		println("-------- Error --------")
 	end
 
+# 	println("
+# Method:\t$(Symbol(f))
+# Lambdas:\t$(lambda_arr)
+# Initial phi:\t$(p0)
+# CV Errors:\t$(@isdefined(lambda_hold_errors) ? lambda_hold_errors : false)
+# Best lambda:\t$(best_lambda)
+# Final Errors:\t$(results[1][1])
+# Final phi:\t$(results[3])")
 	return results
 end
 
@@ -280,7 +289,6 @@ function get_results(method::String,
 
 	k = convert(Int64, length(training_set)/1)
 
-	# For DSS
 	add_time = zero(T)
 
 	if method == "SS"
