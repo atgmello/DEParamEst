@@ -53,6 +53,11 @@ function plot_main_results(results::Dict,
             oe_plots(plot_data,noise_levels,methods,
                     method_label,method_color,sam,dir_path)
 
+            if :DS in methods
+                oe_plots(plot_data,noise_levels,filter(x -> x != :DS, methods),
+                         method_label,method_color,sam,dir_path)
+            end
+
             for noise in noise_levels
                 plot_data = get_plot_data(res,[noise],methods)
 

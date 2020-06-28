@@ -441,12 +441,13 @@ function oe_plots(plot_data::Dict,
                 major_label_font=PLOT_FONT,
                 minor_label_font=PLOT_FONT))
 
+    methods_str = reduce((acc,x) -> acc*"_"*string(x), methods; init="")
     try
         if length(noise_level) > 1
-            p |> PDF(joinpath(path,"oe_$(sam)_all.pdf"))
+            p |> PDF(joinpath(path,"oe_$(sam)$(methods_str)_all.pdf"))
         else
             var = noise_level[1]
-            p |> PDF(joinpath(path,replace("oe_$(sam)_$(var)","."=>"")*".pdf"))
+            p |> PDF(joinpath(path,replace("oe_$(sam)$(methods_str)_$(var)","."=>"")*".pdf"))
         end
     catch e
         @show e
