@@ -286,8 +286,8 @@ function get_problem(p::String)::DEProblem
 
         phi = [0.2, 0.2, 3.0]
 
-        bounds = [[10^(-3) for i in 1:length(phi)],
-                [10^(3) for i in 1:length(phi)]]
+        bounds = [[10^(-5) for i in 1:length(phi)],
+                [10^(5) for i in 1:length(phi)]]
 
         ini_cond = [-1.0, 1.0]
         t = range(0.0, stop=20.0, length=7)
