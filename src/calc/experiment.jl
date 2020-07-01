@@ -82,16 +82,24 @@ function optim_res(obj_fun::Function,
 	end
 
 	try
-		p = testing_set[1]
-		tspan = (p.t[1], p.t[end])
-		ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-		ode_sol  = solve(ode_prob, saveat=p.t)
-		data_est = ode_sol.u
+		generate_est_data = function (p)
+			tspan = (p.t[1], p.t[end])
+			ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
+			ode_sol  = solve(ode_prob, saveat=p.t)
+			ode_sol.u
+		end
 
+		data_est_set = map(generate_est_data, testing_set)
+		data_training_set = map(p -> p.data, testing_set)
+
+		compare_testing_estimated = zip(data_training_set, data_est_set)
+
+		nmse_each_state_vector = compare -> map(vector -> nmse(vector[1], vector[2]),
+												zip(compare[1], compare[2]))
+
+		total_nmse = map(nmse_each_state_vector, compare_testing_estimated)
 		# (mean) Normalized Root Mean Squared Error
-		nrmse = mean([map(d -> nmse(d[1], d[2]),
-						  zip(tp.data, data_est))
-					  for tp in testing_set]) |> mean |> sqrt
+		nrmse = mean(total_nmse) |> mean |> sqrt
 	catch e
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
