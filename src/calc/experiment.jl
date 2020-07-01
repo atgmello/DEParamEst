@@ -7,10 +7,12 @@ using DiffEqParamEstim
 using DifferentialEquations
 using Statistics
 using Random
-import StatsBase: sample
-import Distributions: Uniform
 using Optim
 using JLSO
+using Logging
+import StatsBase: sample
+import Distributions: Uniform
+import Dates: now
 
 using Revise
 includet("./problem_set.jl")
@@ -20,15 +22,11 @@ import .ProblemSet: get_problem, get_problem_key, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
 import .Utils: rand_guess, add_noise, nmse
 
-@assert Threads.nthreads() > 1
-
 Random.seed!(1234)
 
-#old_precision = precision(BigFloat)
-#new_precision = 1024
-#setprecision(new_precision)
-#setprecision(old_precision)
-#const dp = Float64
+const RT = 0.70
+const MAXT = 10^4
+const M = 30
 
 """
 Performs optimization and returns a vector with
@@ -39,7 +37,7 @@ estimated parameters (third position)
 function optim_res(obj_fun::Function,
 					testing_set::Vector{ProblemSet.DEProblem},
 					p0::Vector{T})::Vector{Vector{T}} where T
-	g_t_lim = 10^4
+	g_t_lim = MAXT
 	f_tol = 10^-12
 	x_tol = 10^-6
 	iter = 10^8
@@ -65,7 +63,7 @@ function optim_res(obj_fun::Function,
 		elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
 									lb,ub,
 									p0,
-									Optim.SAMIN(verbosity=0, rt=0.70), SAMIN_options)
+									Optim.SAMIN(verbosity=0, rt=RT), SAMIN_options)
 
 		# Local method disabled since it does not improve accuracy
 		#elapsed_time += @elapsed res_obj = Optim.optimize(obj_fun,
@@ -77,12 +75,10 @@ function optim_res(obj_fun::Function,
 
 		phi_est = res_obj.minimizer[1:length(p0)]
 	catch e
-		println("-------- Error --------")
-		println("There was an error during the optimization step.")
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
-		println(msg)
-		println("-------- Error --------")
+		@warn """Error!
+				   There was an error during the optimization step.""" msg
 	end
 
 	try
@@ -96,12 +92,10 @@ function optim_res(obj_fun::Function,
 		nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
 				for tp in testing_set]) |> x -> sqrt(x)
 	catch e
-		println("-------- Error --------")
-		println("There was an error during the NRMSE calculation step.")
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
-		println(msg)
-		println("-------- Error --------")
+		@warn """Error!
+				   There was an error during the NRMSE calculation step.""" msg
 	end
 
 	if elapsed_time == zero(T)
@@ -132,13 +126,13 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	# Lamdba selection via
 	# Cross Validation
-	#println("\n--- x ---")
-	#println(method)
-	#println("--- x ---\n")
-	#println("Initial guess:\n$(p0)")
-	#println("Starting Cross Validation!")
-	#println("Preprocessing starting")
-	#println("...")
+	@debug """"--- x ---
+				$(method)
+				--- x ---
+				Initial guess:\n$(p0)
+				Starting Cross Validation!
+				Preprocessing starting
+				..."""
 
 	if sum(w) != 0.0
 		# K-Fold Cross Validation
@@ -200,9 +194,9 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 			hold_out_set_arr[i] = hold_out_set_folds
 		end
 
-		#println("Preprocessing done!")
-		#println("Async CV starting")
-		#println("...")
+		@debug """Preprocessing done!
+					Async CV starting
+					..."""
 
 		# Async CV
 		@sync for i in 1:num_lambdas
@@ -214,31 +208,31 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 		end
 
 		# Post - Process results
-		#println("Async CV done for $(method)!")
-		#println("Evaluating results:")
+		@debug """Async CV done for $(method)!
+					Evaluating results:"""
 		fold_error_mean = zero(T)
 		lambda_hold_errors = Vector{Float64}(undef,num_lambdas)
 		for i in 1:num_lambdas
 			fold_error_mean = 0.0
-			#println("\nResults for $(lambda_arr[i])")
+			@debug """Results for $(lambda_arr[i])"""
 			for j in 1:k
 				pres = partial_res_arr[i][j]
 				fold_error_mean += pres[1][1]
 				elapsed_time += pres[2][1]
-				#println("Error $(j):\n$(pres[1][1])")
+				@debug """Error $(j)""" pres[1][1]
 			end
 			fold_error_mean /= k
-			#println("Mean error on $(lambda_arr[i]):\n$(fold_error_mean)\n")
+			@debug """Mean error on $(lambda_arr[i])""" fold_error_mean
 			lambda_hold_errors[i] = fold_error_mean
 		end
 
 		elapsed_time /= num_lambdas*k
 		best_lambda = lambda_arr[argmin(lambda_hold_errors)]
 
-		#println("\nDone!")
-		#println("Best lambda:\n$(best_lambda)")
-		#println("Optimizing on whole dataset.")
-		#println("...")
+		@debug """Done!
+					Best lambda:\n$(best_lambda)
+					Optimizing on whole dataset.
+					..."""
 	end
 
 	final_obj_fun = function (x)
@@ -260,26 +254,24 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 				   partial_res[2],
 				   partial_res[3]]
 
-		#println("Done!")
-		#println("Test Error:\n$(results[1])")
-		#println("Estimated parameters:\n$(results[3])\n\n")
+		@debug """Done!
+					Test Error:\n$(results[1])
+					Estimated parameters:\n$(results[3])\n"""
 	catch e
-		println("-------- Error --------")
-		println("There was an error during the call to optim_res.")
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
-		println(msg)
-		println("-------- Error --------")
+		@warn """Error!
+				   There was an error during the call to optim_res.""" msg
 	end
 
-# 	println("
-# Method:\t$(Symbol(f))
-# Lambdas:\t$(lambda_arr)
-# Initial phi:\t$(p0)
-# CV Errors:\t$(@isdefined(lambda_hold_errors) ? lambda_hold_errors : false)
-# Best lambda:\t$(best_lambda)
-# Final Errors:\t$(results[1][1])
-# Final phi:\t$(results[3])")
+	@info """Results.
+			  Method:\t$(Symbol(f))
+			  Lambdas:\t$(lambda_arr)
+			  Initial phi:\t$(p0)
+			  CV Errors:\t$(@isdefined(lambda_hold_errors) ? lambda_hold_errors : false)
+			  Best lambda:\t$(best_lambda)
+			  Final Errors:\t$(results[1][1])
+			  Final phi:\t$(results[3])"""
 	return results
 end
 
@@ -366,7 +358,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 	#data_sams = convert.(eltype(sams[1]),sams.*min_data)
 	data_sams = samples
 
-	num_reps = 30
+	num_reps = M
 
 	results_final = Dict()
 	for sam in data_sams
@@ -478,12 +470,10 @@ function run_experiments(problems::Vector{<:Int},
 		try
 			JLSO.save(joinpath(dir,"tmp",p_name*".jlso"), results[i])
 		catch e
-			println("-------- Error --------")
-			println("There was an error during the call to JLSO.save for $(results[i]).")
 			bt = backtrace()
 			msg = sprint(showerror, e, bt)
-			println(msg)
-			println("-------- Error --------")
+			@warn """Error!
+						Error during the call to JLSO.save for $(results[i])."""
 		end
 	end
 
@@ -491,12 +481,10 @@ function run_experiments(problems::Vector{<:Int},
 		JLSO.save(joinpath(dir,"experiment_results.jlso"), results...)
 		rm(joinpath(dir,"tmp"), recursive=true)
 	catch e
-		println("-------- Error --------")
-		println("There was an error during the call to JLSO.save for joining all the results.")
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
-		println(msg)
-		println("-------- Error --------")
+		@warn """Error!
+				   Error when joining all the results.""" msg
 	end
 
 end
@@ -506,10 +494,39 @@ function main(args::Array{<:String})::Nothing
 	problems = eval(Meta.parse(args[2]))
 	samples = eval(Meta.parse(args[3]))
 	noise_level = eval(Meta.parse(args[4]))
+
 	methods = ["DS","SS","SSR","DSS"]
-	time_main = @elapsed run_experiments(problems,samples,
+
+	io = open(joinpath(path,"general.log"), "w+")
+	logger = SimpleLogger(io)
+	global_logger(logger)
+
+	@info "Program started." now()
+	@info "Number of threads." Threads.nthreads()
+
+	@info "Arguments." args
+	@info "Methods." methods
+	@info "Cooling rate." RT
+	@info "Maximum Time." MAXT
+	@info "Number of runs." M
+
+	info_io = open(joinpath(path,"info.log"), "w+")
+	with_logger(SimpleLogger(info_io)) do
+		@info "Arguments." args
+		@info "Methods." methods
+		@info "Cooling rate." RT
+		@info "Maximum Time." MAXT
+		@info "Number of runs." M
+	end
+	flush(info_io)
+	close(info_io)
+
+	elapsed_time = @elapsed run_experiments(problems,samples,
 										noise_level,methods,path)
-	println(time_main)
+
+	@info "Program finished." now()
+	@info "Elapsed time." elapsed_time
+	close(io)
 end
 
 main(ARGS)
