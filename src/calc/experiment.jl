@@ -86,11 +86,12 @@ function optim_res(obj_fun::Function,
 		tspan = (p.t[1], p.t[end])
 		ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
 		ode_sol  = solve(ode_prob, saveat=p.t)
-		data_est = reduce(vcat,ode_sol.u)
+		data_est = ode_sol.u
 
-		# Normalized Root Mean Squared Error
-		nrmse = mean([nmse(reduce(vcat,tp.data), data_est)
-				for tp in testing_set]) |> x -> sqrt(x)
+		# (mean) Normalized Root Mean Squared Error
+		nrmse = mean([map(d -> nmse(d[1], d[2]),
+						  zip(tp.data, data_est))
+					  for tp in testing_set]) |> mean |> sqrt
 	catch e
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)

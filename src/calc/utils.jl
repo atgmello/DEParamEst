@@ -99,9 +99,8 @@ end
 Normalized Mean Square Error
 """
 function nmse(data::Vector{T}, data_est::Vector{T})::T where T
-    normalizer = abs2(maximum(data_est) - minimum(data_est))
-    res = sum(abs2.(data-data_est))/normalizer
-    res /= length(data)
+    normalizer = abs2(maximum(data) - minimum(data))
+    res = mean(abs2.(data_est-data))/normalizer
     return res
 end
 
