@@ -20,7 +20,7 @@ includet("./objective_function.jl")
 includet("./utils.jl")
 import .ProblemSet: get_problem, get_problem_key, DEProblem
 import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
-import .Utils: rand_guess, add_noise, nmse
+import .Utils: rand_guess, add_noise, nmse, transpose_vector
 
 Random.seed!(1234)
 
@@ -82,19 +82,22 @@ function optim_res(obj_fun::Function,
 	end
 
 	try
-		generate_est_data = function (p)
+		generate_estimated_data = function (p)
 			tspan = (p.t[1], p.t[end])
 			ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
 			ode_sol  = solve(ode_prob, saveat=p.t)
 			ode_sol.u
 		end
 
-		data_est_set = map(generate_est_data, testing_set)
-		data_training_set = map(p -> p.data, testing_set)
+		generate_then_transpose(p) = p |> generate_estimated_data |> transpose_vector
+		data_estimated_set = map(generate_then_transpose, testing_set)
 
-		compare_testing_estimated = zip(data_training_set, data_est_set)
+		get_then_transpose(p) = p.data |> transpose_vector
+		data_training_set = map(get_then_transpose, testing_set)
 
-		nmse_each_state_vector = compare -> map(vector -> nmse(vector[1], vector[2]),
+		compare_testing_estimated = zip(data_training_set, data_estimated_set)
+
+		nmse_each_state_vector(compare) =  map(vector -> nmse(vector[1], vector[2]),
 												zip(compare[1], compare[2]))
 
 		total_nmse = map(nmse_each_state_vector, compare_testing_estimated)

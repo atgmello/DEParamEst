@@ -10,6 +10,10 @@ using .ProblemSet
 
 Random.seed!(1234)
 
+function transpose_vector(v::Vector{Vector{T}})::Vector{Vector{T}} where T
+    [[v[i][j] for i in 1:length(v)] for j in 1:length(v[1])]
+end
+
 """
 From bounds, generates a random startign point for
 the optimization procedure.
