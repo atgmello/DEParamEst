@@ -10,6 +10,7 @@ using Random
 using Optim
 using JLSO
 using Logging
+using LoggingExtras
 import StatsBase: sample
 import Distributions: Uniform
 import Dates: now
@@ -27,6 +28,7 @@ Random.seed!(1234)
 const RT = 0.70
 const MAXT = 10^4
 const M = 30
+const MIN_LOG = Logging.Info
 
 """
 Performs optimization and returns a vector with
@@ -509,36 +511,34 @@ function main(args::Array{<:String})::Nothing
 
 	methods = ["DS","SS","SSR","DSS"]
 
-	io = open(joinpath(path,"general.log"), "w+")
-	logger = SimpleLogger(io)
-	global_logger(logger)
+	main_file_logger = MinLevelLogger(FileLogger(joinpath(path,"general.log")),
+									  MIN_LOG)
+	console_logger = ConsoleLogger()
+	main_logger = TeeLogger(console_logger, main_file_logger)
+	global_logger(main_logger)
 
 	@info "Program started." now()
 	@info "Number of threads." Threads.nthreads()
 
-	@info "Arguments." args
-	@info "Methods." methods
-	@info "Cooling rate." RT
-	@info "Maximum Time." MAXT
-	@info "Number of runs." M
+	minor_logger = FileLogger(joinpath(path,"info.log"))
+	minor_and_global_logger = TeeLogger(minor_logger, global_logger())
 
-	info_io = open(joinpath(path,"info.log"), "w+")
-	with_logger(SimpleLogger(info_io)) do
+	with_logger(minor_and_global_logger) do
 		@info "Arguments." args
 		@info "Methods." methods
 		@info "Cooling rate." RT
 		@info "Maximum Time." MAXT
 		@info "Number of runs." M
 	end
-	flush(info_io)
-	close(info_io)
 
 	elapsed_time = @elapsed run_experiments(problems,samples,
 										noise_level,methods,path)
 
-	@info "Program finished." now()
-	@info "Elapsed time." elapsed_time
-	close(io)
+	with_logger(minor_and_global_logger) do
+		@info "Program finished." now()
+		@info "Elapsed time." elapsed_time
+	end
+
 end
 
 main(ARGS)
