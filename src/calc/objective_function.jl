@@ -9,55 +9,55 @@ export data_shooting, single_shooting, tikhonov
 Tikhonov Regularization
 """
 function tikhonov(lambda::T, phi::Vector{T}, phi_ref::Vector{T},
-					w::Vector{T})::T where T
+                  w::Vector{T})::T where T
     res = zero(T)
     @simd for i in 1:length(phi)
         @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
     end
     res *= lambda
-	return res
+    return res
 end
 function tikhonov(lambda::T, phi::Vector{D}, phi_ref::Vector{T},
-					w::Vector{T})::D where T where D
+                  w::Vector{T})::D where T where D
     res = zero(D)
     @simd for i in 1:length(phi)
         @inbounds res += abs2((phi[i]-phi_ref[i])*w[i])
     end
     res *= lambda
-	return res
+    return res
 end
 
 """
 Sum of Squared Errors
 """
 function sse(a::Vector{Vector{T}},b::Vector{Vector{T}})::T where T<:AbstractFloat
-	sum = zero(T)
+    sum = zero(T)
 
-	if length(a) != length(b) || length(a[1]) != length(b[1])
-		return Inf64
-	end
+    if length(a) != length(b) || length(a[1]) != length(b[1])
+        return Inf64
+    end
 
-	@simd for i in 1:length(a)
-		for j in 1:length(a[1])
-			@inbounds sum += abs2(a[i][j]-b[i][j])
-		end
-	end
-	return sum
+    @simd for i in 1:length(a)
+        for j in 1:length(a[1])
+            @inbounds sum += abs2(a[i][j]-b[i][j])
+        end
+    end
+    return sum
 end
 function sse(a::Vector,b::Vector)
-	T = promote_type(eltype(a[1]),eltype(b[1]))
-	sum = zero(T)
+    T = promote_type(eltype(a[1]),eltype(b[1]))
+    sum = zero(T)
 
-	if length(a) != length(b) || length(a[1]) != length(b[1])
-		return Inf64
-	end
+    if length(a) != length(b) || length(a[1]) != length(b[1])
+        return Inf64
+    end
 
-	for i in 1:length(a)
-		for j in 1:length(a[1])
-			@inbounds sum += abs2(a[i][j]-b[i][j])
-		end
-	end
-	return sum
+    for i in 1:length(a)
+        for j in 1:length(a[1])
+            @inbounds sum += abs2(a[i][j]-b[i][j])
+        end
+    end
+    return sum
 end
 
 """
@@ -295,141 +295,12 @@ function single_shooting_exp(params::Array{<:AbstractFloat},
     return residuals
 end
 
-function adams_moulton_estimator(phi::Array{AbstractFloat}, data::Array{AbstractFloat}, time_array::Array{AbstractFloat}, f::Function; return_estimated=false)::Array{AbstractFloat}
-    num_state_vars, num_samples = size(data)
-    data = convert(Array{eltype(phi)}, data)
-    time_array = convert(Array{eltype(phi)}, time_array)
-
-    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_vars)
-    estimated = reshape(estimated, (num_state_vars, num_samples))
-    estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
-
-    for i in range(1, stop=num_samples-1)
-        delta_t = time_array[i+1] - time_array[i]
-        delta_t = convert(eltype(phi), delta_t)
-
-        x_k_0 = data[:, i]
-        x_k_1 = data[:, i+1]
-
-        f_eval_0 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_0, x_k_0, phi, 0)
-        f_eval_1 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_1, x_k_1, phi, 0)
-
-        x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
-        estimated[:, i+1] = x_k_1_est
-    end
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    #=>
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = 10^10
-        end
-    end
-    <=#
-    if return_estimated
-        return estimated
-    end
-    return residuals
-end
-
-function sm_mean_shooting(phi, data, time_array, f; return_estimated=false)
-    partial_estimate = single_shooting_estimator(phi, data, time_array, f; return_estimated=true)
-    partial_estimate = (partial_estimate+data)*(1/2)
-    num_state_vars, num_samples = size(partial_estimate)
-
-    estimated = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_samples*num_state_vars)
-    estimated = reshape(estimated, (num_state_vars, num_samples))
-    estimated[:, 1] = partial_estimate[:,1] #Initial conditions are stored at x_dot_num's first column
-
-    for i in range(1, stop=num_samples-1)
-        delta_t = time_array[i+1] - time_array[i]
-        x_k_0 = partial_estimate[:, i]
-        x_k_1 = partial_estimate[:, i+1]
-
-        f_eval_0 = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_state_vars)
-        f(f_eval_0, x_k_0, phi, 0)
-        f_eval_1 = zeros(promote_type(eltype(phi),eltype(partial_estimate)), num_state_vars)
-        f(f_eval_1, x_k_1, phi, 0)
-
-        x_k_1_est = x_k_0 + (1/2)*delta_t*(f_eval_0+f_eval_1)
-        estimated[:, i+1] = x_k_1_est
-    end
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    #=>
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = 10^10
-        end
-    end
-    <=#
-    if return_estimated
-        return estimated
-    end
-    return residuals
-end
-
-function adams_moulton_fourth_estimator(phi, data, time_array, f; return_estimated=false)
-    num_state_vars, num_samples = size(data)
-
-    estimated = zeros(promote_type(eltype(phi),eltype(data)), num_samples*num_state_vars)
-    estimated = reshape(estimated, (num_state_vars, num_samples))
-    estimated[:, 1] = data[:,1] #Initial conditions are stored at x_dot_num's first column
-    estimated[:, 2] = data[:,2] #Initial conditions are stored at x_dot_num's first column
-    estimated[:, 3] = data[:,3] #Initial conditions are stored at x_dot_num's first column
-    estimated[:, 4] = data[:,4] #Initial conditions are stored at x_dot_num's first column
-
-    for i in range(1, stop=num_samples-3)
-        delta_t = []
-        push!(delta_t, time_array[i+1] - time_array[i])
-        push!(delta_t, time_array[i+2] - time_array[i+1])
-        push!(delta_t, time_array[i+3] - time_array[i+2])
-        push!(delta_t, time_array[i+1] - time_array[i])
-
-        x_k = []
-        push!(x_k, data[:, i])
-        push!(x_k, data[:, i+1])
-        push!(x_k, data[:, i+2])
-        push!(x_k, data[:, i+3])
-
-        f_eval_1 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_1, x_k[1], phi, 0)
-        f_eval_2 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_2, x_k[2], phi, 0)
-        f_eval_3 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_3, x_k[3], phi, 0)
-        f_eval_4 = zeros(promote_type(eltype(phi),eltype(data)), num_state_vars)
-        f(f_eval_4, x_k[4], phi, 0)
-
-        x_k_est = x_k[3] + (delta_t[1]*(9/24)*f_eval_4+delta_t[1]*(19/24)*f_eval_3-delta_t[1]*(5/24)f_eval_2+delta_t[1]*(1/24)*f_eval_1)
-        estimated[:, i+3] = x_k_est
-    end
-
-    weight = abs2(1/findmax(data)[1])
-    residuals = weight .* (data-estimated)
-    #=>
-    if findmin(estimated)[1] < 0
-        for i in 1:length(residuals)
-            residuals[i] = 10^10
-        end
-    end
-    <=#
-    if return_estimated
-        return estimated
-    end
-    return residuals
-end
-
 function soft_l1(z::T)::T where T<:Number
     sz = (2 * ((1 + z)^0.5 - 1))
 end
 
 function huber(z::T)::T where T<:Number
-	M = 1.35
+    M = 1.35
     if z < M
         return abs2(z)
     else
