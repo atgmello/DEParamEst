@@ -32,9 +32,9 @@ function problem_info(p::DEProblem)::String
 end
 
 function get_problem_key(i::Int=0)::String
-    keys = ["floudas_1","floudas_2",
-            "floudas_3","floudas_4",
-            "floudas_5","floudas_6",
+    keys = ["fic","frc",
+            "ccgo","bep",
+            "mhp","lvp",
             "bbg","fhn",
             "mapk",
             "gosc",
@@ -66,10 +66,10 @@ end
 
         return DEProblem(f_exp, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_1"
+    elseif p == "fic"
         # ----- Problem 1 -----
 
-        function floudas_one(dz_dt, z, phi, t)
+        function fic(dz_dt, z, phi, t)
             r_1 = phi[1]*z[1]
             r_2 = phi[2]*z[2]
 
@@ -90,16 +90,16 @@ end
                             ]
         <=#
         t = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-        de_prob = ODEProblem(floudas_one, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(fic, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
 
-        return DEProblem(floudas_one, phi, bounds, ode_data, t)
+        return DEProblem(fic, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_2"
+    elseif p == "frc"
         # ----- Problem 2 -----
 
-        function floudas_two(dz_dt, z, phi, t)
+        function frc(dz_dt, z, phi, t)
             r_1 = phi[1]*z[1]
             r_2 = phi[2]*z[2]
             r_3 = phi[3]*z[2]
@@ -127,15 +127,15 @@ end
         <=#
 
         t = [0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]
-        de_prob = ODEProblem(floudas_two, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(frc, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_two, phi, bounds, ode_data, t)
+        return DEProblem(frc, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_3"
+    elseif p == "ccgo"
         # ----- Problem 3 -----
 
-        function floudas_three(dz_dt, z, phi, t)
+        function ccgo(dz_dt, z, phi, t)
             r_1 = phi[1]*z[1]^2
             r_2 = phi[2]*z[2]
             r_3 = phi[3]*z[1]^2
@@ -158,15 +158,15 @@ end
                             ]
         <=#
         t =[0.0,.025,.05,.075,.1,.125,.150,.175,.2,.225,.25,.3,.35,.4,.45,.5,.55,.65,.75,.85,.95]
-        de_prob = ODEProblem(floudas_three, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(ccgo, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_three, phi, bounds, ode_data, t)
+        return DEProblem(ccgo, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_4"
+    elseif p == "bep"
         # ----- Problem 4 -----
 
-        function floudas_four(dz_dt, z, phi, t)
+        function bep(dz_dt, z, phi, t)
             dz_dt[1] = phi[1]*(126.2 - z[1])*(91.9 - z[1])^2 - phi[2]*z[1]^2
         end
 
@@ -182,15 +182,15 @@ end
                             ]
         <=#
         t = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,11.0,14.0,19.0,24.0,29.0,39.0]
-        de_prob = ODEProblem(floudas_four, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(bep, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_four, phi, bounds, ode_data, t)
+        return DEProblem(bep, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_5"
+    elseif p == "mhp"
         # ----- Problem 5 -----
 
-        function floudas_five(dz_dt, z, phi, t)
+        function mhp(dz_dt, z, phi, t)
             dz_dt[1] = - (2*phi[1] - ((phi[1]*z[2])/((phi[2] + phi[5])*z[1] + z[2])) + phi[3] + phi[4])*z[1]
             dz_dt[2] = ((phi[1]*z[1])*(phi[2]*z[1] - z[2]))/((phi[2] + phi[5])*z[1] + z[2]) + phi[3]*z[1]
             dz_dt[3] = ((phi[1]*z[1])*(z[2] + phi[5]*z[1]))/((phi[2] + phi[5])*z[1] + z[2]) + phi[4]*z[1]
@@ -213,15 +213,15 @@ end
                             ]
         <=#
         t = [0.,0.050,0.065,0.080,0.123,0.233,0.273,0.354,0.397,0.418,0.502,0.553,0.681,0.750,0.916,0.937,1.122]
-        de_prob = ODEProblem(floudas_five, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(mhp, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_five, phi, bounds, ode_data, t)
+        return DEProblem(mhp, phi, bounds, ode_data, t)
 
-    elseif p == "floudas_6"
+    elseif p == "lvp"
         # ----- Problem 6 -----
 
-        function floudas_six(dz_dt, z, phi, t)
+        function lvp(dz_dt, z, phi, t)
             dz_dt[1] = phi[1]*z[1]*(1-z[2])
             dz_dt[2] = phi[2]*z[2]*(z[1]-1)
         end
@@ -239,10 +239,10 @@ end
                             ]
         <=#
         t = [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]
-        de_prob = ODEProblem(floudas_six, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(lvp, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(floudas_six, phi, bounds, ode_data, t)
+        return DEProblem(lvp, phi, bounds, ode_data, t)
 
     elseif p == "bbg"
         # ----- BBG -----
@@ -261,17 +261,17 @@ end
         ini_cond = [2.0, 30.0]
         t = range(0.0, stop=12.0, length=7)
 
-        function f_bbg(dz_dt, z, phi, t)
+        function bbg(dz_dt, z, phi, t)
             mi, Ks, Kd, yield = phi
             Cb, Cs = z
             dz_dt[1] = mi*(Cs*Cb/(Ks+Cs))-Kd*Cb
             dz_dt[2] = -(mi/yield)*(Cs*Cb/(Ks+Cs))
         end
 
-        de_prob = ODEProblem(f_bbg, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(bbg, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_bbg, phi, bounds, ode_data, t)
+        return DEProblem(bbg, phi, bounds, ode_data, t)
 
     elseif p == "fhn"
         # ----- FHN -----
@@ -290,7 +290,7 @@ end
         ini_cond = [-1.0, 1.0]
         t = range(0.0, stop=20.0, length=7)
 
-        function f_fhn(dz_dt, z, phi, t)
+        function fhn(dz_dt, z, phi, t)
             a, b, c = phi
             V, R = z
             u = 0
@@ -298,10 +298,10 @@ end
             dz_dt[2] = -(1/c)*(V - a + b*R)
         end
 
-        de_prob = ODEProblem(f_fhn, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(fhn, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_fhn, phi, bounds, ode_data, t)
+        return DEProblem(fhn, phi, bounds, ode_data, t)
 
     elseif p == "mapk"
         # ----- MPK -----
@@ -319,7 +319,7 @@ end
         t = [50.0, 100.0, 150.0, 200.0, 300.0,
             400.0, 500.0, 600.0, 800.0, 1000.0]
 
-        function f_mapk(dz_dt, z, phi, t)
+        function mapk(dz_dt, z, phi, t)
             J0V1, J1V2, J4V5, J5V6, J8V9, J9V10 = phi
             J0Ki, J0n, J0k1, J1KK2, J2k3, J2KK3, J3k4,
             J3KK4, J4KK5, J5KK6, J6k7, J6KK7, J7k8, J7KK8,
@@ -348,10 +348,10 @@ end
             dz_dt[8] = RJ7 - RJ8
         end
 
-        de_prob = ODEProblem(f_mapk, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(mapk, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_mapk, phi, bounds, ode_data, t)
+        return DEProblem(mapk, phi, bounds, ode_data, t)
 
     elseif p == "gosc"
         # ----- GOsc -----
@@ -371,7 +371,7 @@ end
         ini_cond = [0.1, 0.2, 2.5]
         t = range(0.0, stop=240.0, length=10)
 
-        function f_gosc(dz_dt, z, phi, t)
+        function gosc(dz_dt, z, phi, t)
             k1, k2, k3, k4, k5, k6, Ki, n = phi
 
             dz_dt[1] = k1*Ki^n/(Ki^n + z[3]^n) - k2*z[1]
@@ -379,10 +379,10 @@ end
             dz_dt[3] = k5*z[2] - k6*z[3]
         end
 
-        de_prob = ODEProblem(f_gosc, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(gosc, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        new_prob = DEProblem(f_gosc, phi, bounds, ode_data, t)
+        new_prob = DEProblem(gosc, phi, bounds, ode_data, t)
 
         #=>
         # ----- TGFB -----
@@ -493,7 +493,7 @@ end
         ini_cond = [.6667, .5725, .4176, .4, .3641, .2946, 1.419, .9346]
         t = range(0, stop=120, length=21)
 
-        function f_tsp(dz_dt, z, phi, t)
+        function tsmp(dz_dt, z, phi, t)
             G1 = z[1]
             G2 = z[2]
             G3 = z[3]
@@ -557,14 +557,14 @@ end
             dz_dt[8] = ((kcat2*E2*(1/Km3)*(M1-M2)))/(1+(M1/Km3)+(M2/Km4)) - ((kcat3*E3*(1/Km5)*(M2-P)))/(1+(M2/Km5)+(P/Km6))
         end
 
-        de_prob = ODEProblem(f_tsp, ini_cond, (t[1],t[end]), phi)
+        de_prob = ODEProblem(tsmp, ini_cond, (t[1],t[end]), phi)
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_tsp, phi, bounds, ode_data, t)
+        return DEProblem(tsmp, phi, bounds, ode_data, t)
 
     elseif p == "cho"
     # ----- CHO -----
-	# [BioPreDyn]
+    # [BioPreDyn]
 
         x0 = zeros(Float64, 35)
         x0[1] = 5
@@ -726,7 +726,7 @@ end
         bounds = [[10^-5 for i in 1:length(p)],
                 [10^5 for i in 1:length(p)]]
 
-        function f_cho(dx_dt, x, par, t)
+        function cho(dx_dt, x, par, t)
             p = zeros(347)
             p[118] = 1
             p[119] = 1
@@ -962,9 +962,7 @@ end
             for i in 1:length(par)
                 p[i] = par[i]
             end
-            #endif /* FIXED */
 
-            #ifdef ASSIGNMENT
             y = zeros(promote_type(eltype(x),eltype(t)),102)
             y[1] = log(x[1])
             y[2] = log(x[2])
@@ -1072,9 +1070,7 @@ end
             y[100] = p[147]*p[183]*(1.00000000000000000+p[341]*y[4]+p[342]*y[34])
             y[101] = p[148]*p[184]*(1.00000000000000000+p[343]*y[6]+p[344]*y[12])
             y[102] = p[149]*p[185]*(1.00000000000000000+p[345]*y[18]+p[346]*y[31]+p[347]*y[20])
-            #endif /* ASSIGNMENT */
 
-            #ifdef ODEs
             dx_dt[1] = (y[71]-y[98]*1.00000000000000000/p[151]-x[1]*p[186]/x[35]*y[70])/p[186]
             dx_dt[2] = ((-y[72])+y[86]*1.00000000000000000/p[151]-x[2]*p[187]/x[35]*y[70])/p[187]
             dx_dt[3] = (y[73]-y[99]*1.00000000000000000/p[151]-x[3]*p[188]/x[35]*y[70])/p[188]
@@ -1112,10 +1108,11 @@ end
             dx_dt[35] = y[70]
         end
 
-        de_prob = ODEProblem(f_cho, x0, (t[1],t[end]), p)
+        de_prob = ODEProblem(cho, x0, (t[1],t[end]), p,
+                       isoutofdomain=(u,p,t) -> any(x -> (x < 0), vcat(u,p)))
         de_sol = solve(de_prob, saveat=t)
         ode_data = de_sol.u
-        return DEProblem(f_cho, p, bounds, ode_data, t)
+        return DEProblem(cho, p, bounds, ode_data, t)
 
     end
 end
