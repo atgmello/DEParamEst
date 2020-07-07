@@ -1,11 +1,8 @@
 module ProblemSet
 
 using DifferentialEquations
-using ParameterizedFunctions
 export DEProblem, get_ode_problem,
         get_problem_key, problem_info, problem_plot
-
-desired_precision = Float64
 
 struct DEProblem
     fun::Function
