@@ -277,7 +277,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	end
 
 	@info """Results.
-			  Problem\t$(Symbol(training_set[1].fun))
+			  Problem:\t$(Symbol(training_set[1].fun))
 			  Method:\t$(Symbol(f))
 			  Lambdas:\t$(lambda_arr)
 			  Initial phi:\t$(p0)
