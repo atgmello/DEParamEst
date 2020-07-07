@@ -140,9 +140,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	# Lamdba selection via
 	# Cross Validation
-	@debug """"--- x ---
-				$(method)
-				--- x ---
+	@debug """"$(method)
 				Initial guess:\n$(p0)
 				Starting Cross Validation!
 				Preprocessing starting
@@ -279,6 +277,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 	end
 
 	@info """Results.
+			  Problem\t$(Symbol(training_set[1].fun))
 			  Method:\t$(Symbol(f))
 			  Lambdas:\t$(lambda_arr)
 			  Initial phi:\t$(p0)
