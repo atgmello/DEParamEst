@@ -1,6 +1,7 @@
 module ProblemSet
 
 using DifferentialEquations
+using Memoize
 export DEProblem, get_ode_problem,
         get_problem_key, problem_info, problem_plot
 
@@ -45,7 +46,7 @@ function get_problem_key(i::Int=0)::String
     end
 end
 
-function get_problem(p::String)::DEProblem
+@memoize function get_problem(p::String)::DEProblem
     if p == "exponential"
         # ----- Problem 0 -----
 
