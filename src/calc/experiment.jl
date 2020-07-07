@@ -130,9 +130,9 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	results = [[Inf64], [NaN64], p0]
 	#lambda_arr = [1e-2,1e-1,0.0,1e0,1e1,1e2]
-	lambda_arr = [1e0,1e-1,1e-2,1e-3,0.0]
+	lambda_arr = [0.0,1e-3,1e-2,1e-1,1e0]
 	num_lambdas = length(lambda_arr)
-	best_lambda = lambda_arr[end]
+	best_lambda = lambda_arr[1]
 
 	bounds = training_set[1].bounds
 
