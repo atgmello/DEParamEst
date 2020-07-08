@@ -187,7 +187,7 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
                         plot_data)
 
         x = range(min_range, max_range, step=(max_range-min_range)/500)
-        if length(states) == 1
+        if length(true_par) == 1
             y = 0.0
         else
             y = range(min_range, max_range, step=(max_range-min_range)/500)
