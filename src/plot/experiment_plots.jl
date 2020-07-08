@@ -86,8 +86,15 @@ function main(args::Array{<:String})::Nothing
     println(jlso_file_or_path)
 
     if isdir(jlso_file_or_path)
-        jlso_files = map(file -> joinpath(jlso_file_or_path, file),
-                         readdir(jlso_file_or_path))
+        filter_jlso = files -> filter(f -> occursin(".jlso", f), files)
+
+        prepend_full_path = file -> joinpath(jlso_file_or_path, file)
+        generate_jlso_paths = files -> map(prepend_full_path, files)
+
+        get_jlso_files(path) =
+            path |> readdir |> filter_jlso |> generate_jlso_paths
+
+        jlso_files = get_jlso_files(jlso_file_or_path)
     else
         jlso_files = [jlso_file_or_path]
     end
