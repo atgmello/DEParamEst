@@ -2,6 +2,7 @@ using Pkg
 Pkg.activate(@__DIR__)
 Pkg.instantiate()
 
+using Logging
 using Gadfly
 using DifferentialEquations
 using ColorSchemes
@@ -85,31 +86,41 @@ function contour_3d_plots(x, y, z, par, save_path; method="", save_name="")
                     cont)
 end
 
+function calc_z_plot(x::AbstractArray, y::AbstractFloat,
+                     data, ode_fun, t, obj_fun;
+                     unknown_states=[],fixed_pars=[-1.0,-1.0])::AbstractArray
+    z = zeros(length(x))
+    par_eval = copy(fixed_pars)
+    idx = 1
 
-function calc_z_plot(x, y, data, ode_fun, t, obj_fun;
-                        unknown_states=[],fixed_pars=[-1.0,-1.0])
-    z = []
+    for k in x
+        par_eval[fixed_pars .< 0.0] .= [k]
+        z[idx] = obj_fun(par_eval, data, t, ode_fun)
+        @debug "Eval" k par_eval z[idx]
+        idx += 1
+    end
 
-    if length(y) > 1
-        #2D case
-        for i in x
-            for j in y
-                par_eval = copy(fixed_pars)
-                par_eval[par_eval .< 0.0] = [i, j]
-                #obj_eval = obj_fun(par_eval, data, t, ode_fun)+tikhonov(0.01,par_eval,zeros(length(par_eval)),ones(length(par_eval)))
-                obj_eval = obj_fun(par_eval, data, t, ode_fun)
-                push!(z, obj_eval)
-                #println("$i,$j\nPhi: $phi_eval\nRes: $obj_eval")
-            end
-        end
-    else
-        #1D case
-        for i in x
-            par_eval = copy(fixed_pars)
-            par_eval[par_eval .< 0.0] = [i]
-            obj_eval = obj_fun(par_eval, data, t, ode_fun)
-            push!(z, obj_eval)
-            #println("$i,$j\nPhi: $phi_eval\nRes: $obj_eval")
+    z = reshape(z, (length(y), length(x)))
+
+    return z
+end
+function calc_z_plot(x::AbstractArray, y::AbstractArray,
+                     data, ode_fun, t, obj_fun;
+                     unknown_states=[],fixed_pars=[-1.0,-1.0])::AbstractArray
+    z = zeros(length(y)*length(x))
+    par_eval = copy(fixed_pars)
+    idx = 1
+
+    for i in x
+        for j in y
+            par_eval[fixed_pars .< 0.0] .= [i, j]
+            # obj_eval = (obj_fun(par_eval, data, t, ode_fun)
+            #             +tikhonov(0.01, par_eval,
+            #                       zeros(length(par_eval)),
+            #                       ones(length(par_eval))))
+            z[idx] = obj_fun(par_eval, data, t, ode_fun)
+            @debug "Eval" i j par_eval z[idx]
+            idx += 1
         end
     end
 
@@ -118,11 +129,7 @@ function calc_z_plot(x, y, data, ode_fun, t, obj_fun;
     return z
 end
 
-function experiment_countour(exp, sample_range)
-    dir = exp["problem_name"]
-    save_path = joinpath(PATH,dir)
-    mkdir(joinpath(PATH,dir))
-
+function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
     ode_problem = exp["ode_problem"]
     ode_fun = ode_problem.fun
     t = ode_problem.t
@@ -135,6 +142,10 @@ function experiment_countour(exp, sample_range)
     max_range = rand_range[end][end]
 
     delta_t = 0.1
+
+    dir = exp["ode_problem"].fun |> Symbol |> String
+    save_path = joinpath(PATH,dir)
+    mkdir(joinpath(PATH,dir))
 
     # --- Fine Tune This Part ---
     fixed_pars = exp["fixed_pars"]
@@ -182,79 +193,92 @@ function experiment_countour(exp, sample_range)
             y = range(min_range, max_range, step=(max_range-min_range)/100)
         end
 
-        println("\n----- Data Shooting Estimator -----")
-            z = calc_z_plot(x, y, data, ode_fun, saveat_t,
-                                        data_shooting,
-                                        unknown_states=unknown_states,
-                                        fixed_pars=fixed_pars)
+        @info """Data Shooting Estimator
+                   Calculating z...""" Symbol(ode_fun)
+        z = calc_z_plot(x, y, data, ode_fun, saveat_t,
+                        data_shooting,
+                        unknown_states=unknown_states,
+                        fixed_pars=fixed_pars)
 
-            contour_3d_plots(x, y, z,
-                            true_par, save_path,
-                            title="Data Shooting",
-                            save_name="$(length(data))_big")
+        @info """Data Shooting Estimator
+                   Plotting...""" Symbol(ode_fun)
+        contour_3d_plots(x, y, z,
+                         true_par, save_path,
+                         method="ds",
+                         save_name="$(dir)_$(length(data))_big")
 
-            f_min,f_min_idx  = findmin(z)
+        @info """Data Shooting Estimator
+                   Reducing range...""" Symbol(ode_fun)
+        f_min,f_min_idx  = findmin(z)
 
-            x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
-            y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
-            try
-                z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
-                                            data_shooting,
-                                            unknown_states=unknown_states,
-                                            fixed_pars=fixed_pars)
-
-                contour_3d_plots(x_reduced, y_reduced, z,
-                                true_par, save_path,
-                                title="Data Shooting",
-                                save_name="$(length(data))_small")
-            catch e
-                println("-------- Error --------")
-                println("Error on small grid.\n$e")
-                bt = backtrace()
-                msg = sprint(showerror, e, bt)
-                println(msg)
-                println("-------- Error --------")
-            end
-
-        println("\n----- Classic Estimator -----")
+        x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
+        y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
         try
-            z = calc_z_plot(x, y, data, ode_fun, saveat_t,
-                                        single_shooting,
-                                        unknown_states=unknown_states,
-                                        fixed_pars=fixed_pars)
-            contour_3d_plots(x, y, z,
-                            true_par, save_path,
-                            title="Single Shooting",
-                            save_name="$(length(data))_big")
+            @info """Data Shooting Estimator
+                        Calculating z...""" Symbol(ode_fun)
+            z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
+                            data_shooting,
+                            unknown_states=unknown_states,
+                            fixed_pars=fixed_pars)
 
-            f_min,f_min_idx  = findmin(z)
-            x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
-            y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
-            try
-                z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
-                                            single_shooting,
-                                            unknown_states=unknown_states,
-                                            fixed_pars=fixed_pars)
-
-                contour_3d_plots(x_reduced, y_reduced, z,
-                                true_par, save_path,
-                                title="Single Shooting",
-                                save_name="$(length(data))_small")
-            catch e
-                println("-------- Error --------")
-                println("Error on small grid.\n$e")
-                bt = backtrace()
-                msg = sprint(showerror, e, bt)
-                println(msg)
-                println("-------- Error --------")
-            end
+            @info """Data Shooting Estimator
+                        Plotting...""" Symbol(ode_fun)
+            contour_3d_plots(x_reduced, y_reduced, z,
+                             true_par, save_path,
+                             method="ds",
+                             save_name="$(dir)_$(length(data))_small")
         catch e
-            println("-------- Error --------")
-            println("Error on small grid.\n$e")
             bt = backtrace()
             msg = sprint(showerror, e, bt)
-            println(msg)
-            println("-------- Error --------")
+            @warn """Error!
+                        Error in small grid.""" msg
+        end
+
+        try
+            @info """Single Shooting Estimator
+                        Calculating z...""" Symbol(ode_fun)
+            z = calc_z_plot(x, y, data, ode_fun, saveat_t,
+                            single_shooting,
+                            unknown_states=unknown_states,
+                            fixed_pars=fixed_pars)
+
+            @info """Single Shooting Estimator
+                        Plotting...""" Symbol(ode_fun)
+            contour_3d_plots(x, y, z,
+                             true_par, save_path,
+                             method="ss",
+                             save_name="$(dir)_$(length(data))_big")
+
+            @info """Single Shooting Estimator
+                        Reducing range...""" Symbol(ode_fun)
+            f_min,f_min_idx  = findmin(z)
+            x_reduced = range(x[f_min_idx[2]]-r, x[f_min_idx[2]]+r, step=s)
+            y_reduced = range(y[f_min_idx[1]]-r, y[f_min_idx[1]]+r, step=s)
+            try
+                @info """Single Shooting Estimator
+                             Calculating z...""" Symbol(ode_fun)
+                z = calc_z_plot(x_reduced, y_reduced, data, ode_fun, saveat_t,
+                                single_shooting,
+                                unknown_states=unknown_states,
+                                fixed_pars=fixed_pars)
+
+                @info """Single Shooting Estimator
+                             Plotting...""" Symbol(ode_fun)
+                contour_3d_plots(x_reduced, y_reduced, z,
+                                 true_par, save_path,
+                                 method="ss",
+                                 save_name="$(dir)_$(length(data))_small")
+            catch e
+                bt = backtrace()
+                msg = sprint(showerror, e, bt)
+                @warn """Error!
+                             Error in small grid.""" msg
+            end
+        catch e
+            bt = backtrace()
+            msg = sprint(showerror, e, bt)
+            @warn """Error!
+                        Error in small grid.""" msg
         end
     end
 end
