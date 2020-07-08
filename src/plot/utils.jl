@@ -384,6 +384,14 @@ function sr_plots(plot_data::Dict,
     nothing
 end
 
+"""
+Normalized Mean Square Error
+"""
+function nmse(data::Vector{T}, data_est::Vector{T})::T where T
+    normalizer = abs2(maximum(data) - minimum(data))
+    res = mean(abs2.(data_est-data))/normalizer
+    return res
+end
 
 function plot_compare(data::Vector, data_est::Vector)
     alphabet='A':'Z'
