@@ -159,7 +159,7 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
     true_par = exp["true_par"]
 
     r = exp["reduced_raius"]
-    s = exp["reduced_step"]
+    s = exp["reduced_step"]/2.0
 
     noise = exp["noise"]
     # -- Fine Tune This Part ---
@@ -170,7 +170,7 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
         #saveat_t = range(t[1], stop=t[end], length=num_samples)
         #saveat_t = collect(t[1]:((t[end]-t[1])/(num_samples-1)):t[end])
         saveat_t = range(t[1], stop=t[end], length=num_samples)
-        osol  = solve(oprob, OwrenZen3(), saveat=saveat_t)
+        osol  = solve(oprob, saveat=saveat_t)
         Plots.plot(osol)
         data = osol.u
         known_states = setdiff(1:length(states),unknown_states)
@@ -186,11 +186,11 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
                         "./data_$(length(saveat_t)*length(known_states)).pdf")),
                         plot_data)
 
-        x = range(min_range, max_range, step=(max_range-min_range)/100)
+        x = range(min_range, max_range, step=(max_range-min_range)/500)
         if length(states) == 1
             y = 0.0
         else
-            y = range(min_range, max_range, step=(max_range-min_range)/100)
+            y = range(min_range, max_range, step=(max_range-min_range)/500)
         end
 
         @info """Data Shooting Estimator
