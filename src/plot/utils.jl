@@ -8,7 +8,7 @@ import Cairo,
       Fontconfig
 
 const PLOT_FONT = "Arial"
-
+const VTR = 0.125
 
 """
 Adds noise to a Vector of Vector
@@ -38,7 +38,7 @@ end
 
 
 function step_success_rate(x::T)::Int64 where T
-    if x < 0.1
+    if x < VTR
        return 1
     else
         return 0
