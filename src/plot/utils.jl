@@ -118,10 +118,10 @@ function error_plots(plot_data::Dict,
                 major_label_font=PLOT_FONT,
                 minor_label_font=PLOT_FONT))
 
-    p = plot(x=noise_level, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
+    p = plot(x=noise_level, xlabel="Noise Percentage", ylabel="NRMSE", legend=:outertopright)
     ylim_arr = []
     for m in methods
-        p2 = plot(x=noise_level, xlabel="Noise Percentage", ylabel="Error", legend=:outertopright)
+        p2 = plot(x=noise_level, xlabel="Noise Percentage", ylabel="NRMSE", legend=:outertopright)
         error = plot_data[m]["error"]
         # Proceed only if there are no NaN
         if !any(isnan.(vcat(error...)))
@@ -194,7 +194,7 @@ function box_error_plots(plot_data::Dict,
         end
     end
     p = plot(df, x="method", y="data", color="color", Geom.boxplot,
-                Guide.xlabel("Method"), Guide.ylabel("Error"),
+                Guide.xlabel("Method"), Guide.ylabel("NRMSE"),
                 Theme(background_color=colorant"white",
                     panel_fill=colorant"white",
                     major_label_font=PLOT_FONT,
