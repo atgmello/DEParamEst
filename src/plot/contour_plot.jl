@@ -23,15 +23,17 @@ const PATH = "./data/contours/"
 const PLOT_FONT = "Arial"
 
 
-function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
+function contour_3d_plots(x, y, z, par, save_path; method="", save_name="")
+    title = Dict("ss"=>"Single Shooting", "ds"=>"Data Shooting")
+
     if length(par) > 1
         cont = PlottingUtils.heatmap(x, y, vec(z'),
                                     xlabel="θ₁", ylabel="θ₂",
-                                    zlabel="Cost\nFunction",
-                                    title=title,
+                                    zlabel="Objective\nFunction",
+                                    title=title[method],
                                     fillcolor=ColorSchemes.vik)
     else
-        cont = plot(x=x, y=vec(z), Geom.line, Guide.title(title),
+        cont = plot(x=x, y=vec(z), Geom.line, Guide.title(title[method]),
                     Gadfly.Coord.cartesian(yflip=false,
                                             fixed=false,
                                             xmin=minimum(x),
@@ -42,7 +44,7 @@ function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
                                     major_label_font=PLOT_FONT,
                                     key_title_font=PLOT_FONT,
                                     key_label_font=PLOT_FONT),
-                    Guide.xlabel("θ₁"), Guide.ylabel("Cost Function"))
+                    Guide.xlabel("θ₁"), Guide.ylabel("Objective Function"))
     end
 
     if par[1] > x[1] && par[1] < x[end]
@@ -61,10 +63,10 @@ function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
 
         three_dim = Plots.surface(
                         x, y, z, fillcolor=:vik, alpha=0.7,
-                        title=title,
+                        title=title[method],
                         #xrotation=45,yrotation=360-45,
                         xlabel=L"θ_1", ylabel=L"θ_2",
-                        zlabel="Cost Function",
+                        zlabel="Objective Function",
                         xtickfont=Plots.font("Arial", 10, "#6c606b"),
                         ytickfont=Plots.font("Arial", 10, "#6c606b"),
                         ztickfont=Plots.font("Arial", 10, "#6c606b"),
@@ -75,11 +77,11 @@ function contour_3d_plots(x, y, z, par, save_path; title="", save_name="")
 
         Plots.savefig(three_dim,
             joinpath(save_path,
-            "./3d_$(lowercase(replace(title," " => "_")))_$(save_name).pdf"))
+            "./3d_$(method)_$(save_name).pdf"))
     end
 
     Gadfly.draw(PDF(joinpath(save_path,
-                            "./cont_$(lowercase(replace(title," " => "_")))_$(save_name).pdf")),
+                            "./cont_$(method)_$(save_name).pdf")),
                     cont)
 end
 
