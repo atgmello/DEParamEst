@@ -283,208 +283,198 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
     end
 end
 
-# --- Interesting Experiments ---
+function get_experiments()::Vector{Dict}
+    experiments = Dict[]
+    # --- Interesting Experiments ---
 
-# No missing states
+    # No missing states
 
-# 0 - exponential
-expo_1 = Dict(
-    "problem_name" => "exponential",
-    "ode_problem" => get_problem("exponential"),
-    "fixed_pars" => [-1.0],
-    "min_range" => -1.1,
-    "max_range" => 1.15,
-    "reduced_raius" => 1.0,
-    "reduced_step" => 0.02,
-    "noise" => 0.0,
-    "states" => [1],
-    "unknown_states" => [],
-    "true_par" => [1.0])
+    # 0 - exponential
+    expo = Dict(
+        "ode_problem" => get_problem("exponential"),
+        "fixed_pars" => [-1.0],
+        "min_range" => -1.1,
+        "max_range" => 1.15,
+        "reduced_raius" => 1.0,
+        "reduced_step" => 0.02,
+        "noise" => 0.0,
+        "states" => [1],
+        "unknown_states" => [],
+        "true_par" => [1.0])
+    push!(experiments, expo)
 
-
-# 2 - floudas_1
-floudas_1 = Dict(
-    "problem_name" => "floudas_1",
-    "ode_problem" => get_problem("floudas_1"),
-    "fixed_pars" => [-1.0,-1.0],
-    "min_range" => 0.0,
-    "max_range" => 10.0,
-    "reduced_raius" => 0.5,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [5.0035,1.0])
-
-
-# 1 - floudas_6
-floudas_6 = Dict(
-    "problem_name" => "floudas_6",
-    "ode_problem" => get_problem("floudas_6"),
-    "fixed_pars" => [-1.0,-1.0],
-    "min_range" => 0.5,
-    "max_range" => 5.0,
-    "reduced_raius" => 1.0,
-    "reduced_step" => 0.02,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [3.2434,0.9209])
-
-# 2 - fhn
-fhn = Dict(
-    "problem_name" => "fhn",
-    "ode_problem" => get_problem("fhn"),
-    "fixed_pars" => [-1.0,-1.0, 3.0],
-    "min_range" => 0.0,
-    "max_range" => 1.50,
-    "reduced_raius" => 0.91,
-    "reduced_step" => 0.005,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [0.2,0.2])
+    # 2 - floudas_1
+    fic = Dict(
+        "ode_problem" => get_problem("fic"),
+        "fixed_pars" => [-1.0,-1.0],
+        "min_range" => 0.0,
+        "max_range" => 10.0,
+        "reduced_raius" => 0.5,
+        "reduced_step" => 0.01,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [],
+        "true_par" => [5.0035,1.0])
+    push!(experiments, fic)
 
 
-# 2 - floudas_4
-floudas_4 = Dict(
-    "problem_name" => "floudas_4",
-    "ode_problem" => get_problem("floudas_4"),
-    "fixed_pars" => [-1.0,-1.0],
-    "min_range" => 0.0,
-    "max_range" => 0.01,
-    "reduced_raius" => 1e-4,
-    "reduced_step" => 1e-6,
-    "noise" => 0.0,
-    "states" => [1],
-    "unknown_states" => [],
-    "true_par" => [4.5704*10^(-6),2.7845*10^(-4)])
+    # 1 - floudas_6
+    lvp = Dict(
+        "ode_problem" => get_problem("lvp"),
+        "fixed_pars" => [-1.0,-1.0],
+        "min_range" => 0.5,
+        "max_range" => 5.0,
+        "reduced_raius" => 1.0,
+        "reduced_step" => 0.02,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [],
+        "true_par" => [3.2434,0.9209])
+    push!(experiments, lvp)
+
+    # 2 - fhn
+    fhn = Dict(
+        "ode_problem" => get_problem("fhn"),
+        "fixed_pars" => [-1.0,-1.0, 3.0],
+        "min_range" => 0.0,
+        "max_range" => 1.50,
+        "reduced_raius" => 0.91,
+        "reduced_step" => 0.005,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [],
+        "true_par" => [0.2,0.2])
+    push!(experiments, fhn)
 
 
-# 2 - floudas_5
-floudas_5 = Dict(
-    "problem_name" => "floudas_5",
-    "ode_problem" => get_problem("floudas_5"),
-    "fixed_pars" => [-1.0,-1.0,1e-6,1e-6,1e-6],
-    "min_range" => 0.0,
-    "max_range" => 10.0,
-    "reduced_raius" => 0.8,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "noise" => 0.0,
-    "states" => [1,2,3],
-    "unknown_states" => [],
-    "true_par" => [5.2407,1.2176])
+    # 2 - floudas_4
+    bep = Dict(
+        "ode_problem" => get_problem("bep"),
+        "fixed_pars" => [-1.0,-1.0],
+        "min_range" => 0.0,
+        "max_range" => 0.01,
+        "reduced_raius" => 1e-4,
+        "reduced_step" => 1e-6,
+        "noise" => 0.0,
+        "states" => [1],
+        "unknown_states" => [],
+        "true_par" => [4.5704*10^(-6),2.7845*10^(-4)])
+    push!(experiments, bep)
 
 
-#TODO
-# Up to Here
-# 2 - bbg
-#phi = [0.4, 5, 0.05, 0.5]
-experiment = Dict(
-    "problem_name" => "bbg_1",
-    "ode_problem" => get_problem("bbg"),
-    "fixed_pars" => [-1.0,5.0,-1.0,0.5],
-    "min_range" => 0.0,
-    "max_range" => 5.0,
-    "reduced_raius" => 0.8,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [0.4,0.05])
+    # 2 - floudas_5
+    mhp = Dict(
+        "ode_problem" => get_problem("mhp"),
+        "fixed_pars" => [-1.0,-1.0,1e-6,1e-6,1e-6],
+        "min_range" => 0.0,
+        "max_range" => 10.0,
+        "reduced_raius" => 0.8,
+        "reduced_step" => 0.01,
+        "noise" => 0.0,
+        "noise" => 0.0,
+        "states" => [1,2,3],
+        "unknown_states" => [],
+        "true_par" => [5.2407,1.2176])
+    push!(experiments, mhp)
 
-# experiment_countour(experiment, 10:20:50)
 
-experiment = Dict(
-    "problem_name" => "bbg_2",
-    "ode_problem" => get_problem("bbg"),
-    "fixed_pars" => [0.4,-1.0,0.05,-1.0],
-    "min_range" => 0.5,
-    "max_range" => 8.0,
-    "reduced_raius" => 0.1,
-    "reduced_step" => 0.005,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [],
-    "true_par" => [5.0,0.5])
+    #TODO
+    # Up to Here
+    # 2 - bbg
+    #phi = [0.4, 5, 0.05, 0.5]
+    experiment = Dict(
+        "ode_problem" => get_problem("bbg"),
+        "fixed_pars" => [-1.0,5.0,-1.0,0.5],
+        "min_range" => 0.0,
+        "max_range" => 5.0,
+        "reduced_raius" => 0.8,
+        "reduced_step" => 0.01,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [],
+        "true_par" => [0.4,0.05])
+    # push!(experiments, experiment)
 
-# experiment_countour(experiment, 10:20:50)
+    experiment = Dict(
+        "ode_problem" => get_problem("bbg"),
+        "fixed_pars" => [0.4,-1.0,0.05,-1.0],
+        "min_range" => 0.5,
+        "max_range" => 8.0,
+        "reduced_raius" => 0.1,
+        "reduced_step" => 0.005,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [],
+        "true_par" => [5.0,0.5])
+    # push!(experiments, experiment)
 
-# 1 - floudas_6
-# Not so interesting
-experiment = Dict(
-    "problem_name" => "floudas_6_u2",
-    "ode_problem" => get_problem("floudas_6"),
-    "fixed_pars" => [-1.0,0.9209,-1.0],
-    "min_range" => 0.5,
-    "max_range" => 3.5,
-    "reduced_raius" => 0.5,
-    "reduced_step" => 0.05,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [2],
-    "true_par" => [3.2434,1.1])
+    # 1 - floudas_6
+    # Not so interesting
+    experiment = Dict(
+        "ode_problem" => get_problem("lvp"),
+        "fixed_pars" => [-1.0,0.9209,-1.0],
+        "min_range" => 0.5,
+        "max_range" => 3.5,
+        "reduced_raius" => 0.5,
+        "reduced_step" => 0.05,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [2],
+        "true_par" => [3.2434,1.1])
+    # push!(experiments, experiment)
 
-# experiment_countour(experiment, 10:20:50)
+    # 1 - floudas_6
+    # Better
+    experiment_1 = Dict(
+        "ode_problem" => get_problem("lvp"),
+        "fixed_pars" => [-1.0,0.9209,-1.0],
+        "min_range" => 0.5,
+        "max_range" => 5.0,
+        "reduced_raius" => 1.0,
+        "reduced_step" => 0.05,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [1],
+        "true_par" => [3.2434,1.2])
+    # push!(experiments, experiment_1)
 
-# 1 - floudas_6
-# Better
-experiment_1 = Dict(
-    "problem_name" => "floudas_6_u1",
-    "ode_problem" => get_problem("floudas_6"),
-    "fixed_pars" => [-1.0,0.9209,-1.0],
-    "min_range" => 0.5,
-    "max_range" => 5.0,
-    "reduced_raius" => 1.0,
-    "reduced_step" => 0.05,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [1],
-    "true_par" => [3.2434,1.2])
+    # 2 - floudas_1
+    experiment = Dict(
+        "ode_problem" => get_problem("fic"),
+        "fixed_pars" => [5.0035,-1.0,-1.0],
+        "min_range" => 0.0,
+        "max_range" => 5.0,
+        "reduced_raius" => 0.5,
+        "reduced_step" => 0.01,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [1],
+        "true_par" => [1.0,1.0])
+    # push!(experiments, experiment)
 
-# experiment_countour(experiment_1, 10:20:50)
-
-# 2 - floudas_1
-experiment = Dict(
-    "problem_name" => "floudas_1_u1",
-    "ode_problem" => get_problem("floudas_1"),
-    "fixed_pars" => [5.0035,-1.0,-1.0],
-    "min_range" => 0.0,
-    "max_range" => 5.0,
-    "reduced_raius" => 0.5,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [1],
-    "true_par" => [1.0,1.0])
-
-# experiment_countour(experiment, 10:20:50)
-
-# 2 - floudas_1
-# Not so interesting
-experiment = Dict(
-    "problem_name" => "floudas_1_u2",
-    "ode_problem" => get_problem("floudas_1"),
-    "fixed_pars" => [-1.0,1.0,-1.0],
-    "min_range" => -1.0,
-    "max_range" => 7.0,
-    "reduced_raius" => 0.5,
-    "reduced_step" => 0.01,
-    "noise" => 0.0,
-    "states" => [1,2],
-    "unknown_states" => [2],
-    "true_par" => [5.0035,0.0])
-
-# experiment_countour(experiment, 10:20:50)
+    # 2 - floudas_1
+    # Not so interesting
+    experiment = Dict(
+        "ode_problem" => get_problem("fic"),
+        "fixed_pars" => [-1.0,1.0,-1.0],
+        "min_range" => -1.0,
+        "max_range" => 7.0,
+        "reduced_raius" => 0.5,
+        "reduced_step" => 0.01,
+        "noise" => 0.0,
+        "states" => [1,2],
+        "unknown_states" => [2],
+        "true_par" => [5.0035,0.0])
+    # push!(experiments, experiment)
+    return experiments
+end
 
 function main()
-    # experiment_countour(floudas_5, 10:20:50)
-    # experiment_countour(floudas_4, 10:20:50)
-    experiment_countour(fhn, 10:20:50)
-    # experiment_countour(floudas_6, 10:20:50)
-    # experiment_countour(floudas_1, 10:20:50)
-    # experiment_countour(expo_1, 10:60:50)
+    experiments = get_experiments()
+    experiment_contour_10_50 = e -> experiment_contour(e, 10:20:50)
+    for e in experiments
+        experiment_contour_10_50(e)
+    end
 end
 
 main()
