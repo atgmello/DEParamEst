@@ -106,7 +106,7 @@ function single_shooting(phi::Vector{T},
 
     prob = ODEProblem(f, ini_cond, tspan, phi,
                       isoutofdomain=(u,p,t) -> any(x -> (x < 0), p))
-    osol  = solve(prob, saveat=t)
+    osol  = solve(prob, AutoVern7(Rodas5()), saveat=t)
 
     return sse(data,osol.u)
 end
