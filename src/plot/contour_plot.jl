@@ -69,7 +69,7 @@ function contour_3d_plots(x, y, z, par, save_path; method="", save_name="", cam=
             zrotation=-35
             xformatter=:scientific
         else
-            zlabel_adjust = "\nObjective Function"
+            zlabel = "\nObjective Function"
             xlabel="\n"*L"θ_1"
             ylabel="\n"*L"θ_2"
             zrotation=nothing
