@@ -10,8 +10,6 @@ using LaTeXStrings
 import Plots
 import Cairo,
       Fontconfig
-Plots.pyplot()
-Plots.theme(:default)
 
 include("../calc/problem_set.jl")
 include("../calc/objective_function.jl")
@@ -21,18 +19,20 @@ import .ObjectiveFunction: data_shooting, single_shooting, tikhonov
 import .PlottingUtils: heatmap, problem_plot, add_noise
 
 const PATH = "./data/contours/"
-const PLOT_FONT = "Arial"
+const GADFLY_FONT = "Arial"
 
+Plots.pyplot()
+Plots.theme(:default)
 
-function contour_3d_plots(x, y, z, par, save_path; method="", save_name="")
+function contour_3d_plots(x, y, z, par, save_path; method="", save_name="", cam=(-60,30))
     title = Dict("ss"=>"Single Shooting", "ds"=>"Data Shooting")
 
     if length(par) > 1
         cont = PlottingUtils.heatmap(x, y, vec(z'),
-                                    xlabel="θ₁", ylabel="θ₂",
-                                    zlabel="Objective\nFunction",
-                                    title=title[method],
-                                    fillcolor=ColorSchemes.vik)
+                                     xlabel="θ₁", ylabel="θ₂",
+                                     zlabel="Objective\nFunction",
+                                     title=title[method],
+                                     fillcolor=ColorSchemes.vik)
     else
         cont = plot(x=x, y=vec(z), Geom.line, Guide.title(title[method]),
                     Gadfly.Coord.cartesian(yflip=false,
@@ -41,10 +41,10 @@ function contour_3d_plots(x, y, z, par, save_path; method="", save_name="")
                                             xmax=maximum(x),
                                             ymin=minimum(vec(z)),
                                             ymax=maximum(vec(z))),
-                    Gadfly.Theme(minor_label_font=PLOT_FONT,
-                                    major_label_font=PLOT_FONT,
-                                    key_title_font=PLOT_FONT,
-                                    key_label_font=PLOT_FONT),
+                    Gadfly.Theme(minor_label_font=GADFLY_FONT,
+                                    major_label_font=GADFLY_FONT,
+                                    key_title_font=GADFLY_FONT,
+                                    key_label_font=GADFLY_FONT),
                     Guide.xlabel("θ₁"), Guide.ylabel("Objective Function"))
     end
 
@@ -62,19 +62,41 @@ function contour_3d_plots(x, y, z, par, save_path; method="", save_name="")
         end
 
 
-        three_dim = Plots.surface(
-                        x, y, z, fillcolor=:vik, alpha=0.7,
-                        title=title[method],
-                        #xrotation=45,yrotation=360-45,
-                        xlabel=L"θ_1", ylabel=L"θ_2",
-                        zlabel="Objective Function",
-                        xtickfont=Plots.font("Arial", 10, "#6c606b"),
-                        ytickfont=Plots.font("Arial", 10, "#6c606b"),
-                        ztickfont=Plots.font("Arial", 10, "#6c606b"),
-                        titlefont=Plots.font("Arial", 12, "#564a55"),
-                        legendfont=Plots.font("Arial", 10, "#6c606b"),
-                        guidefont=Plots.font("Arial", 12, "#564a55"),
-                        colorbar=false, right_margin=30px)
+        if occursin("bep", save_name)
+            zlabel = "\n\n\nObjective Function"
+            xlabel="\n\n\n"*L"θ_1"
+            ylabel="\n"*L"θ_2"
+            zrotation=-35
+            xformatter=:scientific
+        else
+            zlabel_adjust = "\nObjective Function"
+            xlabel="\n"*L"θ_1"
+            ylabel="\n"*L"θ_2"
+            zrotation=nothing
+            xformatter=:auto
+        end
+        # "Arial" font does not have the required glyphs under PyPlot
+        three_dim = Plots.surface(x, y, z,
+                                  fillcolor=:vik, alpha=0.7,
+                                  title=title[method],
+                                  # xrotation=xrotation,
+                                  # yrotation=360-45,
+                                  zrotation=zrotation,
+                                  xformatter=xformatter,
+                                  # yformatter=yformatter,
+                                  # zformatter=zformatter,
+                                  xlabel=xlabel,
+                                  ylabel=ylabel,
+                                  zlabel=zlabel,
+                                  xtickfont=Plots.font("DejaVu Sans", 10, "#6c606b"),
+                                  ytickfont=Plots.font("DejaVu Sans", 10, "#6c606b"),
+                                  ztickfont=Plots.font("DejaVu Sans", 10, "#6c606b"),
+                                  titlefont=Plots.font("DejaVu Sans", 12, "#564a55"),
+                                  legendfont=Plots.font("DejaVu Sans", 10, "#6c606b"),
+                                  guidefont=Plots.font("DejaVu Sans", 12, "#564a55"),
+                                  colorbar=false, right_margin=30px,
+                                  camera=cam
+                                  )
 
         Plots.savefig(three_dim,
             joinpath(save_path,
@@ -147,6 +169,11 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
     save_path = joinpath(PATH,dir)
     mkdir(joinpath(PATH,dir))
 
+    cam = (60,30)
+    if Symbol(ode_fun) == :bep
+        cam = (-100,35)
+    end
+
     # --- Fine Tune This Part ---
     fixed_pars = exp["fixed_pars"]
 
@@ -205,7 +232,8 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
         contour_3d_plots(x, y, z,
                          true_par, save_path,
                          method="ds",
-                         save_name="$(dir)_$(length(data))_big")
+                         save_name="$(dir)_$(length(data))_big",
+                         cam=cam)
 
         @info """Data Shooting Estimator
                    Reducing range...""" Symbol(ode_fun)
@@ -226,7 +254,8 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
             contour_3d_plots(x_reduced, y_reduced, z,
                              true_par, save_path,
                              method="ds",
-                             save_name="$(dir)_$(length(data))_small")
+                             save_name="$(dir)_$(length(data))_small",
+                             cam=cam)
         catch e
             bt = backtrace()
             msg = sprint(showerror, e, bt)
@@ -247,7 +276,8 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
             contour_3d_plots(x, y, z,
                              true_par, save_path,
                              method="ss",
-                             save_name="$(dir)_$(length(data))_big")
+                             save_name="$(dir)_$(length(data))_big",
+                             cam=cam)
 
             @info """Single Shooting Estimator
                         Reducing range...""" Symbol(ode_fun)
@@ -267,7 +297,8 @@ function experiment_contour(exp::Dict, sample_range::AbstractArray)::Nothing
                 contour_3d_plots(x_reduced, y_reduced, z,
                                  true_par, save_path,
                                  method="ss",
-                                 save_name="$(dir)_$(length(data))_small")
+                                 save_name="$(dir)_$(length(data))_small",
+                                 cam=cam)
             catch e
                 bt = backtrace()
                 msg = sprint(showerror, e, bt)
