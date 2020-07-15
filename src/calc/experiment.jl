@@ -87,7 +87,7 @@ function optim_res(obj_fun::Function,
 		generate_estimated_data = function (p)
 			tspan = (p.t[1], p.t[end])
 			ode_prob = ODEProblem(p.fun, p.data[1], tspan, phi_est)
-			ode_sol  = solve(ode_prob, saveat=p.t)
+			ode_sol  = solve(ode_prob, AutoVern7(Rodas5()), saveat=p.t)
 			ode_sol.u
 		end
 
@@ -414,7 +414,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 			_t = range(t[1], stop=t[end], length=sam)
 			tspan = (t[1], t[end])
 			ode_prob = ODEProblem(fun, ini_cond, tspan, phi)
-			ode_sol  = solve(ode_prob, saveat=_t)
+			ode_sol  = solve(ode_prob, AutoVern7(Rodas5()), saveat=_t)
 			data = ode_sol.u
 			#data_plot = plot(t,data')
 			#display(data_plot)
@@ -434,7 +434,7 @@ function experiment(p_num::Int64,samples::AbstractArray{<:Int},
 					_t = range(t[1], stop=t[end], length=sam)
 					tspan = (t[1], t[end])
 					ode_prob = ODEProblem(fun, add_noise(ini_cond,var_ini_cond), tspan, phi)
-					ode_sol  = solve(ode_prob, saveat=_t)
+					ode_sol  = solve(ode_prob, AutoVern7(Rodas5()), saveat=_t)
 					data = ode_sol.u
 
 					push!(testing_set_arr_partial,ProblemSet.DEProblem(problem.fun, problem.phi,

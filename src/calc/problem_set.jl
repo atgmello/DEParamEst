@@ -61,7 +61,7 @@ end
 
         t = range(0.0, stop=10.0, length=10)
         de_prob = ODEProblem(f_exp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
 
         return DEProblem(f_exp, phi, bounds, ode_data, t)
@@ -91,7 +91,7 @@ end
         <=#
         t = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         de_prob = ODEProblem(fic, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
 
         return DEProblem(fic, phi, bounds, ode_data, t)
@@ -128,7 +128,7 @@ end
 
         t = [0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]
         de_prob = ODEProblem(frc, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(frc, phi, bounds, ode_data, t)
 
@@ -159,7 +159,7 @@ end
         <=#
         t =[0.0,.025,.05,.075,.1,.125,.150,.175,.2,.225,.25,.3,.35,.4,.45,.5,.55,.65,.75,.85,.95]
         de_prob = ODEProblem(ccgo, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(ccgo, phi, bounds, ode_data, t)
 
@@ -183,7 +183,7 @@ end
         <=#
         t = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,11.0,14.0,19.0,24.0,29.0,39.0]
         de_prob = ODEProblem(bep, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(bep, phi, bounds, ode_data, t)
 
@@ -214,7 +214,7 @@ end
         <=#
         t = [0.,0.050,0.065,0.080,0.123,0.233,0.273,0.354,0.397,0.418,0.502,0.553,0.681,0.750,0.916,0.937,1.122]
         de_prob = ODEProblem(mhp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(mhp, phi, bounds, ode_data, t)
 
@@ -240,7 +240,7 @@ end
         <=#
         t = [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]
         de_prob = ODEProblem(lvp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(lvp, phi, bounds, ode_data, t)
 
@@ -269,7 +269,7 @@ end
         end
 
         de_prob = ODEProblem(bbg, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(bbg, phi, bounds, ode_data, t)
 
@@ -299,7 +299,7 @@ end
         end
 
         de_prob = ODEProblem(fhn, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(fhn, phi, bounds, ode_data, t)
 
@@ -349,7 +349,7 @@ end
         end
 
         de_prob = ODEProblem(mapk, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(mapk, phi, bounds, ode_data, t)
 
@@ -380,7 +380,7 @@ end
         end
 
         de_prob = ODEProblem(gosc, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         new_prob = DEProblem(gosc, phi, bounds, ode_data, t)
 
@@ -558,7 +558,7 @@ end
         end
 
         de_prob = ODEProblem(tsmp, ini_cond, (t[1],t[end]), phi)
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(tsmp, phi, bounds, ode_data, t)
 
@@ -1110,7 +1110,7 @@ end
 
         de_prob = ODEProblem(cho, x0, (t[1],t[end]), p,
                        isoutofdomain=(u,p,t) -> any(x -> (x < 0), vcat(u,p)))
-        de_sol = solve(de_prob, saveat=t)
+        de_sol = solve(de_prob, AutoVern7(Rodas5()), saveat=t)
         ode_data = de_sol.u
         return DEProblem(cho, p, bounds, ode_data, t)
 
