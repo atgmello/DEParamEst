@@ -26,7 +26,7 @@ import .Utils: rand_guess, add_noise, nmse, transpose_vector
 Random.seed!(1234)
 
 const RT = 0.95
-const MAXT = 10^4
+const MAXT = 10^6
 const M = 50
 const MIN_LOG = Logging.Info
 
