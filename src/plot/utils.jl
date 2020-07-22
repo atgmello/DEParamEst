@@ -225,16 +225,16 @@ function parameter_plots(plot_data::Dict,
     p_arr = []
     for m in methods
         p = plot(legend=:outertopright, ylabel="Value", xlabel="Parameter")
-    	for i in 1:num_pars
+        for i in 1:num_pars
             data = getindex.(plot_data[m]["est"][1],i)
-    		if i == 1
-    			boxplot!(p, [string(i)], log10.(data), color=method_color[m], label=m)
-    		else
-    			boxplot!(p, [string(i)], log10.(data), color=method_color[m], label="")
-    		end
-    	end
+            if i == 1
+                boxplot!(p, [string(i)], log10.(data), color=method_color[m], label=m)
+            else
+                boxplot!(p, [string(i)], log10.(data), color=method_color[m], label="")
+            end
+        end
         savefig(p,joinpath(path,replace("par_$(m)_$(sam)_$(var)","."=>"")*".pdf"))
-    	push!(p_arr,p)
+        push!(p_arr,p)
     end
 
     p = plot(p_arr...,layout=(length(methods),1))
