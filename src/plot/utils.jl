@@ -111,8 +111,9 @@ function error_plots(plot_data::Dict,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Int,
-                    path::String)::Nothing
+                    path::String)::String
 
+    nrmse_log = "NRMSE\n"
     p = plot(x=noise_level, y=[],Geom.line,
             Theme(background_color=colorant"white",
                 panel_fill=colorant"white",
@@ -122,6 +123,7 @@ function error_plots(plot_data::Dict,
     p = plot(x=noise_level, xlabel="Noise Percentage", ylabel="NRMSE", legend=:outertopright)
     ylim_arr = []
     for m in methods
+        nrmse_log *= "$(m), "
         p2 = plot(x=noise_level, xlabel="Noise Percentage", ylabel="NRMSE", legend=:outertopright)
         error = plot_data[m]["error"]
         # Proceed only if there are no NaN
@@ -151,6 +153,7 @@ function error_plots(plot_data::Dict,
                                 qerror[3,:]),
                         fillalpha=.5, label=method_label[m], color=method_color[m])
             #display(p2)
+            nrmse_log *= "$(qerror)\n"
 
             savefig(p,path*"/error_inter_$(m)_$(sam).pdf")
             savefig(p2,path*"/error_$(m)_$(sam).pdf")
@@ -165,7 +168,7 @@ function error_plots(plot_data::Dict,
     #display(p)
 
     savefig(p,path*"/error_all_$(sam).pdf")
-    nothing
+    return nrmse_log
 end
 
 
@@ -180,16 +183,19 @@ function box_error_plots(plot_data::Dict,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Symbol,
-                    path::String)::Nothing
+                    path::String)::String
 
+    log_str = "NRMSE\n"
     df = DataFrame()
     for m in methods
         # Substitute infinite for missing
         # so that boxplot can still work
         # with the data
+        log_str *= "$(m), "
         data = [ifelse(isinf(x),missing,x) for x in plot_data[m]["error"][1]]
         aux_df = DataFrame(method=method_label[m],
                     data=data, color=method_color[m])
+        log_str *= "$(round(box_scatter_plot(data)[2], digits=4))\n "
         try
             append!(df, aux_df)
         catch e
@@ -209,6 +215,7 @@ function box_error_plots(plot_data::Dict,
         println(df)
         println()
     end
+    return log_str
 end
 
 
@@ -256,7 +263,9 @@ function sr_plots(plot_data::Dict,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Symbol,
-                    path::String)::Nothing
+                    path::String)::String
+
+    log_str = "Method, SR, Cost, ISR\n"
 
     p = plot(x=[], y=[], Geom.point,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
@@ -280,6 +289,7 @@ function sr_plots(plot_data::Dict,
 
     ylim_arr = []
     for m in methods
+        log_str *= "$(m), "
         p3 = plot(x=[], y=[],Geom.point,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
                 Theme(background_color=colorant"white",
@@ -288,12 +298,16 @@ function sr_plots(plot_data::Dict,
                     minor_label_font=PLOT_FONT))
 
         sr = mean.([step_success_rate.(e) for e in plot_data[m]["error"]])
+        qsr = box_scatter_plot(sr)
+        log_str *= "$(round(qsr[2], digits=4)), "
         isr = 1.0./sr
         timed = plot_data[m]["time"]
         if !any(isnan.(vcat(timed...)))
             qtime = hcat(box_scatter_plot.(timed)...)
             qqtime = box_scatter_plot(qtime[2,:])
             qisr = box_scatter_plot(isr)
+            log_str *= "$(round(qqtime[2], digits=4)), "
+            log_str *= "$(round(qisr[2], digits=4))\n"
             if qisr[2] <= 5.0
                 append!(p.layers,
                     layer(x=[qqtime[2]], y=[qisr[2]],
@@ -336,9 +350,10 @@ function sr_plots(plot_data::Dict,
     catch e
         @show e
     end
-    nothing
-end
 
+    log_str *= "\n"
+    return log_str
+end
 
 function sr_plots(plot_data::Dict,
                     var::Symbol,
@@ -346,7 +361,9 @@ function sr_plots(plot_data::Dict,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Symbol,
-                    path::String)::Nothing
+                    path::String)::String
+
+    log_str = "Method, SR, Cost, ISR\n"
 
     p = plot(x=[], y=[], Geom.point,
                 Guide.xlabel("Time"), Guide.ylabel("1 / Success Rate"),
@@ -360,13 +377,17 @@ function sr_plots(plot_data::Dict,
 
     ylim_arr = []
     for m in methods
+        log_str *= "$(m), "
         sr = mean([step_success_rate(e) for e in plot_data[m]["error"][1]])
+        log_str *= "$(round(sr, digits=4)), "
         isr = [1.0./sr]
         timed = plot_data[m]["time"][1]
 
         if !any(isnan.(vcat(timed...)))
             qtime = box_scatter_plot(timed)
             qisr = box_scatter_plot(isr)
+            log_str *= "$(round(qtime[2], digits=4)), "
+            log_str *= "$(round(qisr[2], digits=4))\n"
             if qisr[2] <= 5.0
                 append!(p.layers,
                     layer(x=[qtime[2]], y=[qisr[2]],
@@ -386,7 +407,9 @@ function sr_plots(plot_data::Dict,
     catch  e
         @show e
     end
-    nothing
+
+    log_str *= "\n"
+    return log_str
 end
 
 """
@@ -422,8 +445,9 @@ function oe_plots(plot_data::Dict,
                     method_label::Dict,
                     method_color::Dict,
                     sam::Symbol,
-                    path::String)::Nothing
+                    path::String)::String
 
+    log_str = "Overall Efficiency\n"
     t_succ = zeros(length(methods))
     for (i,m) in enumerate(methods)
         error = plot_data[m]["error"]
@@ -432,9 +456,11 @@ function oe_plots(plot_data::Dict,
         mean_time = mean.(time)
         t_succ_arr = mean_time./sr
         t_succ[i] = mean(t_succ_arr)
+        log_str *= "$(m), "
     end
 
     oe = minimum(t_succ)./t_succ
+    log_str *= "\n$(round.(oe, digits=4))\n"
 
     df = DataFrame()
     for (i,m) in enumerate(methods)
@@ -465,7 +491,8 @@ function oe_plots(plot_data::Dict,
     catch e
         @show e
     end
-    nothing
+
+    return log_str
 end
 
 
