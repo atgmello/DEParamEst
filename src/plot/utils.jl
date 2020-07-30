@@ -2,6 +2,7 @@ module PlottingUtils
 
 using Gadfly
 using ColorSchemes
+using Measures
 using DataFrames
 using Statistics: mean, quantile
 import Cairo,
@@ -131,8 +132,10 @@ function error_plots(plot_data::Dict,
             # data < 5)
             if !any(qerror[3,:] .> 5.0)
 
-                append!(p.layers,layer(x=x1, y=y1, Theme(default_color=colorant"#e6612f"), #Vivid Vermilion
-                        Geom.PointGeometry))
+                append!(p.layers,layer(x=x1, y=y1,
+                                       size=map(x->x*mm, repeat([1.25], length(x1))),
+                                       Theme(default_color=colorant"#e6612f"), #Vivid Vermilion
+                                       Geom.PointGeometry))
 
 #                plot!(p, noise_level, qerror[2,:],
 #                            grid=true,
@@ -303,12 +306,14 @@ function sr_plots(plot_data::Dict,
             end
 
             append!(p2.layers, layer(x=qtime[2,:], y=isr,
-                        color=[method_color[m]], Geom.point))
+                                     size=map(x->x*mm,
+                                              repeat([1.25], length(qtime[2,:]))),
+                                     color=[method_color[m]], Geom.point))
 
             append!(p3.layers, layer(x=qtime[2,:], y=isr,
-                        color=[method_color[m]],
-                        label=String.(noise_level),
-                        Geom.point, Geom.label))
+                                     color=[method_color[m]],
+                                     label=String.(noise_level),
+                                     Geom.point, Geom.label))
 
             try
                 p3 |> PDF(joinpath(path,"sr_$(m)_$(sam).pdf"))
