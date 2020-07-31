@@ -91,20 +91,29 @@ function optim_res(obj_fun::Function,
 			ode_sol.u
 		end
 
-		generate_then_transpose(p) = p |> generate_estimated_data |> transpose_vector
+		generate_then_transpose(p) = (p
+									  |> generate_estimated_data
+									  |> transpose_vector)
 		data_estimated_set = map(generate_then_transpose, testing_set)
 
 		get_then_transpose(p) = p.data |> transpose_vector
-		data_training_set = map(get_then_transpose, testing_set)
+		data_testing_set = map(get_then_transpose, testing_set)
 
-		compare_testing_estimated = zip(data_training_set, data_estimated_set)
+		testing_estimated_pairs = zip(data_testing_set, data_estimated_set)
 
-		nmse_each_state_vector(compare) =  map(vector -> nmse(vector[1], vector[2]),
-												zip(compare[1], compare[2]))
+		nmse_state_vectors(dataset_pairs) =  map(state_pairs -> nmse(state_pairs...),
+												 zip(dataset_pairs...))
 
-		total_nmse = map(nmse_each_state_vector, compare_testing_estimated)
+		total_nmse = map(nmse_state_vectors, testing_estimated_pairs)
 		# (mean) Normalized Root Mean Squared Error
 		nrmse = mean(total_nmse) |> mean |> sqrt
+		@debug("NRMSE",
+			   Symbol(testing_set[1].fun),
+			   phi_est,
+			   nrmse,
+			   data_estimated_set,
+			   data_testing_set,
+			   testing_estimated_pairs)
 	catch e
 		bt = backtrace()
 		msg = sprint(showerror, e, bt)
@@ -140,7 +149,7 @@ function cv_optimize(training_set::Vector{ProblemSet.DEProblem},
 
 	# Lamdba selection via
 	# Cross Validation
-	@debug """"$(method)
+	@debug """CV
 				Initial guess:\n$(p0)
 				Starting Cross Validation!
 				Preprocessing starting
