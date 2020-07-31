@@ -10,11 +10,129 @@ using DataFrames
 using DifferentialEquations
 import Distributions: Normal, Uniform
 
+
 struct IVP
     f::Function
     ini::Vector
     t::AbstractArray
     phi::Vector
+    data::Vector
+    IVP(f, ini, t, phi, data) = new(f, ini, t, phi, data)
+    IVP(f, ini, t, phi) = new(f, ini, t, phi,
+                              (solve_ivp(new(f, ini, t, phi, []))
+                               |> transpose_vector))
+end
+
+
+function get_ivps()::Dict
+    var_ini = 0.01
+    ivps = Dict()
+
+    function fic(dz_dt, z, phi, t)
+        r_1 = phi[1]*z[1]
+        r_2 = phi[2]*z[2]
+
+        dz_dt[1] = -r_1
+        dz_dt[2] = r_1 - r_2
+    end
+
+    ivps[:fic] = Dict()
+    ini = [1., 0.]
+    t = range(0.0, 1.0, length=10)
+    phi = [5.0035, 1.0]
+
+    ivps[:fic][:nom] = IVP(fic, ini, t, phi)
+    ivps_test = IVP(fic, add_noise(ini, var_ini), t, phi)
+    ivps[:fic][:test] = IVP(fic, ivps_test.ini, t, phi,
+                            add_noise(ivps_test.data, 0.1))
+
+    ivps[:fic][:ss] = IVP(fic, ini, t,
+                          [5.011535232847903,
+                           0.9490955193480339], [])
+    ivps[:fic][:ssr] = IVP(fic, ini, t,
+                           [5.662374165061859,
+                            4.600853424625171], [])
+    ivps[:fic][:ds] = IVP(fic, ini, t,
+                          [4.767811504376019,
+                           0.9620285702765027], [])
+    ivps[:fic][:dss] = IVP(fic, ini, t,
+                           [5.057700471184158,
+                            1.1660869766794006], [])
+
+
+
+    function ccgo(dz_dt, z, phi, t)
+        r_1 = phi[1]*z[1]^2
+        r_2 = phi[2]*z[2]
+        r_3 = phi[3]*z[1]^2
+
+        dz_dt[1] = - r_1 - r_3
+        dz_dt[2] = r_1 - r_2
+    end
+
+    ivps[:ccgo] = Dict()
+    ini = [1., 0.]
+    t = range(0.0, 0.95, length=10)
+    phi = [12.214, 7.9798, 2.2216]
+
+    ivps[:ccgo][:nom] = IVP(ccgo, ini, t, phi)
+    ivps_test = IVP(ccgo, add_noise(ini, var_ini), t, phi)
+    ivps[:ccgo][:test] = IVP(ccgo, ivps_test.ini, t, phi,
+                            add_noise(ivps_test.data, 0.1))
+
+    ivps[:ccgo][:ss] = IVP(ccgo, ini, t,
+                           [10.601173576959617,
+                            7.024603700551421,
+                            5.296705518161371], [])
+    ivps[:ccgo][:ssr] = IVP(ccgo, ini, t,
+                            [12.694091102822359,
+                             7.7461038473135275,
+                             2.3847262326540015], [])
+    ivps[:ccgo][:ds] = IVP(ccgo, ini, t,
+                           [3.261725472047141,
+                            9.713554040149868,
+                            15.845961062140784], [])
+    ivps[:ccgo][:dss] = IVP(ccgo, ini, t,
+                            [11.701892961901253,
+                             7.718104344633692,
+                             2.748291378149207], [])
+
+
+    function fhn(dz_dt, z, phi, t)
+        a, b, c = phi
+        V, R = z
+        u = 0
+        dz_dt[1] = c*(V - (V^3)/3 + R) + u
+        dz_dt[2] = -(1/c)*(V - a + b*R)
+    end
+
+    ivps[:fhn] = Dict()
+    ini = [-1.0, 1.0]
+    t = range(0.0, 20.0, length=10)
+    phi = [0.2, 0.2, 3.0]
+
+    ivps[:fhn][:nom] = IVP(fhn, ini, t, phi)
+    ivps_test = IVP(fhn, add_noise(ini, var_ini), t, phi)
+    ivps[:fhn][:test] = IVP(fhn, ivps_test.ini, t, phi,
+                            add_noise(ivps_test.data, 0.1))
+
+    ivps[:fhn][:ss] = IVP(fhn, ini, t,
+                          [1.0006533637635783e-5,
+                           36762.161906015695,
+                           29720.269687392283], [])
+    ivps[:fhn][:ssr] = IVP(fhn, ini, t,
+                           [0.1973538954650349,
+                            0.11390293281470151,
+                            3.0111993244825737], [])
+    ivps[:fhn][:ds] = IVP(fhn, ini, t,
+                          [0.06942005151231272,
+                           0.4361123400524667,
+                           1.696854260779007], [])
+    ivps[:fhn][:dss] = IVP(fhn, ini, t,
+                           [0.17695871191283072,
+                            0.18851523532377604,
+                            3.0158958746888795], [])
+    return ivps
 end
 
 
@@ -23,7 +141,7 @@ function transpose_vector(v::Vector{Vector{T}})::Vector{Vector{T}} where T
 end
 
 
-function generate_data(ivp)
+function solve_ivp(ivp::IVP)::Vector
     prob = ODEProblem(ivp.f, ivp.ini,
                       (ivp.t[1], ivp.t[end]), ivp.phi)
     osol  = solve(prob, AutoVern7(Rodas5()), saveat=ivp.t)
@@ -104,260 +222,108 @@ function nrmse(data_nominal::Vector, data_estimated::Vector)::Float64
 end
 
 
-function gen_plt_err(ivp_nominal::IVP,
-                                  ivp_estimated::IVP,
-                                  type::String)::NamedTuple
-    ini_cond = (type == "Test" ?
-                add_noise(ivp_nominal.ini, 0.01) :
-                ivp_nominal.ini)
+function gen_plt_err(ivp_comp::IVP,
+                     ivp_est::IVP)::NamedTuple
 
-    ivp_est = IVP(ivp_estimated.f,
-                      ini_cond,
-                      ivp_estimated.t,
-                      ivp_estimated.phi)
-    ivp_test = IVP(ivp_nominal.f,
-                      ini_cond,
-                      ivp_nominal.t,
-                      ivp_nominal.phi)
+    # Generate estimated values using ivp_comp.ini as initial point
+    ivp_est = IVP(ivp_est.f, ivp_comp.ini, ivp_est.t, ivp_est.phi)
 
-
-    data_est = (ivp_est
-                |> generate_data
-                |> transpose_vector)
-    data_test = (ivp_test
-                 |> generate_data
-                 |> data -> (type == "Test" ? add_noise(data, 0.1) : data)
-                 |> transpose_vector)
-
-    nrmse_result = nrmse(data_test, data_est)
-
-    df_est = map(data -> DataFrame(x=ivp_estimated.t,
+    df_est = map(data -> DataFrame(x=ivp_est.t,
                                    y=data,
                                    Legend=repeat(["Estimated"],
-                                                 length(ivp_estimated.t))),
-                 data_est)
+                                                 length(ivp_est.t))),
+                 ivp_est.data)
 
-    df_test = map(data -> DataFrame(x=ivp_nominal.t,
+    df_comp = map(data -> DataFrame(x=ivp_comp.t,
                                    y=data,
-                                   Legend=repeat([type],
-                                                 length(ivp_estimated.t))),
-                 data_test)
-    df_pairs = zip(df_test, df_est)
+                                   Legend=repeat(["Data"],
+                                                 length(ivp_comp.t))),
+                 ivp_comp.data)
+
+    df_pairs = zip(df_comp, df_est)
 
     gen_layer(df) = layer(vcat(df...), x=:x, y=:y,
                           color=:Legend,
                           linestyle=:Legend,
                           Geom.line, Geom.point)
 
-    layers = map(gen_layer,
-                 df_pairs)
+    layers = map(gen_layer, df_pairs)
 
     gen_plot(layers) = plot((layers...),
                             Guide.XLabel("t"),
                             Guide.YLabel("x"))
     plt = gen_plot(layers)
-    return (plt=plt, err=nrmse_result)
-end
 
-function gen_plt_err(data_nominal::Vector,
-                     data_estimated::Vector,
-                     t::AbstractArray)::NamedTuple
-    nrmse_result = nrmse(data_nominal, data_estimated)
+    nrmse_result = nrmse(ivp_comp.data, ivp_est.data)
 
-    df_est = map(data -> DataFrame(x=t,
-                                   y=data,
-                                   Legend=repeat(["Estimated"],
-                                                 length(t))),
-                 data_estimated)
-
-    df_nom = map(data -> DataFrame(x=t,
-                                   y=data,
-                                   Legend=repeat(["Nominal"],
-                                                 length(t))),
-                 data_nominal)
-    df_pairs = zip(df_nom, df_est)
-
-    gen_layer(df) = layer(vcat(df...), x=:x, y=:y,
-                          color=:Legend,
-                          linestyle=:Legend,
-                          Geom.line, Geom.point)
-
-    layers = map(gen_layer,
-                 df_pairs)
-
-    gen_plot(layers) = plot((layers...),
-                            Guide.XLabel("t"),
-                            Guide.YLabel("x"))
-    plt = gen_plot(layers)
     return (plt=plt, err=nrmse_result)
 end
 
 
-function fic(dz_dt, z, phi, t)
-    r_1 = phi[1]*z[1]
-    r_2 = phi[2]*z[2]
-
-    dz_dt[1] = -r_1
-    dz_dt[2] = r_1 - r_2
-end
-
-
-function ccgo(dz_dt, z, phi, t)
-    r_1 = phi[1]*z[1]^2
-    r_2 = phi[2]*z[2]
-    r_3 = phi[3]*z[1]^2
-    
-    dz_dt[1] = - r_1 - r_3
-    dz_dt[2] = r_1 - r_2
-end
-
-
-function fhn(dz_dt, z, phi, t)
-    a, b, c = phi
-    V, R = z
-    u = 0
-    dz_dt[1] = c*(V - (V^3)/3 + R) + u
-    dz_dt[2] = -(1/c)*(V - a + b*R)
-end
-
-
-function compare_to_nominal(p::NamedTuple, t::String)::Vector{NamedTuple}
-    # Generate plot, error and wrap results in a more convenient NamedTuple
-    res = map(k -> (gen_plt_err(p.methods[:nom], p.methods[k], t)
-                    |> tup -> (plt=tup.plt,
-                               err=tup.err,
-                               method=string(k),
-                               plt_type=t,
-                               name=p.name)),
-              [k for k in filter(x -> x != :nom, keys(p.methods))])
-    return res
-end
-
-
-function get_res_from_dict(problems::Dict)::Vector{NamedTuple}
+function get_res_from_dict(ivps::Dict)::Vector{NamedTuple}
     # Unpack first Dictionary layer into Vector of NamedTuple
-    flat_problems = map(k -> (methods=problems[k],
-                              name=string(k)),
-                        (keys(problems) |> collect))
+    isest(x) = x != :nom && x != :test
 
-    results_list = map(x -> compare_to_nominal(x...),
-                       [(p,t)
-                        for p in
-                        flat_problems
-                        for t in
-                        ["Nominal", "Test"]])
-    flat_results_list = reduce(vcat, results_list)
+    est_ivps = map(k -> (ivp=ivps[k], method=string(k)),
+                   (keys(ivps) |> collect |> x -> filter(isest, x)))
 
-   return flat_results_list
+    nom_test_ivps = map(k -> (ivp=ivps[k], method=string(k)),
+                        (keys(ivps) |> collect |> x -> filter(!isest, x)))
+
+    compare_pairs = [(i, j) for i in nom_test_ivps for j in est_ivps]
+
+    results_list = map(x -> (gen_plt_err(x[1].ivp, x[2].ivp)
+                             |> res -> (plt=res.plt,
+                                        err=res.err,
+                                        method=x[2].method,
+                                        plt_type=x[1].method)),
+                             compare_pairs)
+    return results_list
 end
 
 
-function save_results(res::NamedTuple, path::AbstractString)::String
-    base_path = joinpath(path, res.name)
-    draw(PDF(joinpath(base_path, "$(res.method)_$(res.plt_type).pdf")), res.plt)
+function save_results(results::NamedTuple, path::AbstractString)::String
+    base_path = joinpath(path, results.model)
 
-    io = joinpath(base_path, "info.log") |> f -> open(f, "a+")
+    # Save plots
+    map(x ->
+        draw(PDF(joinpath(base_path, "$(x.plt_type)_$(x.method).pdf")), x.plt),
+        results.res)
+
+    # Save info
+    io = joinpath(path, "info.log") |> f -> open(f, "a+")
     with_logger(SimpleLogger(io)) do
-        @info("NRMSE", res.plt_type, res.name, res.method, res.err)
+        map(x ->
+            @info("NRMSE", x.plt_type, results.model, x.method, x.err),
+            results.res)
     end
     close(io)
     return base_path
 end
 
 
-function get_ivps()::Dict
-    ivps = Dict()
-
-    ivps[:fic] = Dict()
-    ini = [1., 0.]
-    t = range(0.0, 1.0, length=10)
-    phi = [5.0035, 1.0]
-
-    ivps[:fic][:nom] = IVP(fic, ini, t, phi)
-
-    ivps[:fic][:ss] = IVP(fic, ini, t,
-                          [5.011535232847903,
-                           0.9490955193480339])
-    ivps[:fic][:ssr] = IVP(fic, ini, t,
-                           [5.662374165061859,
-                            4.600853424625171])
-    ivps[:fic][:ds] = IVP(fic, ini, t,
-                          [4.767811504376019,
-                           0.9620285702765027])
-    ivps[:fic][:dss] = IVP(fic, ini, t,
-                           [5.057700471184158,
-                            1.1660869766794006])
-
-    ivps[:ccgo] = Dict()
-    ini = [1., 0.]
-    t = range(0.0, 0.95, length=10)
-    phi = [12.214, 7.9798, 2.2216]
-
-    ivps[:ccgo][:nom] = IVP(ccgo, ini, t, phi)
-
-    ivps[:ccgo][:ss] = IVP(ccgo, ini, t,
-                           [10.601173576959617,
-                            7.024603700551421,
-                            5.296705518161371])
-    ivps[:ccgo][:ssr] = IVP(ccgo, ini, t,
-                            [12.694091102822359,
-                             7.7461038473135275,
-                             2.3847262326540015])
-    ivps[:ccgo][:ds] = IVP(ccgo, ini, t,
-                           [3.261725472047141,
-                            9.713554040149868,
-                            15.845961062140784])
-    ivps[:ccgo][:dss] = IVP(ccgo, ini, t,
-                            [11.701892961901253,
-                             7.718104344633692,
-                             2.748291378149207])
-
-    ivps[:fhn] = Dict()
-    ini = [-1.0, 1.0]
-    t = range(0.0, 20.0, length=10)
-    phi = [0.2, 0.2, 3.0]
-
-    ivps[:fhn][:nom] = IVP(fhn, ini, t, phi)
-
-    ivps[:fhn][:ss] = IVP(fhn, ini, t,
-                          [1.0006533637635783e-5,
-                           36762.161906015695,
-                           29720.269687392283])
-    ivps[:fhn][:ssr] = IVP(fhn, ini, t,
-                           [0.1973538954650349,
-                            0.11390293281470151,
-                            3.0111993244825737])
-    ivps[:fhn][:ds] = IVP(fhn, ini, t,
-                          [0.06942005151231272,
-                           0.4361123400524667,
-                           1.696854260779007])
-    ivps[:fhn][:dss] = IVP(fhn, ini, t,
-                           [0.17695871191283072,
-                            0.18851523532377604,
-                            3.0158958746888795])
-    return ivps
-end
-
-
 function main(args::Array{<:String})::Nothing
     path = string(args[1])
 
-    str_mkdir(k) = (k
+    str_mkdir(x) = (x
                     |> string
-                    |> d -> joinpath(path, d)
-                    |> p -> (isdir(p) ?
-                             p : mkdir(p)))
+                    |> y -> joinpath(path, y)
+                    |> z -> (isdir(z) ?
+                             z : mkdir(z)))
 
     ivps = get_ivps()
 
     folders = map(str_mkdir,
                   (keys(ivps) |> collect))
 
-    res = get_res_from_dict(ivps)
-    saved_files = map(r -> save_results(r, path), res)
+    res_list = map(k -> (res=get_res_from_dict(ivps[k]),
+                         model=string(k)),
+                   (keys(ivps) |> collect))
+
+    saved_files = map(r -> save_results(r, path), res_list)
 
     with_logger(ConsoleLogger()) do
-        @debug res
+        @debug res_list
         @debug saved_files
     end
     nothing
