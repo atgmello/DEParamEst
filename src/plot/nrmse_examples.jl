@@ -2,6 +2,7 @@ using Pkg
 Pkg.activate(@__DIR__)
 Pkg.instantiate()
 
+ 
 using Logging
 using Statistics
 using Gadfly
@@ -112,9 +113,9 @@ function get_ivps()::Dict
     phi = [0.2, 0.2, 3.0]
 
     ivps[:fhn][:nom] = IVP(fhn, ini, t, phi)
-    ivps_test = IVP(fhn, add_noise(ini, var_ini), t, phi)
+    ivps_test = IVP(fhn, add_noise(ini, var_ini, false), t, phi)
     ivps[:fhn][:test] = IVP(fhn, ivps_test.ini, t, phi,
-                            add_noise(ivps_test.data, 0.1))
+                            add_noise(ivps_test.data, 0.01, false))
 
     ivps[:fhn][:ss] = IVP(fhn, ini, t,
                           [1.0006533637635783e-5,
