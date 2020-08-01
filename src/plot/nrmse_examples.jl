@@ -150,54 +150,36 @@ function solve_ivp(ivp::IVP)::Vector
 end
 
 
-"""
-Adds noise to a Vector of Vector
-Used for adding simulated noise to
-the states of a system.
-Assumes that the values can be negative.
-"""
-function add_noise(data::Vector{Vector{T}},
-                   percent::T,positive::Bool=false)::Vector{Vector{T}} where T
+function add_noise(data::Vector{T}, percent::Float64,
+                   non_negative::Bool=true)::Vector{T} where T
     if percent == 0.0
         return data
     end
 
-    noise_data = deepcopy(data)
-    epsilon_arr = [0.01*mean(getindex.(data,i)) for i in 1:length(data[1])]
-    sigma = zero(T)
-    @inbounds for i in 2:length(noise_data)
-        for j in 1:length(noise_data[1])
-            sigma = abs(percent*noise_data[i][j] + epsilon_arr[j])
+    epsilon_map = function(x)
+        (isa(x, Vector{Vector{T}} where T) ?
+         map(epsilon_map, x) :
+         repeat([0.01*mean(x)], length(x)))
+    end
+
+    epsilon_iter = (map(epsilon_map, data)
+                    |> Iterators.Flatten
+                    |> Iterators.Stateful)
+
+    noise_map = function(x)
+        if isa(x, Vector)
+            map(noise_map, x)
+        else
+            sigma = abs(percent*x + iterate(epsilon_iter)[1])
             d = Normal(0,sigma)
-            noise_data[i][j] += rand(d)
-            noise_data[i][j] = positive ? abs(noise_data[i][j]) : noise_data[i][j]
+            noisy_x = x + rand(d)
+            non_negative ? abs(noisy_x) : noisy_x
         end
     end
-    return noise_data
-end
 
-"""
-Adds noise to a Vector of T
-Used for generating new reasonable
-initial values to an IVP. Assumes
-that the values should be positive.
-"""
-function add_noise(data::Vector{T},
-                    percent::T,positive::Bool=true)::Vector{T} where T
-    if percent == 0.0
-        return data
-    end
+    noisy_data = map(noise_map, data)
 
-    noise_data = deepcopy(data)
-    epsilon = 0.01 * mean(data)
-    sigma = zero(T)
-    @inbounds for i in 1:length(noise_data)
-        sigma = abs(percent*noise_data[i] + epsilon)
-        d = Normal(0,sigma)
-        noise_data[i] += rand(d)
-        noise_data[i] = positive ? abs(noise_data[i]) : noise_data[i]
-    end
-    return noise_data
+    return noisy_data
 end
 
 
