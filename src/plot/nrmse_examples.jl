@@ -226,8 +226,8 @@ end
 function gen_plt_err(ivp_comp::IVP,
                      ivp_est::IVP)::NamedTuple
 
-    # Generate estimated values using ivp_comp.ini as initial point
-    ivp_est = IVP(ivp_est.f, ivp_comp.ini, ivp_est.t, ivp_est.phi)
+    ini_cond = getindex.(ivp_comp.data, 1)
+    ivp_est = IVP(ivp_est.f, ini_cond, ivp_est.t, ivp_est.phi)
 
     df_est = map(data -> DataFrame(x=ivp_est.t,
                                    y=data,
