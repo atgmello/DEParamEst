@@ -4,6 +4,7 @@
 
 # Ignore helper bash scripts
 *.sh
+!run.sh
 
 # Ignore data and plots
 data/
