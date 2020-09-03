@@ -1,14 +1,15 @@
-#+TITLE: Readme
+#+TITLE: DEParamEst
 #+OPTIONS: toc: nil
 
-* DEParamEst
-> Parameter estimation experiments for ordinary differential equation models.
+#+BEGIN_QUOTE
+Parameter estimation experiments for ordinary differential equation models.
+#+END_QUOTE
 
 This repository has been developed as a deliverable for my master's thesis
 titled "A proposal of new methods for parameter estimation in ordinary
 differential equations".
 
-You can get a copy of the text via _this link_ (not yet available).
+# You can get a copy of the text via _this link_ (not yet available).
 
 ** Abstract
 Chemical kinetics studies models which describe the behavior of chemical
@@ -52,20 +53,20 @@ regularization
 ** Project structure
 This project has been developed entirely in the Julia language.
 
-The `src` folder holds the code.
-Inside it you can find the `calc` and `plot` folders.
+The ~src~ folder holds the code.
+Inside it you can find the ~calc~ and ~plot~ folders.
 
-The `calc` folder has the code for conducting the experiments. It generates the
+The ~calc~ folder has the code for conducting the experiments. It generates the
 data for comparing the efficiency of the different parameter estimation methods.
 
-`plot`, on the other hand, stores the code used for creating the plots shown in
-the thesis. The modules inside `plot` are the ones that treat the data generated
-by the main program in `calc` and in turn use them to generate useful
+~plot~, on the other hand, stores the code used for creating the plots shown in
+the thesis. The modules inside ~plot~ are the ones that treat the data generated
+by the main program in ~calc~ and in turn use them to generate useful
 visualizations for easier interpretability of the results.
 
 
 ** Usage
-The `run.sh` file is a bash helper that sets the appropriate parameters for
+The ~run.sh~ file is a bash helper that sets the appropriate parameters for
 running the main routine of this project.
 
 With this script you can easily reproduce the results discussed in the thesis.
