@@ -51,7 +51,7 @@ ordinary differential equations, ill conditioning, non convexity,
 regularization
 
 ** Project structure
-This project has been developed entirely in the Julia language.
+This project has been developed entirely in the [[https://julialang.org/][Julia]] language.
 
 The ~src~ folder holds the code.
 Inside it you can find the ~calc~ and ~plot~ folders.
@@ -69,5 +69,47 @@ visualizations for easier interpretability of the results.
 The ~run.sh~ file is a bash helper that sets the appropriate parameters for
 running the main routine of this project.
 
-With this script you can easily reproduce the results discussed in the thesis.
+#+BEGIN_SRC bash
+#!/bin/sh
 
+export JULIA_NUM_THREADS=16
+save_path='./data/results'
+test_cases='[1,2,3,4,5,6,7,8,9]'
+num_samples='[10]'
+variance_multiplier='[0.1]'
+julia ./src/calc/experiment.jl $save_path $test_cases $num_samples $variance_multiplier
+#+END_SRC
+
+The ~experiment.jl~ file holds the main piece of the code. It takes four command
+line arguments.
+The first one, ~save_path~ in the script above, takes a folder
+in which to store the experiment results in [[https://github.com/invenia/JLSO.jl][~JLSO~]] format.
+
+The second, ~test_cases~, must be a list of numbers, each one representing a
+test case.
+
+The test cases are:
+1. First Order Irreversible Chain Reaction (FIC)
+1. First Order Reversible Chain Reaction (RFC)
+1. Catalytic Cracking of Gas Oil (CCGO)
+1. Bellman's Problem (BEP)
+1. Methanol-to-Hydrocarbons Process (MHP)
+1. Lotka-Volterra's Problem (LVP)
+1. Biomass Batch Growth (BBG)
+1. FitzHugh-Nagumo (FHN)
+1. Mitogen Activated Protein Kinases (MAPK)
+
+The third argument, ~num_samples~ is a list of number of samples to be simulated
+for the experiment.
+
+The final argument, ~variance_multiplier~, is a list of numbers that sets the
+proportion between signal and noise in the simulated data. A multiplier of ~0.1~
+represents adding a noise proportional to 10% of the value of the signal. In
+practice, this value should not be higher than ~0.2~, otherwise the noise would
+end up destroying the signal.
+
+All of the arguments passed must be a bash string so that they can be correctly
+interpreted inside the
+main program.
+
+With this script one can easily reproduce the results discussed in the thesis.
