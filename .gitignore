@@ -8,10 +8,6 @@
 # But not the main one
 !run.sh
 
-# Ignore notebooks and data folder
-notebooks
-data/
-
-# But not main results
-!data/results/results_all/
-!data/results/results_lvp/
+# Ignore notebooks and old data folder
+notebooks/
+old_data/
