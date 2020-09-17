@@ -1,0 +1,21 @@
+┌ Info: Arguments.
+│   args = ["/home/atgmello/results/results_fhn", "[6]", "[10]", "[0.01]"]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:526
+┌ Info: Methods.
+│   methods = ["DS", "SS", "SSR", "DSS"]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:527
+┌ Info: Cooling rate.
+│   RT = 0.75
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:528
+┌ Info: Maximum Time.
+│   MAXT = 10000
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:529
+┌ Info: Number of runs.
+│   M = 30
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:530
+┌ Info: Program finished.
+│   now() = 2020-07-27T17:18:37.356
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:537
+┌ Info: Elapsed time.
+│   elapsed_time = 5220.708388484
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:538

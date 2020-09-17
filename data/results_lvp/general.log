@@ -1,0 +1,1827 @@
+┌ Info: Program started.
+│   now() = 2020-07-27T15:51:32.836
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:519
+┌ Info: Number of threads.
+│   Threads.nthreads() = 32
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:520
+┌ Info: Arguments.
+│   args = ["/home/atgmello/results/results_fhn", "[6]", "[10]", "[0.01]"]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:526
+┌ Info: Methods.
+│   methods = ["DS", "SS", "SSR", "DSS"]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:527
+┌ Info: Cooling rate.
+│   RT = 0.75
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:528
+┌ Info: Maximum Time.
+│   MAXT = 10000
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:529
+┌ Info: Number of runs.
+│   M = 30
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:530
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.6071522632820776, 5.955204840509289]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.0728911844159113
+│ Final phi:	[3.0283950474921313, 0.9888259273198295]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46288741031345504, 6.9835550605324865]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4711350583876728
+│ Final phi:	[4.438859739591673, 1.3349109473148]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46288741031345504, 6.9835550605324865]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.12297291846341256
+│ Final phi:	[9.999999469375373, 5.4897007665993955]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.320003814997245, 2.9905752670238184]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.11022354535020124
+│ Final phi:	[8.951624507817842, 6.164925711035067]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.725754415996787, 1.5050782744925795]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10447594356769276
+│ Final phi:	[9.99999999999906, 5.51080607173873]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.725754415996787, 1.5050782744925795]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4674976072403666
+│ Final phi:	[4.589485993557926, 1.2746316833313316]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.651093677271471, 3.024777928234499]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07870841704465929
+│ Final phi:	[2.956809102090173, 1.0025350257828656]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.504984071553011, 9.646697763820898]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4695322876908549
+│ Final phi:	[4.727763082437166, 1.2869585242426151]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.4732938279328955, 2.834013103457036]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.47541945870541596
+│ Final phi:	[4.296541810082444, 1.4419009300708903]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.181597973815087, 6.642598175011505]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.1088484299148996
+│ Final phi:	[9.638799955466753, 5.721456964100765]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.760209506672211, 6.516642063795697]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4913940176817704
+│ Final phi:	[4.502192313068965, 1.236037076332068]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.6642303695533736, 9.567533636029237]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08325323622130634
+│ Final phi:	[3.211755440804048, 0.9410661903364221]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.651093677271471, 3.024777928234499]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4733375136245876
+│ Final phi:	[4.344302232677726, 1.3041298485728776]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.491821088563023, 8.750962647851141]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.09798252058320314
+│ Final phi:	[9.999999999999615, 5.50012242882013]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.4732938279328955, 2.834013103457036]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.09537362433198171
+│ Final phi:	[9.999999999998213, 5.516473708400266]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.457754052519123, 7.899036826169576]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.46514655331378935
+│ Final phi:	[4.491926373400863, 1.3448112248680766]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.504984071553011, 9.646697763820898]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10285794095135524
+│ Final phi:	[9.999999999999265, 5.520554582162423]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4686248047491066, 0.11819583479107054]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.46751506510539803
+│ Final phi:	[4.582023362164899, 1.301389247656367]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4683718661000897, 5.796722333690417]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08285369652641238
+│ Final phi:	[3.3618420319199145, 0.8965061471041729]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.908446386657102, 7.667970365022592]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.454354500839708
+│ Final phi:	[4.620845772735672, 1.3391745106791835]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.535081177709988, 0.3688418241886171]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.09563121796836606
+│ Final phi:	[9.999999999999526, 5.509405691908414]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.049528336488379, 4.99530744114878]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.46972772098936316
+│ Final phi:	[4.528884021971958, 1.2239070408088801]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.588147837334962, 5.1562721797952555]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10578556600170312
+│ Final phi:	[9.999999999999508, 5.502839632005256]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.005860349338411, 2.986142783434118]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.47842180908061555
+│ Final phi:	[4.494545702609844, 1.2965987822853482]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.9402571033179425, 8.541465903790503]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08730149967231722
+│ Final phi:	[3.2690927581496516, 0.9038847667314871]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.6642303695533736, 9.567533636029237]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.45649265235522063
+│ Final phi:	[4.746296131568729, 1.2389265322991379]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.466909815316459, 1.1248587118714015]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07766813318236258
+│ Final phi:	[3.1523349776472984, 0.9652369210749749]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.488819502093454, 0.10905889635595356]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4684467668211343
+│ Final phi:	[4.606344792668844, 1.271008337229364]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.005860349338411, 2.986142783434118]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07378069421229431
+│ Final phi:	[3.023063938909637, 0.9877437535473035]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.488819502093454, 0.10905889635595356]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08514052827031489
+│ Final phi:	[3.376688931793034, 0.8874120040073085]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.320003814997245, 2.9905752670238184]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4914814213091974
+│ Final phi:	[4.412659912265227, 1.2344867559510249]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46042826396498704, 4.96168672722459]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10388114512598944
+│ Final phi:	[9.526935961712292, 5.792019543937435]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.9402571033179425, 8.541465903790503]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.48634260645693433
+│ Final phi:	[4.713260894396625, 1.2133160495209807]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.662374165061859, 4.600853424625171]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07116922965592916
+│ Final phi:	[3.2031499297103614, 0.9416305689121861]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.6071522632820776, 5.955204840509289]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4783133911149553
+│ Final phi:	[4.648390936628078, 1.1954952326129267]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.049528336488379, 4.99530744114878]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10168529204614626
+│ Final phi:	[9.999999999999517, 5.511608354652915]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.924615242315285, 2.885798506061561]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07921175128844633
+│ Final phi:	[3.4313740808375974, 0.8678895979469319]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.311151512445585, 4.389389593310216]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.47061223312377015
+│ Final phi:	[4.382857491361212, 1.3416018457424945]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.9454448946400307, 3.1492622391998415]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.1170498441614426
+│ Final phi:	[9.999999930699758, 5.537563374624468]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.311151512445585, 4.389389593310216]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.13100932687978414
+│ Final phi:	[8.715014287018066, 6.356852631571533]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.466909815316459, 1.1248587118714015]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.44093407089445374
+│ Final phi:	[4.648801688938338, 1.3162925598662685]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.760209506672211, 6.516642063795697]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10888427678944883
+│ Final phi:	[9.53350179986181, 5.783574695353258]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[8.211604203482922, 0.3416010848943718]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4673965524722418
+│ Final phi:	[4.520040281672171, 1.2739449811616335]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[8.211604203482922, 0.3416010848943718]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.11674746017001797
+│ Final phi:	[8.554129082975946, 6.459447381793977]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.588147837334962, 5.1562721797952555]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4995143475740912
+│ Final phi:	[4.3065595826882115, 1.289534259451047]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.9454448946400307, 3.1492622391998415]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4683475953859283
+│ Final phi:	[4.72462360387534, 1.2542354785670744]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.2780989889368866, 3.74186714831074]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07444261386072676
+│ Final phi:	[3.0773540153643895, 0.9712097773378928]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4686248047491066, 0.11819583479107054]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.07870793534038575
+│ Final phi:	[9.999999999999797, 5.515801527702146]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.924615242315285, 2.885798506061561]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.47590519170739837
+│ Final phi:	[4.606094578278994, 1.2992898543847122]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.535081177709988, 0.3688418241886171]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4626604359019565
+│ Final phi:	[4.477412838176516, 1.3094457131629356]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.908446386657102, 7.667970365022592]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08256307013108727
+│ Final phi:	[3.248779493241799, 0.9301636786673538]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46042826396498704, 4.96168672722459]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.47470385764306927
+│ Final phi:	[4.619121667017477, 1.2985432866197573]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.2780989889368866, 3.74186714831074]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4741974655498885
+│ Final phi:	[4.499041462891117, 1.2752007958984672]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.491821088563023, 8.750962647851141]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4759802492994595
+│ Final phi:	[4.569437475227657, 1.2773403768286415]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4683718661000897, 5.796722333690417]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.48193992070699626
+│ Final phi:	[4.598325318616705, 1.2605518572564463]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.181597973815087, 6.642598175011505]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4563210517357054
+│ Final phi:	[4.646385811787887, 1.323072648453957]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.662374165061859, 4.600853424625171]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4686894861008247
+│ Final phi:	[4.663475978430251, 1.2465861639948472]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.5664246860321187, 8.427136165865521]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.4908675430111714
+│ Final phi:	[4.490760475168436, 1.2786764409455476]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.457754052519123, 7.899036826169576]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.10564956209464865
+│ Final phi:	[9.99999999999971, 5.506909995018234]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.5664246860321187, 8.427136165865521]
+│ CV Errors:	false
+│ Best lambda:	0.0
+│ Final Errors:	0.08165280661243773
+│ Final phi:	[3.193429252636091, 0.9305087859762666]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.181597973815087, 6.642598175011505]
+│ CV Errors:	[0.48552056880883854, 0.48552057531334436, 0.4855205759470881, 0.48552057249331354, 0.48552057084114286]
+│ Best lambda:	0.0
+│ Final Errors:	0.456321050815499
+│ Final phi:	[4.646385842770829, 1.3230726901623577]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.535081177709988, 0.3688418241886171]
+│ CV Errors:	[0.48323647528984404, 0.48323647559435423, 0.48323647481642923, 0.4832364776521893, 0.48323647797651115]
+│ Best lambda:	0.01
+│ Final Errors:	0.483664979589522
+│ Final phi:	[4.280092892501482, 1.2878173849823216]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.049528336488379, 4.99530744114878]
+│ CV Errors:	[0.5072850764473104, 0.5072850850731985, 0.5072850778848981, 0.5072850842386271, 0.5072850752957302]
+│ Best lambda:	1.0
+│ Final Errors:	0.5159846322020999
+│ Final phi:	[0.7597373898818296, 0.46179280503631437]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.6071522632820776, 5.955204840509289]
+│ CV Errors:	[0.5251198961787249, 0.5251198954310602, 0.5251198882109279, 0.5251198925517598, 0.5251198900881136]
+│ Best lambda:	0.01
+│ Final Errors:	0.5080417250604091
+│ Final phi:	[4.434896516986905, 1.176319616788751]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.535081177709988, 0.3688418241886171]
+│ CV Errors:	[0.4463716538709443, 0.4463716543343367, 0.44637165604222195, 0.4463716533947603, 0.4463716541572009]
+│ Best lambda:	0.1
+│ Final Errors:	0.11133358257076843
+│ Final phi:	[2.106015895375551, 1.4573504205262076]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.588147837334962, 5.1562721797952555]
+│ CV Errors:	[0.5188061280674461, 0.5188061417613091, 0.5188061303918559, 0.5188061325386524, 0.5188061242553227]
+│ Best lambda:	1.0
+│ Final Errors:	0.5332237972929533
+│ Final phi:	[0.7717412468068294, 0.4633846967526977]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.924615242315285, 2.885798506061561]
+│ CV Errors:	[0.48727667411761394, 0.4872766807259851, 0.48727667703596184, 0.48727667304207295, 0.48727667898600646]
+│ Best lambda:	0.1
+│ Final Errors:	0.2749235302877637
+│ Final phi:	[3.1119346463580024, 1.1155421052237164]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.488819502093454, 0.10905889635595356]
+│ CV Errors:	[0.4415378892271799, 0.4415378899176128, 0.4415378899296273, 0.44153788973278096, 0.441537889943438]
+│ Best lambda:	0.0
+│ Final Errors:	0.08514057908529582
+│ Final phi:	[3.3766885944984324, 0.8874121951560907]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4686248047491066, 0.11819583479107054]
+│ CV Errors:	[0.45772003594630073, 0.45772003522710325, 0.457720037300135, 0.4577200343212021, 0.4577200350537778]
+│ Best lambda:	0.1
+│ Final Errors:	0.09672877159954482
+│ Final phi:	[2.1097120425692126, 1.4598727079730782]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.491821088563023, 8.750962647851141]
+│ CV Errors:	[0.47959242114837136, 0.4795924202677912, 0.47959242119336326, 0.4795924212498847, 0.47959242137337466]
+│ Best lambda:	0.001
+│ Final Errors:	0.09805684415515707
+│ Final phi:	[9.999999999734703, 5.499940740698346]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.4732938279328955, 2.834013103457036]
+│ CV Errors:	[0.4925462375109563, 0.49254624069760417, 0.49254624224527166, 0.49254623947566023, 0.4925462353412714]
+│ Best lambda:	1.0
+│ Final Errors:	0.5434938052116451
+│ Final phi:	[0.8123424157402224, 0.5197994884521028]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.4732938279328955, 2.834013103457036]
+│ CV Errors:	[0.4455951764496954, 0.44559517615860694, 0.4455951775436552, 0.44559517518095343, 0.445595173959026]
+│ Best lambda:	1.0
+│ Final Errors:	0.4769772007652801
+│ Final phi:	[0.24355979691066282, 9.04863511140642e-16]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.725754415996787, 1.5050782744925795]
+│ CV Errors:	[0.5149603696847113, 0.5149603735436433, 0.5149603704067948, 0.5149603703255538, 0.5149603735851438]
+│ Best lambda:	0.0
+│ Final Errors:	0.4674976019251099
+│ Final phi:	[4.5894859968410415, 1.2746317145967074]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.1097120425692126, 1.4598727079730782]
+│ CV Errors:	[0.11546937996497875, 0.11546953306392904, 0.11546960580207422, 0.11546953615031193, 0.1154692971431506]
+│ Best lambda:	1.0
+│ Final Errors:	0.09177933297916571
+│ Final phi:	[2.1730026015918162, 1.4218826451994855]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.651093677271471, 3.024777928234499]
+│ CV Errors:	[0.5146421581019267, 0.5146421461464356, 0.5146421537983414, 0.5146421558929332, 0.5146421513239126]
+│ Best lambda:	0.001
+│ Final Errors:	0.47545408779403225
+│ Final phi:	[4.325085696806311, 1.3018850690880994]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.1119346463580024, 1.1155421052237164]
+│ CV Errors:	[0.059156240064714115, 0.0591562332695435, 0.05915625696266741, 0.05915624432421847, 0.059156334955957644]
+│ Best lambda:	0.001
+│ Final Errors:	0.07917357127743306
+│ Final phi:	[3.4294298836074897, 0.8684235981925524]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.8123424157402224, 0.5197994884521028]
+│ CV Errors:	[0.14527842275800262, 0.1452784251741402, 0.1452783532462549, 0.14527830025396735, 0.1452784418185226]
+│ Best lambda:	0.1
+│ Final Errors:	0.11072721309160337
+│ Final phi:	[2.128183777060078, 1.4515234253312659]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.320003814997245, 2.9905752670238184]
+│ CV Errors:	[0.5133504822259349, 0.5133504877234589, 0.5133504860235444, 0.5133504895149507, 0.5133504895062924]
+│ Best lambda:	0.0
+│ Final Errors:	0.4914814299150946
+│ Final phi:	[4.412659943989754, 1.2344867235121124]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.24355979691066282, 9.04863511140642e-16]
+│ CV Errors:	[0.44583773628348283, 0.4458377380225828, 0.44583773838667834, 0.44583773661442205, 0.44583773826064055]
+│ Best lambda:	0.0
+│ Final Errors:	0.07877921322657905
+│ Final phi:	[2.8239868428078534, 1.0739503065800045]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.646385842770829, 1.3230726901623577]
+│ CV Errors:	[0.09048377277771875, 0.09048378459015541, 0.09048373174668403, 0.0904836770769295, 0.09048368932803472]
+│ Best lambda:	0.1
+│ Final Errors:	0.08907805484067824
+│ Final phi:	[4.25631244588979, 0.688409221817104]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.7717412468068294, 0.4633846967526977]
+│ CV Errors:	[0.15223124455191708, 0.1522305568178396, 0.15223081104220512, 0.15223046104017385, 0.15223083409633373]
+│ Best lambda:	0.1
+│ Final Errors:	0.1202122277439554
+│ Final phi:	[2.2093895666918026, 1.3763263043624119]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4683718661000897, 5.796722333690417]
+│ CV Errors:	[0.4372924762590388, 0.4372924758756299, 0.4372924767035643, 0.4372924756358623, 0.4372924767019565]
+│ Best lambda:	0.1
+│ Final Errors:	0.1294695240337194
+│ Final phi:	[2.1198145378698383, 1.4650894779502575]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.005860349338411, 2.986142783434118]
+│ CV Errors:	[0.48504372780563215, 0.4850437275659962, 0.485043727661245, 0.48504372745119617, 0.4850437280584856]
+│ Best lambda:	0.1
+│ Final Errors:	0.12351894758858858
+│ Final phi:	[2.1326754727543205, 1.4345954195435164]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.999999999734703, 5.499940740698346]
+│ CV Errors:	[0.08823631561556625, 0.08823726914357577, 0.08823826509491274, 0.08823819720767952, 0.08823701553174323]
+│ Best lambda:	0.0
+│ Final Errors:	0.0979812360712681
+│ Final phi:	[9.999999999998428, 5.500125582792471]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.434896516986905, 1.176319616788751]
+│ CV Errors:	[0.10109681143294269, 0.10109678808881364, 0.10109686739366892, 0.1010968526797477, 0.10109694182283024]
+│ Best lambda:	0.001
+│ Final Errors:	0.07280481609040812
+│ Final phi:	[3.044179879494477, 0.983313412417468]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.3766885944984324, 0.8874121951560907]
+│ CV Errors:	[0.06902067123990693, 0.06902072108686659, 0.06902083063684024, 0.06902068457017388, 0.06902064286407042]
+│ Best lambda:	1.0
+│ Final Errors:	0.0851405785665187
+│ Final phi:	[3.3766886122749162, 0.8874121889802564]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.662374165061859, 4.600853424625171]
+│ CV Errors:	[0.4594738688656973, 0.4594738697235676, 0.4594738699005796, 0.45947386802613854, 0.4594738692513648]
+│ Best lambda:	0.1
+│ Final Errors:	0.10648447616014661
+│ Final phi:	[2.1295408896930024, 1.4551838549308003]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.106015895375551, 1.4573504205262076]
+│ CV Errors:	[0.1056640866236224, 0.10566449496582828, 0.10566452011234828, 0.10566445458985467, 0.10566441839492088]
+│ Best lambda:	0.0
+│ Final Errors:	0.08323891261548332
+│ Final phi:	[3.3429447039175297, 0.889107065763625]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.466909815316459, 1.1248587118714015]
+│ CV Errors:	[0.44168164696384593, 0.4416816486781098, 0.44168164655017544, 0.4416816475725415, 0.4416816483451836]
+│ Best lambda:	0.01
+│ Final Errors:	0.08266712044933706
+│ Final phi:	[2.728353664259216, 1.127336083680596]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.9402571033179425, 8.541465903790503]
+│ CV Errors:	[0.5092133916472876, 0.5092133917636947, 0.509213392487366, 0.5092133846311424, 0.5092133909263897]
+│ Best lambda:	0.1
+│ Final Errors:	0.1351677341445149
+│ Final phi:	[3.0973209303507105, 1.0381865904525136]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.7597373898818296, 0.46179280503631437]
+│ CV Errors:	[0.17515040004806579, 0.17515034460848555, 0.17515005462100322, 0.17515031844032075, 0.17515045360118253]
+│ Best lambda:	0.01
+│ Final Errors:	0.1326943439077579
+│ Final phi:	[8.501521778498478, 6.500917290408765]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.9402571033179425, 8.541465903790503]
+│ CV Errors:	[0.47894557525221737, 0.47894557477484356, 0.4789455751927963, 0.4789455756753348, 0.4789455753959513]
+│ Best lambda:	0.001
+│ Final Errors:	0.0870348980020255
+│ Final phi:	[3.2265957370217127, 0.9166762321607903]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.908446386657102, 7.667970365022592]
+│ CV Errors:	[0.4429494820115325, 0.4429494818165697, 0.44294948119497574, 0.4429494815214083, 0.44294948178326976]
+│ Best lambda:	0.01
+│ Final Errors:	0.08749315935411509
+│ Final phi:	[2.7175816981116303, 1.1276608697789834]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.924615242315285, 2.885798506061561]
+│ CV Errors:	[0.4500210141834021, 0.45002101468423394, 0.4500210144510219, 0.45002101355922963, 0.4500210130922375]
+│ Best lambda:	1.0
+│ Final Errors:	0.47695589941090144
+│ Final phi:	[0.2456680139365695, 4.511968428749637e-15]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.6642303695533736, 9.567533636029237]
+│ CV Errors:	[0.46518632896378415, 0.46518632834619816, 0.4651863282347143, 0.465186327767024, 0.4651863283438039]
+│ Best lambda:	0.1
+│ Final Errors:	0.12321298831775028
+│ Final phi:	[2.128552200403528, 1.4605367943530356]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.5664246860321187, 8.427136165865521]
+│ CV Errors:	[0.4385226312103905, 0.43852263044992057, 0.4385226301646135, 0.4385226306655504, 0.4385226307218704]
+│ Best lambda:	0.01
+│ Final Errors:	0.13985000900796596
+│ Final phi:	[8.275659194919365, 6.672128653853891]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46288741031345504, 6.9835550605324865]
+│ CV Errors:	[0.4823469625793019, 0.4823469635412073, 0.482346964192309, 0.4823469638774303, 0.4823469627409086]
+│ Best lambda:	0.0
+│ Final Errors:	0.1076317547247718
+│ Final phi:	[3.016140834180331, 0.9777854990215292]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.9454448946400307, 3.1492622391998415]
+│ CV Errors:	[0.4524418159353297, 0.45244181646170095, 0.45244181542765727, 0.45244181453043664, 0.4524418138005698]
+│ Best lambda:	1.0
+│ Final Errors:	0.45788755738796305
+│ Final phi:	[0.315671750359795, 9.239857982613361e-15]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.049528336488379, 4.99530744114878]
+│ CV Errors:	[0.4743649076851117, 0.47436490845019597, 0.4743649083897939, 0.47436490934934455, 0.4743649070083425]
+│ Best lambda:	1.0
+│ Final Errors:	0.4464775936099243
+│ Final phi:	[0.25181075297982564, 1.6715564070240535e-15]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[7.320003814997245, 2.9905752670238184]
+│ CV Errors:	[0.471480150611668, 0.4714801474921613, 0.47148015194151627, 0.47148014879451255, 0.4714801496523805]
+│ Best lambda:	0.001
+│ Final Errors:	0.07122027652289517
+│ Final phi:	[2.8771472901437276, 1.0372464422927232]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.6071522632820776, 5.955204840509289]
+│ CV Errors:	[0.46852975286551163, 0.4685297529132605, 0.4685297529038072, 0.46852975322823565, 0.4685297536027588]
+│ Best lambda:	0.0
+│ Final Errors:	0.0728916019368762
+│ Final phi:	[3.028353331503592, 0.9888411470885993]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.908446386657102, 7.667970365022592]
+│ CV Errors:	[0.4957601052795429, 0.4957601127007244, 0.49576010933090064, 0.4957601043903218, 0.49576010669586446]
+│ Best lambda:	0.1
+│ Final Errors:	0.27676685535173956
+│ Final phi:	[3.0763282637674356, 1.139009267645974]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.457754052519123, 7.899036826169576]
+│ CV Errors:	[0.44438295341548945, 0.44438295259719374, 0.44438295412538287, 0.44438295274743994, 0.4443829519562992]
+│ Best lambda:	1.0
+│ Final Errors:	0.4653999488924631
+│ Final phi:	[0.2376161945584288, 1.4548769037070896e-16]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.412659943989754, 1.2344867235121124]
+│ CV Errors:	[0.10224110280131571, 0.10224082986360435, 0.1022408702141567, 0.10224089144796045, 0.10224084363451973]
+│ Best lambda:	0.001
+│ Final Errors:	0.07068304569427715
+│ Final phi:	[2.9183834008667873, 1.0214545101893295]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.488819502093454, 0.10905889635595356]
+│ CV Errors:	[0.4934359720195447, 0.49343596799549977, 0.49343596169613535, 0.4934359684749657, 0.493435966971699]
+│ Best lambda:	0.01
+│ Final Errors:	0.49219215666027355
+│ Final phi:	[4.37822725680091, 1.2487050816177312]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.311151512445585, 4.389389593310216]
+│ CV Errors:	[0.5117439353410059, 0.5117439270077258, 0.5117439404626721, 0.5117439264647629, 0.5117439275620798]
+│ Best lambda:	0.1
+│ Final Errors:	0.24254213610797606
+│ Final phi:	[3.0037804752011423, 1.1417254772922747]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.005860349338411, 2.986142783434118]
+│ CV Errors:	[0.5301679996991158, 0.5301679988293548, 0.5301680027254774, 0.530168003375918, 0.5301680021429359]
+│ Best lambda:	0.001
+│ Final Errors:	0.4801036579269718
+│ Final phi:	[4.4730197686016435, 1.2943006832140154]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.2780989889368866, 3.74186714831074]
+│ CV Errors:	[0.46990036350361886, 0.4699003635913045, 0.4699003634001131, 0.46990036308724203, 0.4699003636524153]
+│ Best lambda:	0.1
+│ Final Errors:	0.11258069506596018
+│ Final phi:	[2.107890008713423, 1.4534438029111758]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.760209506672211, 6.516642063795697]
+│ CV Errors:	[0.4687819413853638, 0.4687819424528845, 0.4687819415773039, 0.4687819422256161, 0.4687819411001673]
+│ Best lambda:	1.0
+│ Final Errors:	0.480216384524009
+│ Final phi:	[0.2212228405551958, 1.7503973595797082e-16]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4683718661000897, 5.796722333690417]
+│ CV Errors:	[0.49179768620058917, 0.4917976797849538, 0.4917976713360209, 0.49179767958199216, 0.4917976792910885]
+│ Best lambda:	0.01
+│ Final Errors:	0.5042129788914489
+│ Final phi:	[4.380988802015361, 1.2397121227616095]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.1198145378698383, 1.4650894779502575]
+│ CV Errors:	[0.1072540257598444, 0.1072541735250423, 0.1072545201310969, 0.10725415355963248, 0.1072542349161619]
+│ Best lambda:	0.0
+│ Final Errors:	0.08285382902518672
+│ Final phi:	[3.361841347296709, 0.8965066471312845]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46042826396498704, 4.96168672722459]
+│ CV Errors:	[0.49207300415343125, 0.49207300516569213, 0.49207300579876156, 0.4920730013647763, 0.4920730050485635]
+│ Best lambda:	0.1
+│ Final Errors:	0.2644281175247598
+│ Final phi:	[3.1055360187148975, 1.1096424592617036]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.2456680139365695, 4.511968428749637e-15]
+│ CV Errors:	[0.4498252917168819, 0.449825292019734, 0.44982529132315846, 0.44982529181017944, 0.4498252911928212]
+│ Best lambda:	1.0
+│ Final Errors:	0.4775978901094923
+│ Final phi:	[0.26059128151696676, 5.382905263848163e-16]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.504984071553011, 9.646697763820898]
+│ CV Errors:	[0.44781982822408556, 0.4478198313704696, 0.4478198327939557, 0.44781982868215076, 0.4478198323387673]
+│ Best lambda:	0.0
+│ Final Errors:	0.07294532581254053
+│ Final phi:	[3.182933176090863, 0.9458899945725862]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.325085696806311, 1.3018850690880994]
+│ CV Errors:	[0.09984944592811304, 0.09984944386089474, 0.09984949748776568, 0.09984946227276692, 0.09984947164808691]
+│ Best lambda:	0.001
+│ Final Errors:	0.07866443857233352
+│ Final phi:	[2.9722489953665208, 0.9969484295661678]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[8.211604203482922, 0.3416010848943718]
+│ CV Errors:	[0.46493109048434655, 0.46493109084068596, 0.46493109153857193, 0.464931089001033, 0.4649310908616945]
+│ Best lambda:	0.1
+│ Final Errors:	0.10680231978169981
+│ Final phi:	[2.129900810768595, 1.4342191479006945]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[5.662374165061859, 4.600853424625171]
+│ CV Errors:	[0.5098034885098544, 0.5098034922781173, 0.5098034883214542, 0.5098034921937039, 0.5098034921572395]
+│ Best lambda:	0.01
+│ Final Errors:	0.49458442491163
+│ Final phi:	[4.441537795173503, 1.226205127992158]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.4686248047491066, 0.11819583479107054]
+│ CV Errors:	[0.5019882210849238, 0.5019882219375915, 0.5019882160805028, 0.5019882209050877, 0.5019882187094998]
+│ Best lambda:	0.01
+│ Final Errors:	0.4846836959924656
+│ Final phi:	[4.375661681265914, 1.2798513907403135]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.457754052519123, 7.899036826169576]
+│ CV Errors:	[0.4945949651464514, 0.49459496621109766, 0.4945949658321001, 0.49459496339923453, 0.4945949656183143]
+│ Best lambda:	0.1
+│ Final Errors:	0.2728980844846847
+│ Final phi:	[3.0477732158270685, 1.1453927649776]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.380988802015361, 1.2397121227616095]
+│ CV Errors:	[0.08491573442763954, 0.08491583816375839, 0.08491570489072134, 0.08491559019321115, 0.084915710826187]
+│ Best lambda:	0.1
+│ Final Errors:	0.09675082586743486
+│ Final phi:	[4.0330512650053345, 0.7373531697763774]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.129900810768595, 1.4342191479006945]
+│ CV Errors:	[0.1062728790160747, 0.10627275916336312, 0.10627282669006352, 0.10627295026863862, 0.10627271331660908]
+│ Best lambda:	1.0
+│ Final Errors:	0.10082947643506289
+│ Final phi:	[2.1970421476999444, 1.3941147891703054]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.37822725680091, 1.2487050816177312]
+│ CV Errors:	[0.08448641253329106, 0.08448651883286837, 0.0844865175061286, 0.08448649963745063, 0.0844864161807726]
+│ Best lambda:	0.0
+│ Final Errors:	0.09962513052801854
+│ Final phi:	[9.999999999998423, 5.516764061846412]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.725754415996787, 1.5050782744925795]
+│ CV Errors:	[0.47425510752510736, 0.4742551064780381, 0.4742551061462694, 0.4742551054967851, 0.4742551054670988]
+│ Best lambda:	1.0
+│ Final Errors:	0.46490054098528605
+│ Final phi:	[0.22642251595813648, 7.940480465262744e-15]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.5894859968410415, 1.2746317145967074]
+│ CV Errors:	[0.09913469268430093, 0.09913471039820139, 0.09913477156552683, 0.09913467784167204, 0.09913463979085325]
+│ Best lambda:	1.0
+│ Final Errors:	0.11073112690500578
+│ Final phi:	[4.394039914690321, 0.6655398374845639]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[8.211604203482922, 0.3416010848943718]
+│ CV Errors:	[0.5163152286858138, 0.5163152302234233, 0.5163152290864679, 0.5163152271060069, 0.5163152288072902]
+│ Best lambda:	0.1
+│ Final Errors:	0.18405252787062004
+│ Final phi:	[3.054879711424746, 1.0860482570418895]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.280092892501482, 1.2878173849823216]
+│ CV Errors:	[0.08870704580672677, 0.08870707842163147, 0.0887066752984787, 0.08870692407235259, 0.08870715896544118]
+│ Best lambda:	0.01
+│ Final Errors:	0.08550513330941753
+│ Final phi:	[3.481041175103414, 0.851223200635757]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.311151512445585, 4.389389593310216]
+│ CV Errors:	[0.46302635102887324, 0.4630263494111615, 0.46302635121943075, 0.46302635073963827, 0.4630263498103714]
+│ Best lambda:	0.001
+│ Final Errors:	0.07962862799030611
+│ Final phi:	[2.8301734613864964, 1.0710747246894576]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46042826396498704, 4.96168672722459]
+│ CV Errors:	[0.44676951156490957, 0.4467695121462933, 0.4467695131664433, 0.4467695134235992, 0.4467695132988868]
+│ Best lambda:	0.0
+│ Final Errors:	0.07715591021081812
+│ Final phi:	[3.370564567858324, 0.8846823598479625]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.182933176090863, 0.9458899945725862]
+│ CV Errors:	[0.07014454951534735, 0.07014495897864173, 0.07014469018512219, 0.07014474711515606, 0.07014478055599907]
+│ Best lambda:	0.0
+│ Final Errors:	0.072945311514848
+│ Final phi:	[3.1829336843829927, 0.9458897175628461]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.2212228405551958, 1.7503973595797082e-16]
+│ CV Errors:	[0.46864975105359524, 0.46864975101268336, 0.4686497512738589, 0.4686497510946638, 0.46864975066298536]
+│ Best lambda:	1.0
+│ Final Errors:	0.4802705509068472
+│ Final phi:	[0.2330418595345521, 1.7134971084971976e-15]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.181597973815087, 6.642598175011505]
+│ CV Errors:	[0.4332718281116673, 0.43327182928088603, 0.4332718285829501, 0.43327182888737636, 0.43327182875563564]
+│ Best lambda:	0.0
+│ Final Errors:	0.07507043823534672
+│ Final phi:	[3.5100361232095785, 0.8465188190036746]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.588147837334962, 5.1562721797952555]
+│ CV Errors:	[0.4861046186308927, 0.4861046181862775, 0.48610461749279193, 0.48610461773102276, 0.4861046179377137]
+│ Best lambda:	0.01
+│ Final Errors:	0.09376167069573614
+│ Final phi:	[2.6911913336237445, 1.1148018000504059]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[1.2780989889368866, 3.74186714831074]
+│ CV Errors:	[0.5095837481185923, 0.5095837450779332, 0.5095837412506864, 0.5095837412069381, 0.50958374394781]
+│ Best lambda:	0.1
+│ Final Errors:	0.22078204541573718
+│ Final phi:	[3.086307126543213, 1.0902743162567217]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.46288741031345504, 6.9835550605324865]
+│ CV Errors:	[0.5032090848621592, 0.5032090839187441, 0.503209078502734, 0.5032090877106532, 0.5032090812074694]
+│ Best lambda:	0.01
+│ Final Errors:	0.4903738124988413
+│ Final phi:	[4.248678743488535, 1.3132881203067814]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.1055360187148975, 1.1096424592617036]
+│ CV Errors:	[0.06052173667139386, 0.06052196611868703, 0.06052186646694789, 0.060521864399052994, 0.06052163577866308]
+│ Best lambda:	1.0
+│ Final Errors:	0.07518953920029425
+│ Final phi:	[2.9921112626833937, 1.0075212695670057]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.651093677271471, 3.024777928234499]
+│ CV Errors:	[0.48943977376807607, 0.4894397742907568, 0.48943977283583295, 0.48943977315887965, 0.48943977380473636]
+│ Best lambda:	0.01
+│ Final Errors:	0.08168090210173413
+│ Final phi:	[2.698072168974569, 1.1059954395426714]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.6642303695533736, 9.567533636029237]
+│ CV Errors:	[0.506236882527587, 0.5062368799126394, 0.506236883875068, 0.5062368850769339, 0.5062368794994637]
+│ Best lambda:	1.0
+│ Final Errors:	0.5111145380791469
+│ Final phi:	[0.7788502125623245, 0.4575453667153955]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.491821088563023, 8.750962647851141]
+│ CV Errors:	[0.5075367212660533, 0.5075367238491341, 0.5075367190643452, 0.5075367210053972, 0.5075367262066083]
+│ Best lambda:	0.01
+│ Final Errors:	0.4980354009664236
+│ Final phi:	[4.362769807411317, 1.2561819837300032]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[6.466909815316459, 1.1248587118714015]
+│ CV Errors:	[0.5084726419579809, 0.5084726485310653, 0.508472644920267, 0.5084726441515232, 0.508472640275546]
+│ Best lambda:	1.0
+│ Final Errors:	0.5101859968311186
+│ Final phi:	[0.7302372000432447, 0.4661356076967126]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.760209506672211, 6.516642063795697]
+│ CV Errors:	[0.49102808319661423, 0.4910280920155555, 0.49102809728689023, 0.49102809109166257, 0.4910280953326763]
+│ Best lambda:	0.0
+│ Final Errors:	0.49139402198652254
+│ Final phi:	[4.502192310329415, 1.2360370649872185]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.028353331503592, 0.9888411470885993]
+│ CV Errors:	[0.07914253278790156, 0.07914206516271695, 0.07914223152251722, 0.07914224727190053, 0.07914225270124556]
+│ Best lambda:	0.001
+│ Final Errors:	0.07289160353383971
+│ Final phi:	[3.028353265791472, 0.9888411742085098]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.7175816981116303, 1.1276608697789834]
+│ CV Errors:	[0.0785948838292198, 0.07859495958349386, 0.07859482792213704, 0.07859506720827458, 0.0785949328455647]
+│ Best lambda:	0.01
+│ Final Errors:	0.08263203075579555
+│ Final phi:	[3.119303923599483, 0.9719851511902781]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.5664246860321187, 8.427136165865521]
+│ CV Errors:	[0.4849643063038391, 0.48496430491466674, 0.4849643062326203, 0.4849643111755356, 0.48496430846794647]
+│ Best lambda:	0.001
+│ Final Errors:	0.49304615151359915
+│ Final phi:	[4.469940929643562, 1.2765366523865866]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.315671750359795, 9.239857982613361e-15]
+│ CV Errors:	[0.45230723793375444, 0.45230723496349634, 0.45230723754050084, 0.4523072363099573, 0.4523072355772923]
+│ Best lambda:	0.001
+│ Final Errors:	0.09935645489483828
+│ Final phi:	[3.0798316615543593, 0.9955681114138313]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.9454448946400307, 3.1492622391998415]
+│ CV Errors:	[0.5053291015098516, 0.5053290976007607, 0.5053291020861832, 0.505329099195823, 0.5053291026548377]
+│ Best lambda:	0.001
+│ Final Errors:	0.4699137031299367
+│ Final phi:	[4.699169434109434, 1.2520453258276631]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.4730197686016435, 1.2943006832140154]
+│ CV Errors:	[0.08882006699765174, 0.08881999718252556, 0.08882007926048265, 0.08882001494326011, 0.08882003559083221]
+│ Best lambda:	0.001
+│ Final Errors:	0.10442182147978936
+│ Final phi:	[9.999999999999925, 5.509087327843753]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.1326754727543205, 1.4345954195435164]
+│ CV Errors:	[0.10482329399965888, 0.1048232435647242, 0.10482309165323814, 0.10482291080611097, 0.10482253213688615]
+│ Best lambda:	1.0
+│ Final Errors:	0.11523303716506485
+│ Final phi:	[2.1999243867617224, 1.3945587518333291]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.128552200403528, 1.4605367943530356]
+│ CV Errors:	[0.11766280286933525, 0.11766301919974617, 0.11766278651645816, 0.11766274775765781, 0.11766277423571403]
+│ Best lambda:	0.1
+│ Final Errors:	0.09958861967162808
+│ Final phi:	[2.5009821816402202, 1.2335908663626045]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.0973209303507105, 1.0381865904525136]
+│ CV Errors:	[0.06614607870064158, 0.0661461781132914, 0.06614616274687819, 0.06614616855378053, 0.06614635989837103]
+│ Best lambda:	0.0
+│ Final Errors:	0.08730165143219475
+│ Final phi:	[3.2690850303860235, 0.9038867506323146]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.0477732158270685, 1.1453927649776]
+│ CV Errors:	[0.06947842110017707, 0.06947841892805517, 0.06947855466182007, 0.06947838882668353, 0.06947835998730591]
+│ Best lambda:	1.0
+│ Final Errors:	0.07992244608703813
+│ Final phi:	[2.8863821426882605, 1.0433318037697386]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.8771472901437276, 1.0372464422927232]
+│ CV Errors:	[0.08303705674044262, 0.08303736382012238, 0.08303720977217391, 0.08303713263897633, 0.08303746820915568]
+│ Best lambda:	0.0
+│ Final Errors:	0.0708652220390562
+│ Final phi:	[2.903279389997022, 1.0271898028461313]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.016140834180331, 0.9777854990215292]
+│ CV Errors:	[0.07750214492947546, 0.0775023128095781, 0.0775020727151193, 0.0775022579676807, 0.07750227841732366]
+│ Best lambda:	0.01
+│ Final Errors:	0.10763175473076868
+│ Final phi:	[3.016140834319981, 0.9777854989666432]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.0037804752011423, 1.1417254772922747]
+│ CV Errors:	[0.0744778998748797, 0.07447805887608887, 0.074477787820842, 0.0744776726526544, 0.07447782968990775]
+│ Best lambda:	0.1
+│ Final Errors:	0.07914010497907764
+│ Final phi:	[2.8506661836274287, 1.0629009580379238]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.441537795173503, 1.226205127992158]
+│ CV Errors:	[0.0886162008163637, 0.08861609909103994, 0.088616219076362, 0.08861618351809604, 0.08861602994192448]
+│ Best lambda:	1.0
+│ Final Errors:	0.10075799727955229
+│ Final phi:	[4.300618083298606, 0.6898251465720995]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	data_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[9.504984071553011, 9.646697763820898]
+│ CV Errors:	[0.4977831315398259, 0.49778313179071737, 0.4977831289617506, 0.4977831295207279, 0.4977831247753156]
+│ Best lambda:	1.0
+│ Final Errors:	0.5323585201552024
+│ Final phi:	[0.767896994908676, 0.47314829057990726]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[8.275659194919365, 6.672128653853891]
+│ CV Errors:	[0.1119082210126388, 0.11190317507746692, 0.11190876530998424, 0.11190419605907394, 0.1119048898321275]
+│ Best lambda:	0.001
+│ Final Errors:	0.10356752413484081
+│ Final phi:	[9.999999999999876, 5.504076805220894]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.2376161945584288, 1.4548769037070896e-16]
+│ CV Errors:	[0.4442445697997754, 0.4442445688038047, 0.4442445700497738, 0.4442445691554573, 0.44424456922604083]
+│ Best lambda:	0.001
+│ Final Errors:	0.10567736614290578
+│ Final phi:	[9.999999999996241, 5.506725487761288]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.25181075297982564, 1.6715564070240535e-15]
+│ CV Errors:	[0.4743044161717834, 0.47430441864625494, 0.4743044176515679, 0.47430441627836684, 0.4743044173435268]
+│ Best lambda:	0.0
+│ Final Errors:	0.07650041843696886
+│ Final phi:	[3.1984381809174014, 0.9327296369396786]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.728353664259216, 1.127336083680596]
+│ CV Errors:	[0.08287928125515748, 0.08287951145644756, 0.08287967364620727, 0.08287968895463675, 0.08287942903028427]
+│ Best lambda:	0.0
+│ Final Errors:	0.07766809267175835
+│ Final phi:	[3.1523614897853207, 0.9652278755590852]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.1295408896930024, 1.4551838549308003]
+│ CV Errors:	[0.11022531698057292, 0.11022554827371453, 0.11022548039736588, 0.11022546695538774, 0.110225277628585]
+│ Best lambda:	1.0
+│ Final Errors:	0.10229934722743257
+│ Final phi:	[2.1952304585280875, 1.4161110991925914]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.0763282637674356, 1.139009267645974]
+│ CV Errors:	[0.07679016801280182, 0.07679041595908774, 0.07679050921781329, 0.07679041696944174, 0.07679049390433901]
+│ Best lambda:	0.0
+│ Final Errors:	0.08256328554654052
+│ Final phi:	[3.248806325433082, 0.9301557549284695]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.107890008713423, 1.4534438029111758]
+│ CV Errors:	[0.10835183695661461, 0.1083514947965051, 0.10835173156930936, 0.10835148681230496, 0.10835147986688665]
+│ Best lambda:	1.0
+│ Final Errors:	0.10747818494036707
+│ Final phi:	[2.1714103914967158, 1.4151677100100584]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.7788502125623245, 0.4575453667153955]
+│ CV Errors:	[0.16978951337801193, 0.16978979101032743, 0.1697892811712866, 0.16978979230570654, 0.169789326160681]
+│ Best lambda:	0.01
+│ Final Errors:	0.0866663362604196
+│ Final phi:	[2.880855827230501, 1.058234020508292]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.370564567858324, 0.8846823598479625]
+│ CV Errors:	[0.058751606574941495, 0.058751414923556886, 0.058751675346555884, 0.05875142834149925, 0.058751461951004634]
+│ Best lambda:	0.001
+│ Final Errors:	0.0771559102024293
+│ Final phi:	[3.3705645681592893, 0.8846823597402746]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.362769807411317, 1.2561819837300032]
+│ CV Errors:	[0.08173170019576934, 0.08173152407783754, 0.08173161930020138, 0.08173152026604925, 0.08173152349184029]
+│ Best lambda:	0.1
+│ Final Errors:	0.07659388612710609
+│ Final phi:	[3.7836729485105596, 0.7724977585088393]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.2265957370217127, 0.9166762321607903]
+│ CV Errors:	[0.06323850968840325, 0.06323847493286443, 0.06323871358601411, 0.06323852341220393, 0.06323856596021515]
+│ Best lambda:	0.001
+│ Final Errors:	0.08729618529542468
+│ Final phi:	[3.2684201853382904, 0.9040850336682243]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.7302372000432447, 0.4661356076967126]
+│ CV Errors:	[0.4668696950817689, 0.411545872174403, 0.4115457808113122, 0.2873991058171272, 0.4665093606491615]
+│ Best lambda:	0.1
+│ Final Errors:	0.10903217444804932
+│ Final phi:	[2.1935695925992915, 1.4211320204253597]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.6911913336237445, 1.1148018000504059]
+│ CV Errors:	[0.06867068058495075, 0.06867067159260323, 0.06867070006151296, 0.0686707361646633, 0.06867070131224508]
+│ Best lambda:	0.001
+│ Final Errors:	0.08874058529577344
+│ Final phi:	[2.9417461223035506, 1.0129870313688196]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.248678743488535, 1.3132881203067814]
+│ CV Errors:	[0.09817217020692048, 0.09817198372953798, 0.0981721891615647, 0.09817207147990939, 0.09817212521478372]
+│ Best lambda:	0.001
+│ Final Errors:	0.10761267818860457
+│ Final phi:	[3.0317419273956085, 0.9723674230426935]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.375661681265914, 1.2798513907403135]
+│ CV Errors:	[0.1015672583531058, 0.10156730160949419, 0.10156732458390587, 0.10156757117693789, 0.1015670987764741]
+│ Best lambda:	1.0
+│ Final Errors:	0.09198520551250215
+│ Final phi:	[4.21557500209736, 0.7006508009012931]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.054879711424746, 1.0860482570418895]
+│ CV Errors:	[0.06673026204866798, 0.06673054064348917, 0.06673015311485489, 0.06673025670083202, 0.06673052755924276]
+│ Best lambda:	0.01
+│ Final Errors:	0.07820254904849802
+│ Final phi:	[3.0102432405662354, 0.9912796981805874]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.698072168974569, 1.1059954395426714]
+│ CV Errors:	[0.07926489608429772, 0.0792650366848259, 0.07926522479193529, 0.07926552142962642, 0.0792647991313874]
+│ Best lambda:	1.0
+│ Final Errors:	0.08122741451289382
+│ Final phi:	[2.7154558408030725, 1.0987894911682095]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.22642251595813648, 7.940480465262744e-15]
+│ CV Errors:	[0.4742591640783146, 0.4742591650352802, 0.4742591644723329, 0.4742591653951115, 0.47425916512353494]
+│ Best lambda:	0.0
+│ Final Errors:	0.08730351642460366
+│ Final phi:	[3.0110135455581815, 0.9931207060251681]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[2.8301734613864964, 1.0710747246894576]
+│ CV Errors:	[0.07451775291305529, 0.07451756646749466, 0.07451765246742831, 0.07451779764086594, 0.0745176333949803]
+│ Best lambda:	0.001
+│ Final Errors:	0.07891983914580898
+│ Final phi:	[2.8595099938939796, 1.05922786903409]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.086307126543213, 1.0902743162567217]
+│ CV Errors:	[0.07266643993089775, 0.07266639994410014, 0.07266654945009018, 0.07266631209663826, 0.0726663663825876]
+│ Best lambda:	0.1
+│ Final Errors:	0.07456472942517978
+│ Final phi:	[3.0367375540029506, 0.9853494734530426]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[3.5100361232095785, 0.8465188190036746]
+│ CV Errors:	[0.06972017169086642, 0.0697201402819551, 0.06972029561904168, 0.06972016005111928, 0.06972033840959377]
+│ Best lambda:	0.001
+│ Final Errors:	0.07507043454276754
+│ Final phi:	[3.5100360590675668, 0.8465188408162264]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.502192310329415, 1.2360370649872185]
+│ CV Errors:	[0.0937092916028048, 0.0937094581489118, 0.09370952634791545, 0.09370929840600488, 0.09370953803745749]
+│ Best lambda:	0.0
+│ Final Errors:	0.07553027111604611
+│ Final phi:	[3.2716685764040667, 0.9111850490756277]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.469940929643562, 1.2765366523865866]
+│ CV Errors:	[0.08836349011555723, 0.08836362578248338, 0.08836352591255567, 0.08836350981567215, 0.08836346145781881]
+│ Best lambda:	1.0
+│ Final Errors:	0.11349292075751924
+│ Final phi:	[4.308072360104038, 0.6792925094195713]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[4.699169434109434, 1.2520453258276631]
+│ CV Errors:	[0.11607484373769417, 0.1160747481200611, 0.11607480808175921, 0.11607500404535162, 0.11607499781692791]
+│ Best lambda:	0.001
+│ Final Errors:	0.09924177284298069
+│ Final phi:	[3.1714251426219096, 0.9647286901506194]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Results.
+│ Problem:	lvp
+│ Method:	single_shooting
+│ Lambdas:	[0.0, 0.001, 0.01, 0.1, 1.0]
+│ Initial phi:	[0.767896994908676, 0.47314829057990726]
+│ CV Errors:	[0.15413198634074685, 0.15413235987567908, 0.1541324243091092, 0.15413096876528445, 0.15413164923807207]
+│ Best lambda:	0.1
+│ Final Errors:	0.11223393681393172
+│ Final phi:	[2.2250204096798925, 1.3867107899235986]
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:279
+┌ Info: Program finished.
+│   now() = 2020-07-27T17:18:37.356
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:537
+┌ Info: Elapsed time.
+│   elapsed_time = 5220.708388484
+└ @ Main /home/atgmello/git/DEParamEst/src/calc/experiment.jl:538
