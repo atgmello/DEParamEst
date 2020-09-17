@@ -1,0 +1,288 @@
+┌ Info: ccgo
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.054
+│  SSR, 0.1172
+│  DS, 0.089
+│  DSS, 0.1127
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: ccgo
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 1.0, 90.023, 1.0, SSR, 0.7667, 169.7176, 1.3043, DS, 1.0, 0.1535, 1.0, DSS, 0.8, 82.2496, 1.25, 
+│ Method, SR, Cost, ISR
+│ SS, 1.0, 89.6427, 1.0
+│ SSR, 0.7667, 172.7892, 1.3043
+│ DS, 1.0, 0.1545, 1.0
+│ DSS, 0.8, 83.4209, 1.25
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: ccgo
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0017, 0.0007, 1.0, 0.0015]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [1.0, 0.4067, 0.8756]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0017, 0.0007, 1.0, 0.0015]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: mhp
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.1523
+│  SSR, 0.1158
+│  DS, 0.1543
+│  DSS, 0.1153
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: mhp
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.3333, 215.1932, 3.0, SSR, 0.8333, 368.8969, 1.2, DS, 0.1, 0.2241, 10.0, DSS, 0.8, 224.0144, 1.25, 
+│ Method, SR, Cost, ISR
+│ SS, 0.3333, 218.5723, 3.0
+│ SSR, 0.8333, 360.7085, 1.2
+│ DS, 0.1, 0.223, 10.0
+│ DSS, 0.8, 184.8924, 1.25
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: mhp
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0035, 0.0051, 1.0, 0.008]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.4337, 0.6326, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0035, 0.0051, 1.0, 0.008]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: mapk
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.143
+│  SSR, 0.1381
+│  DS, 0.1627
+│  DSS, 0.1378
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: mapk
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.2667, 1317.5833, 3.75, SSR, 0.3333, 2387.6698, 3.0, DS, 0.2, 9.88, 5.0, DSS, 0.3667, 1043.1977, 2.7273, 
+│ Method, SR, Cost, ISR
+│ SS, 0.2667, 1308.6893, 3.75
+│ SSR, 0.3333, 2398.4921, 3.0
+│ DS, 0.2, 11.0204, 5.0
+│ DSS, 0.3667, 1131.7839, 2.7273
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: mapk
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.01, 0.0069, 1.0, 0.0174]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.5758, 0.3972, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.01, 0.0069, 1.0, 0.0174]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: bbg
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.391
+│  SSR, 0.3054
+│  DS, 0.1095
+│  DSS, 0.1083
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: bbg
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.0333, 1176.6913, 30.0, SSR, 0.2333, 384.2863, 4.2857, DS, 0.8667, 0.6016, 1.1538, DSS, 0.9, 286.9617, 1.1111, 
+│ Method, SR, Cost, ISR
+│ SS, 0.0333, 1047.1254, 30.0
+│ SSR, 0.2333, 282.8019, 4.2857
+│ DS, 0.8667, 0.2318, 1.1538
+│ DSS, 0.9, 156.691, 1.1111
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: bbg
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0, 0.0004, 1.0, 0.0022]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.009, 0.1936, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0, 0.0004, 1.0, 0.0022]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: bep
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.1899
+│  SSR, 0.1625
+│  DS, 0.081
+│  DSS, 0.0794
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: bep
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.0667, 80.0199, 15.0, SSR, 0.3, 117.546, 3.3333, DS, 1.0, 0.1536, 1.0, DSS, 1.0, 77.8717, 1.0, 
+│ Method, SR, Cost, ISR
+│ SS, 0.0667, 78.8357, 15.0
+│ SSR, 0.3, 120.7648, 3.3333
+│ DS, 1.0, 0.1586, 1.0
+│ DSS, 1.0, 63.5779, 1.0
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: bep
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0001, 0.0004, 1.0, 0.002]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.0649, 0.1987, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0001, 0.0004, 1.0, 0.002]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: frc
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.0977
+│  SSR, 0.1299
+│  DS, 0.1066
+│  DSS, 0.132
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: frc
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 1.0, 116.6657, 1.0, SSR, 0.7, 229.6422, 1.4286, DS, 0.8667, 0.2127, 1.1538, DSS, 0.7, 101.502, 1.4286, 
+│ Method, SR, Cost, ISR
+│ SS, 1.0, 119.4072, 1.0
+│ SSR, 0.7, 250.5911, 1.4286
+│ DS, 0.8667, 0.2115, 1.1538
+│ DSS, 0.7, 111.5658, 1.4286
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: frc
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0021, 0.0007, 1.0, 0.0017]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [1.0, 0.3556, 0.8046]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0021, 0.0007, 1.0, 0.0017]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: fic
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.0878
+│  SSR, 0.0939
+│  DS, 0.0862
+│  DSS, 0.1005
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: fic
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.9667, 62.7307, 1.0345, SSR, 0.9, 108.636, 1.1111, DS, 1.0, 8.3957, 1.0, DSS, 0.9, 54.4286, 1.1111, 
+│ Method, SR, Cost, ISR
+│ SS, 0.9667, 63.2089, 1.0345
+│ SSR, 0.9, 111.9413, 1.1111
+│ DS, 1.0, 9.2482, 1.0
+│ DSS, 0.9, 61.8055, 1.1111
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: fic
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.1294, 0.0696, 1.0, 0.1388]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.9319, 0.501, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.1294, 0.0696, 1.0, 0.1388]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: fhn
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.4
+│  SSR, 0.1711
+│  DS, 0.5338
+│  DSS, 0.0971
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: fhn
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.0, 655.0961, Inf, SSR, 0.7, 837.2326, 1.4286, DS, 0.0, 0.2194, Inf, DSS, 0.9, 186.4527, 1.1111, 
+│ Method, SR, Cost, ISR
+│ SS, 0.0, 628.008, NaN
+│ SSR, 0.7, 590.0782, 1.4286
+│ DS, 0.0, 0.2315, NaN
+│ DSS, 0.9, 125.0657, 1.1111
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: fhn
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0, 0.1732, 0.0, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.0, 0.1732, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.0, 0.1732, 0.0, 1.0]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
+┌ Info: lvp
+│ Sample size:	10
+│ NRMSE
+│ SS, 0.0946
+│  SSR, 0.115
+│  DS, 0.4724
+│  DSS, 0.0927
+│  
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:88
+┌ Info: lvp
+│ Sample size:	10
+│ Method, SR, Cost, ISR
+│ SS, 0.9667, 68.7752, 1.0345, SSR, 0.9333, 161.2559, 1.0714, DS, 0.0, 10.3842, Inf, DSS, 0.9667, 65.8623, 1.0345, 
+│ Method, SR, Cost, ISR
+│ SS, 0.9667, 68.3335, 1.0345
+│ SSR, 0.9333, 159.7719, 1.0714
+│ DS, 0.0, 10.4417, NaN
+│ DSS, 0.9667, 70.6018, 1.0345
+│ 
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:89
+┌ Info: lvp
+│ Sample size:	10
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.9576, 0.3943, 0.0, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DSS, 
+│ [0.9576, 0.3943, 1.0]
+│ Overall Efficiency
+│ SS, SSR, DS, DSS, 
+│ [0.9576, 0.3943, 0.0, 1.0]
+└ @ Main /home/andrew/git/DEParamEst/src/plot/experiment_plots.jl:90
