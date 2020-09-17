@@ -113,3 +113,9 @@ interpreted inside the
 main program.
 
 With this script one can easily reproduce the results discussed in the thesis.
+
+Note that with the command =export JULIA_NUM_THREADS=16= you can control the
+number of threads used during the execution of the experiments. Since this
+process involves stochastic methods, each test case is solved a total of 30
+times in order to calculate its metrics and get more realist results. This leads
+to some points of parallelization, which we take advantage of.
